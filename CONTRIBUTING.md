@@ -134,6 +134,12 @@ docs: clarify domain model contribution guidance
 
 Mark breaking changes with `!` after the type/scope and explain them in the body or a `BREAKING CHANGE: <description>` footer. Reference issues in the body or footer when useful. Keep each commit coherent; do not use vague summaries such as `update` or `fix stuff`.
 
+## Changelog
+
+Record every logical code, configuration, documentation, or architecture change in [`CHANGELOG.md`](CHANGELOG.md) under `[Unreleased]` as part of the same pull request. Write one concise entry per logical change in English, describing its effect rather than listing commits or files.
+
+Use the applicable Keep a Changelog category: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, or `Security`. Keep existing entries, add a category heading only when needed, and leave release sections for maintainers to update when a version is published.
+
 ## Semantic Versioning
 
 Releases use `MAJOR.MINOR.PATCH` as defined by [Semantic Versioning 2.0.0](https://semver.org/). Version the released public contract, including externally observable API behavior:
