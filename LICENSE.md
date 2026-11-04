@@ -2,8 +2,25 @@
 
 Copyright (c) 2026 SmartFarm. All rights reserved.
 
-This software and its source code, documentation, and associated materials (the "Software") are proprietary and confidential. No license or other rights to the Software are granted by this notice, whether by implication, estoppel, or otherwise.
+This software and its source code are proprietary and confidential. No license
+or other rights are granted except as expressly agreed in writing by the
+copyright holder.
 
-You may not copy, modify, distribute, publish, sublicense, sell, or otherwise use the Software, in whole or in part, without prior written permission from the copyright holder. Access to a deployed web service does not grant rights to the Software and is governed by the applicable service terms. Separate written agreements may grant additional rights.
+Without prior written permission from the copyright holder, you may not use,
+copy, modify, merge, publish, distribute, sublicense, sell, or otherwise make
+this software or any part of it available to any person or entity. Access to
+the source code, including access through a private repository, does not by
+itself grant permission to use, reproduce, modify, or distribute it.
 
-The Software is provided "AS IS", to the extent permitted by applicable law. The copyright holder disclaims all warranties and liability arising from the Software to the extent permitted by applicable law.
+To request permission or a separate license, contact the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. TO THE MAXIMUM EXTENT
+PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY
+CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH
+THE SOFTWARE OR ITS USE.
+
+This notice does not replace or override the terms of third-party components
+included in or used by the project; those components remain subject to their
+respective licenses.
