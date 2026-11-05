@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added proprietary licensing information.
 - Added agent instructions and contribution guidance for the backend structure, DDD boundaries, coding standards, naming, comments, Git Flow, and Conventional Commits.
 - Added README guidance for the technology stack, local setup, current service status, and planned bounded contexts.
+- OperationsMonitoring: added Edge Gateway synchronization of readings, alerts and alert changes with individual results, capture-time attribution, six-hour alert deduplication, versioned alert attention, thresholds, geofences, revisioned Edge rules, field events, clinical interventions, offline mobile batches, telemetry queries and a read contract for other contexts.
 
 ### Changed
 
