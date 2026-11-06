@@ -17,7 +17,6 @@ public static class MonitoringUnits
     /// <summary>Unit of the battery level.</summary>
     public const string Percent = "percent";
 
-    // Every reading reaches the central API through an Edge Gateway; collars never call the API directly.
-    /// <summary>Origin of every reading and alert.</summary>
+    /// <summary>Origin of every reading and alert, because collars reach the central API only through an Edge Gateway.</summary>
     public const string EdgeGatewayOrigin = "EdgeGateway";
 }

@@ -17,10 +17,10 @@ public class UnitOfWork(DbContext context) : IUnitOfWork
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    // Only monitoring entities are detached, so pending work of other modules in the shared context is untouched.
     /// <inheritdoc />
     public void DiscardChanges()
     {
+        // Only monitoring entities are detached, so pending work of other modules in the shared context is untouched.
         var entries = context.ChangeTracker.Entries()
             .Where(e => e.Entity.GetType().Namespace?.StartsWith(ModelNamespace, StringComparison.Ordinal) == true)
             .ToList();
