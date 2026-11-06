@@ -1,3 +1,4 @@
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -42,6 +43,9 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 builder.Services.AddScoped<DbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// The Firebase project identifier and Web API key come from configuration, never from source control.
+builder.Services.AddIam(builder.Configuration);
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -53,6 +57,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAllPolicy");
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
