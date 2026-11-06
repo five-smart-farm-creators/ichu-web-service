@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest;
 
+/// <summary>
+/// Exposes ranch-authorized animal registration, profiles and lifecycle changes.
+/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/v1/ranches/{ranchId:guid}/cattle")]
@@ -28,6 +31,10 @@ public sealed class CattleController : ControllerBase
         _queryService = queryService;
     }
 
+    /// <summary>
+    /// Registers an active animal with an ear tag that is unique within the authorized ranch.
+    /// </summary>
+    /// <returns>The new animal and the URI of its profile.</returns>
     [HttpPost]
     [EndpointSummary("Register cattle in a ranch")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status201Created)]
@@ -41,6 +48,10 @@ public sealed class CattleController : ControllerBase
             CattleResourceFromEntityAssembler.ToResourceFromEntity(cattle));
     }
 
+    /// <summary>
+    /// Combines an authorized animal's retained details with explicit device-integration availability.
+    /// </summary>
+    /// <returns>The profile, including a distinction between unavailable device data and no collar assignment.</returns>
     [HttpGet("{cattleId:guid}")]
     [ActionName(nameof(GetCattleByIdAsync))]
     [EndpointSummary("Get the authorized cattle profile")]
@@ -52,6 +63,10 @@ public sealed class CattleController : ControllerBase
         return Ok(CattleProfileResourceFromModelAssembler.ToResourceFromModel(profile));
     }
 
+    /// <summary>
+    /// Searches one authorized ranch, retaining inactive animals unless a status filter is supplied.
+    /// </summary>
+    /// <returns>A page ordered by ear tag and identifier, or an empty array when none match.</returns>
     [HttpGet]
     [EndpointSummary("Search cattle in an authorized ranch")]
     [ProducesResponseType<IReadOnlyList<CattleResource>>(StatusCodes.Status200OK)]
@@ -64,6 +79,9 @@ public sealed class CattleController : ControllerBase
         return Ok(cattle.Select(CattleResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 
+    /// <summary>
+    /// Corrects active animal details using the expected version while preserving stage history.
+    /// </summary>
     [HttpPut("{cattleId:guid}")]
     [EndpointSummary("Update cattle identification and productive details")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
@@ -77,6 +95,9 @@ public sealed class CattleController : ControllerBase
         return Ok(CattleResourceFromEntityAssembler.ToResourceFromEntity(cattle));
     }
 
+    /// <summary>
+    /// Records an effective-dated stage change while retaining the preceding period, including same-day changes.
+    /// </summary>
     [HttpPatch("{cattleId:guid}/life-stage")]
     [EndpointSummary("Change the productive stage while retaining its history")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
@@ -89,6 +110,10 @@ public sealed class CattleController : ControllerBase
         return Ok(CattleResourceFromEntityAssembler.ToResourceFromEntity(cattle));
     }
 
+    /// <summary>
+    /// Records an animal's exit and queues a lifecycle event without deleting its history.
+    /// </summary>
+    /// <returns>The inactive animal; this response does not confirm downstream collar release.</returns>
     [HttpPost("{cattleId:guid}/deactivations")]
     [EndpointSummary("Deactivate cattle and retain the exit reason")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]

@@ -3,6 +3,9 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Resources;
 
+/// <summary>
+/// Proposes active animal identity corrections guarded by its version; stage changes use a separate resource.
+/// </summary>
 public sealed record UpdateCattleResource(
     [Required, StringLength(30)] string EarTag,
     Breed Breed,

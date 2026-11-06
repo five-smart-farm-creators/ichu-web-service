@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest;
 
+/// <summary>
+/// Maps known module failures to Problem Details while leaving unrelated exceptions to the host pipeline.
+/// </summary>
 public sealed class CattleInformationExceptionFilter : IExceptionFilter
 {
     public void OnException(ExceptionContext context)

@@ -3,8 +3,14 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Reso
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Transform;
 
+/// <summary>
+/// Projects animal state to the REST contract without exposing the domain entity.
+/// </summary>
 public static class CattleResourceFromEntityAssembler
 {
+    /// <summary>
+    /// Uses enum names in the response and orders retained stage periods by their effective start date.
+    /// </summary>
     public static CattleResource ToResourceFromEntity(Cattle cattle)
     {
         var stagePeriods = cattle.StagePeriods

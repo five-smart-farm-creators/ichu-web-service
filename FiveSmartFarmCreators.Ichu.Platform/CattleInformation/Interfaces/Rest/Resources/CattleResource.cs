@@ -1,5 +1,8 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Resources;
 
+/// <summary>
+/// Exposes animal details, retained lifecycle history and the version required for subsequent changes.
+/// </summary>
 public sealed record CattleResource(
     Guid Id,
     Guid RanchId,

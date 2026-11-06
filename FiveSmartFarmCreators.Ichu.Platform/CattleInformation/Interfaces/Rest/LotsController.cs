@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest;
 
+/// <summary>
+/// Exposes ranch-authorized management groups and membership changes without owning animal identity.
+/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/v1/ranches/{ranchId:guid}/lots")]
@@ -27,6 +30,9 @@ public sealed class LotsController : ControllerBase
         _queryService = queryService;
     }
 
+    /// <summary>
+    /// Creates a management group in the authorized ranch with an optional grouping criterion.
+    /// </summary>
     [HttpPost]
     [EndpointSummary("Create a cattle lot")]
     [ProducesResponseType<LotResource>(StatusCodes.Status201Created)]
@@ -38,6 +44,9 @@ public sealed class LotsController : ControllerBase
         return Created($"/api/v1/ranches/{ranchId}/lots", LotResourceFromEntityAssembler.ToResourceFromEntity(lot));
     }
 
+    /// <summary>
+    /// Lists stored ranch lots and memberships, including references to inactive animals.
+    /// </summary>
     [HttpGet]
     [EndpointSummary("List lots in an authorized ranch")]
     [ProducesResponseType<IReadOnlyList<LotResource>>(StatusCodes.Status200OK)]
@@ -47,6 +56,10 @@ public sealed class LotsController : ControllerBase
         return Ok(lots.Select(LotResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 
+    /// <summary>
+    /// Assigns active cattle from the same ranch using the lot's expected version.
+    /// </summary>
+    /// <returns>The lot after assignment; a current duplicate membership is unchanged.</returns>
     [HttpPut("{lotId:guid}/cattle/{cattleId:guid}")]
     [EndpointSummary("Assign active cattle to a lot in the same ranch")]
     [ProducesResponseType<LotResource>(StatusCodes.Status200OK)]
@@ -58,6 +71,10 @@ public sealed class LotsController : ControllerBase
         return Ok(LotResourceFromEntityAssembler.ToResourceFromEntity(lot));
     }
 
+    /// <summary>
+    /// Removes membership using <paramref name="expectedVersion"/> of the lot while retaining the animal.
+    /// </summary>
+    /// <returns>The lot after removal, or the unchanged lot when no such membership exists.</returns>
     [HttpDelete("{lotId:guid}/cattle/{cattleId:guid}")]
     [EndpointSummary("Remove cattle from a lot without deleting its identity")]
     [ProducesResponseType<LotResource>(StatusCodes.Status200OK)]
