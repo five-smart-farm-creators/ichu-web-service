@@ -16,7 +16,7 @@ public interface IMonitoringAlertCommandService
     ///     server time of the request. Repeating the same operation returns the stored alert.
     /// </summary>
     /// <param name="command">The command containing the attention data.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing the stored alert on success, or an error enum on failure.</returns>
     /// <exception cref="ArgumentException">Thrown when the attention data violates a domain rule.</exception>
     Task<Result<MonitoringAlert, EAcknowledgeAlertError>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken);
@@ -26,7 +26,7 @@ public interface IMonitoringAlertCommandService
     ///     evidence of the same condition within the deduplication window joins the open alert.
     /// </summary>
     /// <param name="command">The command containing the alert and the gateway that evaluated it.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>The individual result of the alert: accepted, duplicate, rejected or conflicting.</returns>
     Task<SyncEntryResult> Handle(SynchronizeAlertCommand command, CancellationToken cancellationToken);
 
@@ -34,7 +34,7 @@ public interface IMonitoringAlertCommandService
     ///     Handles the synchronization of one change to an existing alert asynchronously.
     /// </summary>
     /// <param name="command">The command containing the change and the gateway that sent it.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>The individual result of the change: accepted, duplicate, rejected or conflicting.</returns>
     Task<SyncEntryResult> Handle(SynchronizeAlertChangeCommand command, CancellationToken cancellationToken);
 }

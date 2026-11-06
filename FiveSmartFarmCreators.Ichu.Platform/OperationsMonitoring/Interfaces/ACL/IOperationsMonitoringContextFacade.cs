@@ -13,7 +13,7 @@ public interface IOperationsMonitoringContextFacade
     /// <param name="ranchId">The ranch that owns the devices.</param>
     /// <param name="from">The first instant of the period.</param>
     /// <param name="to">The instant that ends the period, excluded from it.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the attributed readings ordered by capture time.</returns>
     Task<IReadOnlyList<MonitoringReadingRecord>> GetReadingsAsync(Guid ranchId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 
@@ -23,7 +23,7 @@ public interface IOperationsMonitoringContextFacade
     /// <param name="ranchId">The ranch that owns the alerts.</param>
     /// <param name="from">The first instant of the period.</param>
     /// <param name="to">The instant that ends the period, excluded from it.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the alert lifetimes ordered by event time.</returns>
     Task<IReadOnlyList<MonitoringAlertRecord>> GetAlertsAsync(Guid ranchId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 
@@ -31,7 +31,7 @@ public interface IOperationsMonitoringContextFacade
     ///     Gets the latest synchronized reading of a device.
     /// </summary>
     /// <param name="deviceId">The device identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the communication record, or <see langword="null"/> when the device never reported.</returns>
     Task<DeviceCommunicationRecord?> GetLastDeviceCommunicationAsync(Guid deviceId, CancellationToken cancellationToken);
 
@@ -41,7 +41,7 @@ public interface IOperationsMonitoringContextFacade
     /// <param name="cattleId">The animal the operations were applied to.</param>
     /// <param name="from">The first instant of the period.</param>
     /// <param name="to">The instant that ends the period, excluded from it.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the livestock operations of the animal.</returns>
     Task<IReadOnlyList<LivestockOperationRecord>> GetLivestockOperationsAsync(Guid cattleId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 }

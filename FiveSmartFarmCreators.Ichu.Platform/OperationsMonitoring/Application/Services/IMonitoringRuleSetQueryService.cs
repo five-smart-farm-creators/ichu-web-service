@@ -14,7 +14,7 @@ public interface IMonitoringRuleSetQueryService
     ///     Handles the retrieval of the rules of the gateway's ranch asynchronously.
     /// </summary>
     /// <param name="query">The query containing the gateway and the revision it already holds.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>
     ///     A result containing the rules on success, or an error enum on failure, including when the gateway already
     ///     holds the current revision.

@@ -15,7 +15,7 @@ public interface IEdgeSynchronizationCommandService
     ///     that one rejected entry never blocks the others.
     /// </summary>
     /// <param name="command">The command containing the readings, alerts and alert changes.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing one result per entry on success, or an error enum on failure.</returns>
     Task<Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>> Handle(SynchronizeEdgeBatchCommand command, CancellationToken cancellationToken);
 }

@@ -9,7 +9,7 @@ public interface IMonitoringRuleRevisionService
     ///     Advances the rule revision of a ranch asynchronously, creating its rule set the first time.
     /// </summary>
     /// <param name="ranchId">The ranch whose rules change.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the new revision, which the changed rule must carry.</returns>
     Task<long> AdvanceAsync(Guid ranchId, CancellationToken cancellationToken = default);
 }

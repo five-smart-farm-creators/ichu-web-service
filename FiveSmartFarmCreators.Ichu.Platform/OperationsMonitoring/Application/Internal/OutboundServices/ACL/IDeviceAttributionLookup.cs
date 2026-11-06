@@ -11,7 +11,7 @@ public interface IDeviceAttributionLookup
     /// </summary>
     /// <param name="deviceId">The device identifier.</param>
     /// <param name="capturedAt">The instant the reading was captured.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the attribution, or <see langword="null"/> when the device is not registered.</returns>
     Task<DeviceAttribution?> FindAsync(Guid deviceId, DateTimeOffset capturedAt, CancellationToken cancellationToken);
 }

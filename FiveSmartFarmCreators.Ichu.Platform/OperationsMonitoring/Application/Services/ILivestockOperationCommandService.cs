@@ -15,7 +15,7 @@ public interface ILivestockOperationCommandService
     ///     operation returns the stored record.
     /// </summary>
     /// <param name="command">The command containing the operation data.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing the registration on success, or an error enum on failure.</returns>
     /// <exception cref="ArgumentException">Thrown when a required field is missing or a value violates a domain rule.</exception>
     Task<Result<LivestockOperationRegistration, ERegisterLivestockOperationError>> Handle(RegisterLivestockOperationCommand command, CancellationToken cancellationToken);
@@ -24,7 +24,7 @@ public interface ILivestockOperationCommandService
     ///     Handles the synchronization of the operations recorded offline by the mobile application asynchronously.
     /// </summary>
     /// <param name="command">The command containing the recorded operations.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing one result per operation on success, or an error enum on failure.</returns>
     Task<Result<IReadOnlyList<SyncEntryResult>, ESynchronizeMobileBatchError>> Handle(SynchronizeMobileBatchCommand command, CancellationToken cancellationToken);
 }

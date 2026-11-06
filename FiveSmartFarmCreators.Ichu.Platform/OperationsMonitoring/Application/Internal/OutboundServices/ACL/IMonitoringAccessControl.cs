@@ -9,7 +9,7 @@ public interface IMonitoringAccessControl
     /// <summary>
     ///     Gets the verified account of the current request asynchronously.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing the account identifier, or <see langword="null"/> when no verified identity exists.</returns>
     Task<Guid?> GetCurrentAccountIdAsync(CancellationToken cancellationToken);
 
@@ -19,7 +19,7 @@ public interface IMonitoringAccessControl
     /// <param name="accountId">The verified account.</param>
     /// <param name="ranchId">The ranch the operation targets.</param>
     /// <param name="permission">The required permission.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A task containing <see langword="true"/> when the account holds the permission.</returns>
     Task<bool> CanAccessRanchAsync(Guid accountId, Guid ranchId, MonitoringPermission permission, CancellationToken cancellationToken);
 }

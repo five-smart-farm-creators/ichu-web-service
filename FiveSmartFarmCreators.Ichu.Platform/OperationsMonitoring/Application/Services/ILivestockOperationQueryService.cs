@@ -14,7 +14,7 @@ public interface ILivestockOperationQueryService
     ///     Handles the listing of the livestock operations of an authorized animal asynchronously.
     /// </summary>
     /// <param name="query">The query containing the animal and the period.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing the operations on success, or an error enum on failure.</returns>
     Task<Result<IReadOnlyList<LivestockOperation>, EGetLivestockOperationsError>> Handle(GetLivestockOperationsQuery query, CancellationToken cancellationToken);
 }

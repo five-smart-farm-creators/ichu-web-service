@@ -15,7 +15,7 @@ public interface IMonitoringAlertQueryService
     ///     Handles the listing of the alerts of an authorized ranch asynchronously.
     /// </summary>
     /// <param name="query">The query containing the filters and the page.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing the page of alerts on success, or an error enum on failure.</returns>
     Task<Result<PagedResult<MonitoringAlert>, EGetAlertsError>> Handle(GetAlertsQuery query, CancellationToken cancellationToken);
 
@@ -23,7 +23,7 @@ public interface IMonitoringAlertQueryService
     ///     Handles the retrieval of an alert of an authorized ranch asynchronously.
     /// </summary>
     /// <param name="query">The query containing the alert identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A result containing the alert on success, or an error enum on failure.</returns>
     Task<Result<MonitoringAlert, EGetAlertByIdError>> Handle(GetAlertByIdQuery query, CancellationToken cancellationToken);
 }
