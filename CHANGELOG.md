@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added IoT Assets inventory, collar assignment history, unlimited water-controller assignment, water-trough configuration, REST resources, EF Core mappings and integration contracts; Shared and host wiring remain pending.
 - Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
 - Iam: separated command and query service contracts, implementations and the application ACL facade.
 - Iam: added scoped EF Core mappings and repositories, Firebase identity adapters and request identity resolution.
@@ -16,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DashboardAnalytics: added authorized herd indicators, trends, animal comparisons, epidemiological curves, portfolio summaries and subscription-gated JSON and CSV exports.
 - Shared: added the shared kernel with the result and domain error model, base repository and unit of work, the PostgreSQL application context with audit timestamps, kebab-case routes and a global problem details exception handler.
 - Iam: registered the module in the application host with Firebase settings read from configuration.
-
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
 - Added Humanizer and OpenAPI support.
