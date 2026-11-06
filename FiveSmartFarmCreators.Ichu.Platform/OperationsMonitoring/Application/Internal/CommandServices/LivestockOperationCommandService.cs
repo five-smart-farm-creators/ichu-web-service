@@ -28,7 +28,7 @@ public class LivestockOperationCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     ILivestockOperationRepository operations,
-    IUnitOfWork unitOfWork,
+    IOperationsMonitoringUnitOfWork unitOfWork,
     IOptions<OperationsMonitoringOptions> options,
     TimeProvider clock,
     ILogger<LivestockOperationCommandService> logger) : ILivestockOperationCommandService

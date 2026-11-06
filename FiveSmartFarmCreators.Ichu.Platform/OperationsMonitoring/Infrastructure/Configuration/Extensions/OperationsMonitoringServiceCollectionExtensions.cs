@@ -36,7 +36,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IMonitoringThresholdRepository, MonitoringThresholdRepository>();
         services.AddScoped<IMonitoringRuleSetRepository, MonitoringRuleSetRepository>();
         services.AddScoped<ILivestockOperationRepository, LivestockOperationRepository>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IOperationsMonitoringUnitOfWork, OperationsMonitoringUnitOfWork>();
 
         services.AddScoped<IMonitoringRuleRevisionService, MonitoringRuleRevisionService>();
 

@@ -26,7 +26,7 @@ public class GeofenceCommandService(
     ICattleLookup cattleLookup,
     IGeofenceRepository geofences,
     IMonitoringRuleRevisionService ruleRevisionService,
-    IUnitOfWork unitOfWork,
+    IOperationsMonitoringUnitOfWork unitOfWork,
     ILogger<GeofenceCommandService> logger) : IGeofenceCommandService
 {
     /// <inheritdoc />

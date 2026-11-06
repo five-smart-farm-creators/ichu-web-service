@@ -24,7 +24,7 @@ public class MonitoringThresholdCommandService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds,
     IMonitoringRuleRevisionService ruleRevisionService,
-    IUnitOfWork unitOfWork,
+    IOperationsMonitoringUnitOfWork unitOfWork,
     ILogger<MonitoringThresholdCommandService> logger) : IMonitoringThresholdCommandService
 {
     /// <inheritdoc />

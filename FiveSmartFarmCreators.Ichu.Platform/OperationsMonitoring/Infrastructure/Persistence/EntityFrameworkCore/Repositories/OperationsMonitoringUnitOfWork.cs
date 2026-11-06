@@ -1,27 +1,33 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Unit of work implementation that commits the monitoring changes through the shared database context.
+///     Unit of work that commits the monitoring changes through the shared database context and can discard them.
 /// </summary>
-/// <param name="context">The shared database context.</param>
-public class UnitOfWork(DbContext context) : IUnitOfWork
+public class OperationsMonitoringUnitOfWork : UnitOfWork, IOperationsMonitoringUnitOfWork
 {
     private const string ModelNamespace = "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model";
 
-    /// <inheritdoc />
-    public async Task CompleteAsync(CancellationToken cancellationToken = default)
+    private readonly AppDbContext _context;
+
+    /// <summary>
+    ///     Initializes the unit of work with the shared database context.
+    /// </summary>
+    /// <param name="context">The shared database context.</param>
+    public OperationsMonitoringUnitOfWork(AppDbContext context) : base(context)
     {
-        await context.SaveChangesAsync(cancellationToken);
+        _context = context;
     }
 
     /// <inheritdoc />
     public void DiscardChanges()
     {
         // Only monitoring entities are detached, so pending work of other modules in the shared context is untouched.
-        var entries = context.ChangeTracker.Entries()
+        var entries = _context.ChangeTracker.Entries()
             .Where(e => e.Entity.GetType().Namespace?.StartsWith(ModelNamespace, StringComparison.Ordinal) == true)
             .ToList();
         foreach (var entry in entries)

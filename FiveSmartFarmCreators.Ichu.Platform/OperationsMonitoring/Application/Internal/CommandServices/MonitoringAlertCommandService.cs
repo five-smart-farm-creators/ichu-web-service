@@ -35,7 +35,7 @@ public class MonitoringAlertCommandService(
     IMonitoringAlertRepository alerts,
     IGeofenceRepository geofences,
     IMonitoringRuleSetRepository ruleSets,
-    IUnitOfWork unitOfWork,
+    IOperationsMonitoringUnitOfWork unitOfWork,
     IOptions<OperationsMonitoringOptions> options,
     TimeProvider clock,
     ILogger<MonitoringAlertCommandService> logger) : IMonitoringAlertCommandService

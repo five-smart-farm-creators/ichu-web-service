@@ -24,7 +24,7 @@ public class TelemetryReadingCommandService(
     IDeviceAttributionLookup deviceAttributions,
     ICattleLookup cattleLookup,
     ITelemetryReadingRepository readings,
-    IUnitOfWork unitOfWork,
+    IOperationsMonitoringUnitOfWork unitOfWork,
     IOptions<OperationsMonitoringOptions> options,
     ILogger<TelemetryReadingCommandService> logger) : ITelemetryReadingCommandService
 {
