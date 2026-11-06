@@ -13,6 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 /// </summary>
 /// <param name="thresholdCommandService">The monitoring threshold command service.</param>
 /// <param name="thresholdQueryService">The monitoring threshold query service.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 [ApiController]
 [Route("api/v1/monitoring-thresholds")]
 [Authorize]
@@ -20,7 +21,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 [Tags("Monitoring Thresholds")]
 public class MonitoringThresholdsController(
     IMonitoringThresholdCommandService thresholdCommandService,
-    IMonitoringThresholdQueryService thresholdQueryService) : ControllerBase
+    IMonitoringThresholdQueryService thresholdQueryService,
+    ILogger<MonitoringThresholdsController> logger) : ControllerBase
 {
     /// <summary>
     ///     Creates or replaces the threshold of a ranch for one life stage and metric, advancing the rule revision.
@@ -44,7 +46,8 @@ public class MonitoringThresholdsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 

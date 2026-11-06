@@ -14,12 +14,14 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 /// </summary>
 /// <param name="synchronizationCommandService">The Edge Gateway synchronization command service.</param>
 /// <param name="readingQueryService">The telemetry reading query service.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 [ApiController]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Telemetry")]
 public class TelemetryController(
     IEdgeSynchronizationCommandService synchronizationCommandService,
-    ITelemetryReadingQueryService readingQueryService) : ControllerBase
+    ITelemetryReadingQueryService readingQueryService,
+    ILogger<TelemetryController> logger) : ControllerBase
 {
     /// <summary>
     ///     Receives readings, alerts and alert changes from an Edge Gateway with an individual result per entry.
@@ -75,7 +77,8 @@ public class TelemetryController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 

@@ -16,6 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 /// </summary>
 /// <param name="alertCommandService">The monitoring alert command service.</param>
 /// <param name="alertQueryService">The monitoring alert query service.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 [ApiController]
 [Route("api/v1/alerts")]
 [Authorize]
@@ -23,7 +24,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 [Tags("Alerts")]
 public class AlertsController(
     IMonitoringAlertCommandService alertCommandService,
-    IMonitoringAlertQueryService alertQueryService) : ControllerBase
+    IMonitoringAlertQueryService alertQueryService,
+    ILogger<AlertsController> logger) : ControllerBase
 {
     /// <summary>
     ///     Lists the alerts of an authorized ranch, newest event first. Status is Pending or Acknowledged.
@@ -56,7 +58,8 @@ public class AlertsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -88,7 +91,8 @@ public class AlertsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 

@@ -14,13 +14,15 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 /// </summary>
 /// <param name="operationCommandService">The livestock operation command service.</param>
 /// <param name="operationQueryService">The livestock operation query service.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 [ApiController]
 [Authorize]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Livestock Operations")]
 public class LivestockOperationsController(
     ILivestockOperationCommandService operationCommandService,
-    ILivestockOperationQueryService operationQueryService) : ControllerBase
+    ILivestockOperationQueryService operationQueryService,
+    ILogger<LivestockOperationsController> logger) : ControllerBase
 {
     /// <summary>
     ///     Registers a field event observed by an operator. A retry with the same operation returns 200.
@@ -46,7 +48,8 @@ public class LivestockOperationsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -74,7 +77,8 @@ public class LivestockOperationsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -125,7 +129,8 @@ public class LivestockOperationsController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 }

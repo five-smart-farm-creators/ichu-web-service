@@ -13,6 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 /// </summary>
 /// <param name="geofenceCommandService">The geofence command service.</param>
 /// <param name="geofenceQueryService">The geofence query service.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 [ApiController]
 [Route("api/v1/geofences")]
 [Authorize]
@@ -20,7 +21,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 [Tags("Geofences")]
 public class GeofencesController(
     IGeofenceCommandService geofenceCommandService,
-    IGeofenceQueryService geofenceQueryService) : ControllerBase
+    IGeofenceQueryService geofenceQueryService,
+    ILogger<GeofencesController> logger) : ControllerBase
 {
     /// <summary>
     ///     Defines the permitted grazing area of a lot. A lot has at most one geofence.
@@ -45,7 +47,8 @@ public class GeofencesController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -73,7 +76,8 @@ public class GeofencesController(
         }
         catch (ArgumentException ex)
         {
-            return Problem(title: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            logger.LogWarning(ex, "Rejected an invalid request: {Reason}", ex.Message);
+            return Problem(title: "The request is not valid.", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
