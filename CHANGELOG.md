@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
 - Iam: separated command and query service contracts, implementations and the application ACL facade.
+- Iam: added scoped EF Core mappings and repositories, Firebase identity adapters and request identity resolution.
 
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
