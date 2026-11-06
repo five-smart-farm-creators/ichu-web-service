@@ -1,5 +1,6 @@
 using System.Net.Mime;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Resources;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Transform;

@@ -1,7 +1,7 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 
 /// <summary>
 ///     Application command service interface for handling telemetry reading write operations.

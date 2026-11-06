@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patte
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 
 /// <summary>
 ///     Application query service interface for handling telemetry reading read operations.

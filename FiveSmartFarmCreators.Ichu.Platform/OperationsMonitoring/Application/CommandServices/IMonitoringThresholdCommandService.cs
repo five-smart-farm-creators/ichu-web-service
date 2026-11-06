@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patte
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 
 /// <summary>
 ///     Application command service interface for handling monitoring threshold write operations.

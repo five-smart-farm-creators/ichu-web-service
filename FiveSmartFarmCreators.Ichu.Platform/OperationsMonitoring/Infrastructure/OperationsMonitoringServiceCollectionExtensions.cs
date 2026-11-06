@@ -1,7 +1,8 @@
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;

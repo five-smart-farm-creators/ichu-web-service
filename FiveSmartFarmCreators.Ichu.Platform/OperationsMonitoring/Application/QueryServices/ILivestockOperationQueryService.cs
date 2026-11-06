@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patte
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 
 /// <summary>
 ///     Application query service interface for handling livestock operation read operations.
