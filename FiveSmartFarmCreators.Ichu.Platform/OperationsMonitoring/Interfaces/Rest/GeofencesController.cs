@@ -38,13 +38,17 @@ public class GeofencesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> Define(DefineGeofenceResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Define(DefineGeofenceResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = DefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(resource);
             var result = await geofenceCommandService.Handle(command, cancellationToken);
-            return ActionResultFromDefineGeofenceResultAssembler.ToActionResultFromDefineGeofenceResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromDefineGeofenceResult(
+                this,
+                result,
+                geofence => Created($"/api/v1/geofences?ranchId={geofence.RanchId}",
+                    GeofenceResourceFromEntityAssembler.ToResourceFromEntity(geofence)));
         }
         catch (ArgumentException ex)
         {
@@ -67,13 +71,16 @@ public class GeofencesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> Redefine(Guid geofenceId, RedefineGeofenceResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Redefine(Guid geofenceId, RedefineGeofenceResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = RedefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(geofenceId, resource);
             var result = await geofenceCommandService.Handle(command, cancellationToken);
-            return ActionResultFromRedefineGeofenceResultAssembler.ToActionResultFromRedefineGeofenceResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromRedefineGeofenceResult(
+                this,
+                result,
+                geofence => Ok(GeofenceResourceFromEntityAssembler.ToResourceFromEntity(geofence)));
         }
         catch (ArgumentException ex)
         {
@@ -92,9 +99,12 @@ public class GeofencesController(
     [ProducesResponseType(typeof(IReadOnlyList<GeofenceResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await geofenceQueryService.Handle(new GetGeofencesByRanchQuery(ranchId), cancellationToken);
-        return ActionResultFromGetGeofencesResultAssembler.ToActionResultFromGetGeofencesResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromGetGeofencesResult(
+            this,
+            result,
+            geofences => Ok(geofences.Select(GeofenceResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
     }
 }

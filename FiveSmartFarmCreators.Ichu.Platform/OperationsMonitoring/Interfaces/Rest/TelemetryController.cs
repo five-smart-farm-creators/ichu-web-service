@@ -36,11 +36,14 @@ public class TelemetryController(
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> SynchronizeBatch(EdgeBatchResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> SynchronizeBatch(EdgeBatchResource resource, CancellationToken cancellationToken)
     {
         var command = SynchronizeEdgeBatchCommandFromResourceAssembler.ToCommandFromResource(resource);
         var result = await synchronizationCommandService.Handle(command, cancellationToken);
-        return ActionResultFromSynchronizeEdgeBatchResultAssembler.ToActionResultFromSynchronizeEdgeBatchResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromSynchronizeEdgeBatchResult(
+            this,
+            result,
+            entryResults => Ok(SyncBatchResultResourceFromEntityAssembler.ToResourceFromEntity(entryResults)));
     }
 
     /// <summary>
@@ -60,7 +63,7 @@ public class TelemetryController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetHistory(
+    public async Task<IActionResult> GetHistory(
         Guid animalId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
@@ -74,7 +77,10 @@ public class TelemetryController(
                 from ?? throw new ArgumentException("Both from and to ISO 8601 timestamps are required."),
                 to ?? throw new ArgumentException("Both from and to ISO 8601 timestamps are required."));
             var result = await readingQueryService.Handle(new GetAnimalTelemetryQuery(animalId, period, page, pageSize), cancellationToken);
-            return ActionResultFromGetAnimalTelemetryResultAssembler.ToActionResultFromGetAnimalTelemetryResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromGetAnimalTelemetryResult(
+                this,
+                result,
+                history => Ok(TelemetryHistoryResourceFromEntityAssembler.ToResourceFromEntity(history)));
         }
         catch (ArgumentException ex)
         {
@@ -95,9 +101,12 @@ public class TelemetryController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetLatest(Guid animalId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLatest(Guid animalId, CancellationToken cancellationToken)
     {
         var result = await readingQueryService.Handle(new GetLatestAnimalTelemetryQuery(animalId), cancellationToken);
-        return ActionResultFromGetLatestAnimalTelemetryResultAssembler.ToActionResultFromGetLatestAnimalTelemetryResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromGetLatestAnimalTelemetryResult(
+            this,
+            result,
+            latest => Ok(LatestTelemetryResourceFromEntityAssembler.ToResourceFromEntity(latest)));
     }
 }

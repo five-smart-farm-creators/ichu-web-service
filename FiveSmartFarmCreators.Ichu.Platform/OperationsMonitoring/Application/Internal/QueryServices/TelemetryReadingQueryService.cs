@@ -1,8 +1,9 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
@@ -26,27 +27,27 @@ public class TelemetryReadingQueryService(
     TimeProvider clock) : ITelemetryReadingQueryService
 {
     /// <inheritdoc />
-    public async Task<Result<TelemetryHistory, EGetAnimalTelemetryError>> Handle(GetAnimalTelemetryQuery query, CancellationToken cancellationToken)
+    public async Task<Result<TelemetryHistory>> Handle(GetAnimalTelemetryQuery query, CancellationToken cancellationToken)
     {
         if (query.Page < 1 || query.PageSize < 1 || query.PageSize > options.Value.MaximumPageSize)
         {
-            return new Result<TelemetryHistory, EGetAnimalTelemetryError>.Failure(EGetAnimalTelemetryError.InvalidPage);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.InvalidPage, OperationsMonitoringError.InvalidPage);
         }
 
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<TelemetryHistory, EGetAnimalTelemetryError>.Failure(EGetAnimalTelemetryError.Unauthenticated);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
         if (cattle is null)
         {
-            return new Result<TelemetryHistory, EGetAnimalTelemetryError>.Failure(EGetAnimalTelemetryError.AnimalNotFound);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return new Result<TelemetryHistory, EGetAnimalTelemetryError>.Failure(EGetAnimalTelemetryError.Forbidden);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var skip = (query.Page - 1) * query.PageSize;
@@ -54,26 +55,26 @@ public class TelemetryReadingQueryService(
         var total = await readings.CountByCattleAsync(query.AnimalId, query.Period, cancellationToken);
         var oldest = await readings.FindOldestRecordedAtByCattleAsync(query.AnimalId, cancellationToken);
         var page = new PagedResult<TelemetryReading>(items, query.Page, query.PageSize, total);
-        return new Result<TelemetryHistory, EGetAnimalTelemetryError>.Success(new TelemetryHistory(query.AnimalId, query.Period, oldest, page));
+        return Result<TelemetryHistory>.Success(new TelemetryHistory(query.AnimalId, query.Period, oldest, page));
     }
 
     /// <inheritdoc />
-    public async Task<Result<LatestTelemetry, EGetLatestAnimalTelemetryError>> Handle(GetLatestAnimalTelemetryQuery query, CancellationToken cancellationToken)
+    public async Task<Result<LatestTelemetry>> Handle(GetLatestAnimalTelemetryQuery query, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<LatestTelemetry, EGetLatestAnimalTelemetryError>.Failure(EGetLatestAnimalTelemetryError.Unauthenticated);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
         if (cattle is null)
         {
-            return new Result<LatestTelemetry, EGetLatestAnimalTelemetryError>.Failure(EGetLatestAnimalTelemetryError.AnimalNotFound);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return new Result<LatestTelemetry, EGetLatestAnimalTelemetryError>.Failure(EGetLatestAnimalTelemetryError.Forbidden);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var latest = new LatestTelemetry(
@@ -84,6 +85,6 @@ public class TelemetryReadingQueryService(
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.ActivityIndex, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.RuminationMinutes, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.Position, cancellationToken));
-        return new Result<LatestTelemetry, EGetLatestAnimalTelemetryError>.Success(latest);
+        return Result<LatestTelemetry>.Success(latest);
     }
 }

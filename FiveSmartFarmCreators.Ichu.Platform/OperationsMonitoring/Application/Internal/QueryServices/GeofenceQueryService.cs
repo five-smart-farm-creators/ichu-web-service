@@ -1,8 +1,9 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 
@@ -18,19 +19,19 @@ public class GeofenceQueryService(
     IGeofenceRepository geofences) : IGeofenceQueryService
 {
     /// <inheritdoc />
-    public async Task<Result<IReadOnlyList<Geofence>, EGetGeofencesError>> Handle(GetGeofencesByRanchQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<Geofence>>> Handle(GetGeofencesByRanchQuery query, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<IReadOnlyList<Geofence>, EGetGeofencesError>.Failure(EGetGeofencesError.Unauthenticated);
+            return Result<IReadOnlyList<Geofence>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return new Result<IReadOnlyList<Geofence>, EGetGeofencesError>.Failure(EGetGeofencesError.Forbidden);
+            return Result<IReadOnlyList<Geofence>>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var found = await geofences.FindByRanchAsync(query.RanchId, cancellationToken);
-        return new Result<IReadOnlyList<Geofence>, EGetGeofencesError>.Success(found);
+        return Result<IReadOnlyList<Geofence>>.Success(found);
     }
 }

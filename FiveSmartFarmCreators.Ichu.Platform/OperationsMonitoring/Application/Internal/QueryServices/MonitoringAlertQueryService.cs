@@ -1,8 +1,9 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
@@ -22,45 +23,45 @@ public class MonitoringAlertQueryService(
     IOptions<OperationsMonitoringOptions> options) : IMonitoringAlertQueryService
 {
     /// <inheritdoc />
-    public async Task<Result<PagedResult<MonitoringAlert>, EGetAlertsError>> Handle(GetAlertsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<MonitoringAlert>>> Handle(GetAlertsQuery query, CancellationToken cancellationToken)
     {
         if (query.Page < 1 || query.PageSize < 1 || query.PageSize > options.Value.MaximumPageSize)
         {
-            return new Result<PagedResult<MonitoringAlert>, EGetAlertsError>.Failure(EGetAlertsError.InvalidPage);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.InvalidPage, OperationsMonitoringError.InvalidPage);
         }
 
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<PagedResult<MonitoringAlert>, EGetAlertsError>.Failure(EGetAlertsError.Unauthenticated);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return new Result<PagedResult<MonitoringAlert>, EGetAlertsError>.Failure(EGetAlertsError.Forbidden);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var skip = (query.Page - 1) * query.PageSize;
         var items = await alerts.FindByRanchAsync(query.RanchId, query.Status, query.AnimalId, skip, query.PageSize, cancellationToken);
         var total = await alerts.CountByRanchAsync(query.RanchId, query.Status, query.AnimalId, cancellationToken);
-        return new Result<PagedResult<MonitoringAlert>, EGetAlertsError>.Success(new PagedResult<MonitoringAlert>(items, query.Page, query.PageSize, total));
+        return Result<PagedResult<MonitoringAlert>>.Success(new PagedResult<MonitoringAlert>(items, query.Page, query.PageSize, total));
     }
 
     /// <inheritdoc />
-    public async Task<Result<MonitoringAlert, EGetAlertByIdError>> Handle(GetAlertByIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<MonitoringAlert>> Handle(GetAlertByIdQuery query, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<MonitoringAlert, EGetAlertByIdError>.Failure(EGetAlertByIdError.Unauthenticated);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         var alert = await alerts.FindByIdAsync(query.AlertId, cancellationToken);
         if (alert is null)
         {
-            return new Result<MonitoringAlert, EGetAlertByIdError>.Failure(EGetAlertByIdError.AlertNotFound);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound, OperationsMonitoringError.AlertNotFound);
         }
 
         return await accessControl.CanAccessRanchAsync(accountId, alert.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken)
-            ? new Result<MonitoringAlert, EGetAlertByIdError>.Success(alert)
-            : new Result<MonitoringAlert, EGetAlertByIdError>.Failure(EGetAlertByIdError.Forbidden);
+            ? Result<MonitoringAlert>.Success(alert)
+            : Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
     }
 }

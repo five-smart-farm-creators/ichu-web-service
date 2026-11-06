@@ -1,5 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
@@ -17,9 +16,9 @@ public interface IMonitoringAlertCommandService
     /// </summary>
     /// <param name="command">The command containing the attention data.</param>
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing the stored alert on success, or an error enum on failure.</returns>
+    /// <returns>A result containing the stored alert on success, or the domain error on failure.</returns>
     /// <exception cref="ArgumentException">Thrown when the attention data violates a domain rule.</exception>
-    Task<Result<MonitoringAlert, EAcknowledgeAlertError>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken);
+    Task<Result<MonitoringAlert>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken);
 
     /// <summary>
     ///     Handles the synchronization of one alert evaluated by an authenticated Edge Gateway asynchronously. New

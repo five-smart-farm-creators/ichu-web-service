@@ -1,5 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 
@@ -15,6 +14,6 @@ public interface IGeofenceQueryService
     /// </summary>
     /// <param name="query">The query containing the ranch identifier.</param>
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing the geofences on success, or an error enum on failure.</returns>
-    Task<Result<IReadOnlyList<Geofence>, EGetGeofencesError>> Handle(GetGeofencesByRanchQuery query, CancellationToken cancellationToken);
+    /// <returns>A result containing the geofences on success, or the domain error on failure.</returns>
+    Task<Result<IReadOnlyList<Geofence>>> Handle(GetGeofencesByRanchQuery query, CancellationToken cancellationToken);
 }

@@ -1,9 +1,10 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using Microsoft.EntityFrameworkCore;
@@ -27,16 +28,16 @@ public class MonitoringThresholdCommandService(
     ILogger<MonitoringThresholdCommandService> logger) : IMonitoringThresholdCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<MonitoringThreshold, EConfigureThresholdError>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken)
+    public async Task<Result<MonitoringThreshold>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<MonitoringThreshold, EConfigureThresholdError>.Failure(EConfigureThresholdError.Unauthenticated);
+            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, command.RanchId, MonitoringPermission.ManageRules, cancellationToken))
         {
-            return new Result<MonitoringThreshold, EConfigureThresholdError>.Failure(EConfigureThresholdError.Forbidden);
+            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var lifeStage = MonitoringThreshold.NormalizeLifeStage(command.LifeStage);
@@ -56,12 +57,12 @@ public class MonitoringThresholdCommandService(
         try
         {
             await unitOfWork.CompleteAsync(cancellationToken);
-            return new Result<MonitoringThreshold, EConfigureThresholdError>.Success(threshold);
+            return Result<MonitoringThreshold>.Success(threshold);
         }
         catch (DbUpdateException ex)
         {
             logger.LogWarning(ex, "The changes could not be saved.");
-            return new Result<MonitoringThreshold, EConfigureThresholdError>.Failure(EConfigureThresholdError.ConcurrentModification);
+            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.ConcurrentModification, OperationsMonitoringError.ConcurrentModification);
         }
     }
 }

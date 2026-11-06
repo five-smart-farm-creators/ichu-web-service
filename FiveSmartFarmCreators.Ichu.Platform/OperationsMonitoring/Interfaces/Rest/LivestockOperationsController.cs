@@ -39,13 +39,19 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> RegisterFieldEvent(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> RegisterFieldEvent(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = RegisterFieldEventCommandFromResourceAssembler.ToCommandFromResource(resource);
             var result = await operationCommandService.Handle(command, cancellationToken);
-            return ActionResultFromRegisterLivestockOperationResultAssembler.ToActionResultFromRegisterLivestockOperationResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromRegisterLivestockOperationResult(
+                this,
+                result,
+                registration => registration.Created
+                    ? Created($"/api/v1/animals/{registration.Operation.CattleId}/livestock-operations",
+                        LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation))
+                    : Ok(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation)));
         }
         catch (ArgumentException ex)
         {
@@ -68,13 +74,19 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> RegisterClinicalIntervention(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> RegisterClinicalIntervention(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = RegisterClinicalInterventionCommandFromResourceAssembler.ToCommandFromResource(resource);
             var result = await operationCommandService.Handle(command, cancellationToken);
-            return ActionResultFromRegisterLivestockOperationResultAssembler.ToActionResultFromRegisterLivestockOperationResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromRegisterLivestockOperationResult(
+                this,
+                result,
+                registration => registration.Created
+                    ? Created($"/api/v1/animals/{registration.Operation.CattleId}/livestock-operations",
+                        LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation))
+                    : Ok(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation)));
         }
         catch (ArgumentException ex)
         {
@@ -93,11 +105,14 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> SynchronizeMobileBatch(MobileSyncBatchResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> SynchronizeMobileBatch(MobileSyncBatchResource resource, CancellationToken cancellationToken)
     {
         var command = SynchronizeMobileBatchCommandFromResourceAssembler.ToCommandFromResource(resource);
         var result = await operationCommandService.Handle(command, cancellationToken);
-        return ActionResultFromSynchronizeMobileBatchResultAssembler.ToActionResultFromSynchronizeMobileBatchResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromSynchronizeMobileBatchResult(
+            this,
+            result,
+            entryResults => Ok(SyncBatchResultResourceFromEntityAssembler.ToResourceFromEntity(entryResults)));
     }
 
     /// <summary>
@@ -114,7 +129,7 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetHistory(
+    public async Task<IActionResult> GetHistory(
         Guid animalId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
@@ -126,7 +141,10 @@ public class LivestockOperationsController(
                 from ?? throw new ArgumentException("Both from and to ISO 8601 timestamps are required."),
                 to ?? throw new ArgumentException("Both from and to ISO 8601 timestamps are required."));
             var result = await operationQueryService.Handle(new GetLivestockOperationsQuery(animalId, period), cancellationToken);
-            return ActionResultFromGetLivestockOperationsResultAssembler.ToActionResultFromGetLivestockOperationsResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromGetLivestockOperationsResult(
+                this,
+                result,
+                operations => Ok(operations.Select(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
         }
         catch (ArgumentException ex)
         {

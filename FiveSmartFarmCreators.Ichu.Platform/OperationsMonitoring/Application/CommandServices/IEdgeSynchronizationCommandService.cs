@@ -1,5 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
@@ -16,6 +15,6 @@ public interface IEdgeSynchronizationCommandService
     /// </summary>
     /// <param name="command">The command containing the readings, alerts and alert changes.</param>
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing one result per entry on success, or an error enum on failure.</returns>
-    Task<Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>> Handle(SynchronizeEdgeBatchCommand command, CancellationToken cancellationToken);
+    /// <returns>A result containing one result per entry on success, or the domain error on failure.</returns>
+    Task<Result<IReadOnlyList<SyncEntryResult>>> Handle(SynchronizeEdgeBatchCommand command, CancellationToken cancellationToken);
 }

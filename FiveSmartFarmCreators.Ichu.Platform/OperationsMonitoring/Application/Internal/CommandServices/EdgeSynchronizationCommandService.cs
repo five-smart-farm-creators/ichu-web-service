@@ -1,8 +1,9 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using Microsoft.Extensions.Options;
 
@@ -25,17 +26,17 @@ public class EdgeSynchronizationCommandService(
     TimeProvider clock) : IEdgeSynchronizationCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>> Handle(SynchronizeEdgeBatchCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<SyncEntryResult>>> Handle(SynchronizeEdgeBatchCommand command, CancellationToken cancellationToken)
     {
         if (await gatewayAuthenticator.AuthenticateAsync(cancellationToken) is not { } gateway)
         {
-            return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>.Failure(ESynchronizeEdgeBatchError.Unauthenticated);
+            return Result<IReadOnlyList<SyncEntryResult>>.Failure(OperationsMonitoringErrors.GatewayUnauthenticated, OperationsMonitoringError.GatewayUnauthenticated);
         }
 
         var entryCount = command.Readings.Count + command.Alerts.Count + command.AlertChanges.Count;
         if (entryCount == 0 || entryCount > options.Value.MaximumBatchEntries)
         {
-            return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>.Failure(ESynchronizeEdgeBatchError.InvalidBatchSize);
+            return Result<IReadOnlyList<SyncEntryResult>>.Failure(OperationsMonitoringErrors.InvalidEdgeBatchSize, OperationsMonitoringError.InvalidEdgeBatchSize);
         }
 
         var receivedAt = clock.GetUtcNow();
@@ -60,6 +61,6 @@ public class EdgeSynchronizationCommandService(
             results.Add(await alertCommandService.Handle(change, cancellationToken));
         }
 
-        return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeEdgeBatchError>.Success(results);
+        return Result<IReadOnlyList<SyncEntryResult>>.Success(results);
     }
 }

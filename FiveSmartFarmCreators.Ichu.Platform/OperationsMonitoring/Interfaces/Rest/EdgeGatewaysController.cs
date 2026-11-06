@@ -34,12 +34,15 @@ public class EdgeGatewaysController(IMonitoringRuleSetQueryService ruleSetQueryS
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> GetMonitoringRules(
+    public async Task<IActionResult> GetMonitoringRules(
         Guid gatewayId,
         CancellationToken cancellationToken,
         [FromQuery] long afterRevision = 0)
     {
         var result = await ruleSetQueryService.Handle(new GetEdgeMonitoringRulesQuery(gatewayId, afterRevision), cancellationToken);
-        return ActionResultFromGetEdgeMonitoringRulesResultAssembler.ToActionResultFromGetEdgeMonitoringRulesResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromGetEdgeMonitoringRulesResult(
+            this,
+            result,
+            snapshot => Ok(MonitoringRulesResourceFromEntityAssembler.ToResourceFromEntity(snapshot)));
     }
 }

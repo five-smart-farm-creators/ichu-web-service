@@ -1,9 +1,10 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -32,27 +33,27 @@ public class LivestockOperationCommandService(
     ILogger<LivestockOperationCommandService> logger) : ILivestockOperationCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<LivestockOperationRegistration, ERegisterLivestockOperationError>> Handle(RegisterLivestockOperationCommand command, CancellationToken cancellationToken)
+    public async Task<Result<LivestockOperationRegistration>> Handle(RegisterLivestockOperationCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.Unauthenticated);
+            return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         return await RegisterAsync(accountId, command, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<Result<IReadOnlyList<SyncEntryResult>, ESynchronizeMobileBatchError>> Handle(SynchronizeMobileBatchCommand command, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<SyncEntryResult>>> Handle(SynchronizeMobileBatchCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeMobileBatchError>.Failure(ESynchronizeMobileBatchError.Unauthenticated);
+            return Result<IReadOnlyList<SyncEntryResult>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         if (command.Operations.Count == 0 || command.Operations.Count > options.Value.MaximumBatchEntries)
         {
-            return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeMobileBatchError>.Failure(ESynchronizeMobileBatchError.InvalidBatchSize);
+            return Result<IReadOnlyList<SyncEntryResult>>.Failure(OperationsMonitoringErrors.InvalidMobileBatchSize, OperationsMonitoringError.InvalidMobileBatchSize);
         }
 
         var results = new List<SyncEntryResult>(command.Operations.Count);
@@ -61,35 +62,26 @@ public class LivestockOperationCommandService(
             results.Add(await SynchronizeAsync(accountId, operation, cancellationToken));
         }
 
-        return new Result<IReadOnlyList<SyncEntryResult>, ESynchronizeMobileBatchError>.Success(results);
+        return Result<IReadOnlyList<SyncEntryResult>>.Success(results);
     }
 
     private static SyncEntryResult EntryResult(RegisterLivestockOperationCommand command, SyncEntryStatus status, string? reason) =>
         new(SyncEntryKind.LivestockOperation, command.OperationId, status, reason);
 
-    private static SyncEntryResult ToEntryResult(
-        RegisterLivestockOperationCommand command,
-        Result<LivestockOperationRegistration, ERegisterLivestockOperationError> result) =>
-        result switch
+    private static SyncEntryResult ToEntryResult(RegisterLivestockOperationCommand command, Result<LivestockOperationRegistration> result)
+    {
+        if (result.IsSuccess)
         {
-            Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Success { Value.Created: true } =>
-                EntryResult(command, SyncEntryStatus.Accepted, null),
-            Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Success =>
-                EntryResult(command, SyncEntryStatus.Duplicate, "The operation was already registered."),
-            Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure failure => failure.Error switch
-            {
-                ERegisterLivestockOperationError.OperationConflict =>
-                    EntryResult(command, SyncEntryStatus.Conflict, "A different operation already uses this identifier."),
-                ERegisterLivestockOperationError.AnimalNotActive =>
-                    EntryResult(command, SyncEntryStatus.Conflict, "The animal was not active in the herd when the operation occurred."),
-                ERegisterLivestockOperationError.AnimalNotFound =>
-                    EntryResult(command, SyncEntryStatus.Rejected, "The animal does not exist."),
-                ERegisterLivestockOperationError.EventTimeAhead =>
-                    EntryResult(command, SyncEntryStatus.Rejected, "The event time is ahead of the server clock beyond the configured tolerance."),
-                _ => EntryResult(command, SyncEntryStatus.Rejected, "The account is not authorized for this ranch operation.")
-            },
-            _ => throw new InvalidOperationException("Unknown result type.")
-        };
+            return result.Value!.Created
+                ? EntryResult(command, SyncEntryStatus.Accepted, null)
+                : EntryResult(command, SyncEntryStatus.Duplicate, "The operation was already registered.");
+        }
+
+        var status = result.Error is OperationsMonitoringError.OperationConflict or OperationsMonitoringError.AnimalNotActive
+            ? SyncEntryStatus.Conflict
+            : SyncEntryStatus.Rejected;
+        return EntryResult(command, status, result.Message);
+    }
 
     private async Task<SyncEntryResult> SynchronizeAsync(Guid accountId, RegisterLivestockOperationCommand command, CancellationToken cancellationToken)
     {
@@ -110,7 +102,7 @@ public class LivestockOperationCommandService(
         }
     }
 
-    private async Task<Result<LivestockOperationRegistration, ERegisterLivestockOperationError>> RegisterAsync(
+    private async Task<Result<LivestockOperationRegistration>> RegisterAsync(
         Guid accountId,
         RegisterLivestockOperationCommand command,
         CancellationToken cancellationToken)
@@ -119,13 +111,13 @@ public class LivestockOperationCommandService(
         var now = clock.GetUtcNow();
         if (occurredAt > now + options.Value.ClockSkewTolerance)
         {
-            return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.EventTimeAhead);
+            return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.EventTimeAhead, OperationsMonitoringError.EventTimeAhead);
         }
 
         var cattle = await cattleLookup.FindAsync(animalId, cancellationToken);
         if (cattle is null)
         {
-            return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.AnimalNotFound);
+            return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
         }
 
         var candidate = new LivestockOperation(command.OperationId, cattle.RanchId, cattle.CattleId, type, occurredAt,
@@ -135,8 +127,8 @@ public class LivestockOperationCommandService(
         if (existing is not null)
         {
             return existing.HasSameContentAs(candidate)
-                ? new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Success(new LivestockOperationRegistration(false, existing))
-                : new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.OperationConflict);
+                ? Result<LivestockOperationRegistration>.Success(new LivestockOperationRegistration(false, existing))
+                : Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.OperationConflict, OperationsMonitoringError.OperationConflict);
         }
 
         var permission = LivestockOperation.IsClinical(type)
@@ -144,17 +136,17 @@ public class LivestockOperationCommandService(
             : MonitoringPermission.RecordFieldEvents;
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, permission, cancellationToken))
         {
-            return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.Forbidden);
+            return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         if (!cattle.WasActiveAt(occurredAt))
         {
-            return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Failure(ERegisterLivestockOperationError.AnimalNotActive);
+            return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.AnimalNotActive, OperationsMonitoringError.AnimalNotActive);
         }
 
         await operations.AddAsync(candidate, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
-        return new Result<LivestockOperationRegistration, ERegisterLivestockOperationError>.Success(new LivestockOperationRegistration(true, candidate));
+        return Result<LivestockOperationRegistration>.Success(new LivestockOperationRegistration(true, candidate));
     }
 
     private static (Guid AnimalId, OperationType Type, DateTimeOffset OccurredAt) RequireFields(RegisterLivestockOperationCommand command)

@@ -1,8 +1,7 @@
 using System.Net.Mime;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Resources;
@@ -43,7 +42,7 @@ public class AlertsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> GetAlerts(
+    public async Task<IActionResult> GetAlerts(
         [FromQuery] Guid ranchId,
         [FromQuery] string? status,
         [FromQuery] Guid? animalId,
@@ -55,7 +54,10 @@ public class AlertsController(
         {
             var query = GetAlertsQueryFromRequestAssembler.ToQueryFromRequest(ranchId, status, animalId, page, pageSize);
             var result = await alertQueryService.Handle(query, cancellationToken);
-            return ActionResultFromGetAlertsResultAssembler.ToActionResultFromGetAlertsResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromGetAlertsResult(
+                this,
+                result,
+                alertPage => Ok(AlertPageResourceFromEntityAssembler.ToResourceFromEntity(alertPage)));
         }
         catch (ArgumentException ex)
         {
@@ -79,16 +81,20 @@ public class AlertsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> Acknowledge(Guid alertId, AcknowledgeAlertResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Acknowledge(Guid alertId, AcknowledgeAlertResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = AcknowledgeAlertCommandFromResourceAssembler.ToCommandFromResource(alertId, resource);
             var result = await alertCommandService.Handle(command, cancellationToken);
-            var currentAlert = result is Result<MonitoringAlert, EAcknowledgeAlertError>.Failure { Error: EAcknowledgeAlertError.Conflict }
+            var currentAlert = result.Error is OperationsMonitoringError.AlertConflict
                 ? await FindStoredAlertAsync(alertId, cancellationToken)
                 : null;
-            return ActionResultFromAcknowledgeAlertResultAssembler.ToActionResultFromAcknowledgeAlertResult(result, this, currentAlert);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromAcknowledgeAlertResult(
+                this,
+                result,
+                currentAlert,
+                acknowledgedAlert => Ok(AlertResourceFromEntityAssembler.ToResourceFromEntity(acknowledgedAlert)));
         }
         catch (ArgumentException ex)
         {
@@ -100,6 +106,6 @@ public class AlertsController(
     private async Task<MonitoringAlert?> FindStoredAlertAsync(Guid alertId, CancellationToken cancellationToken)
     {
         var found = await alertQueryService.Handle(new GetAlertByIdQuery(alertId), cancellationToken);
-        return found is Result<MonitoringAlert, EGetAlertByIdError>.Success success ? success.Value : null;
+        return found.IsSuccess ? found.Value : null;
     }
 }

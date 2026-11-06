@@ -1,9 +1,10 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -38,40 +39,40 @@ public class MonitoringAlertCommandService(
     ILogger<MonitoringAlertCommandService> logger) : IMonitoringAlertCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<MonitoringAlert, EAcknowledgeAlertError>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken)
+    public async Task<Result<MonitoringAlert>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Failure(EAcknowledgeAlertError.Unauthenticated);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         var alert = await alerts.FindByIdAsync(command.AlertId, cancellationToken);
         if (alert is null)
         {
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Failure(EAcknowledgeAlertError.AlertNotFound);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound, OperationsMonitoringError.AlertNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, alert.RanchId, MonitoringPermission.AttendAlerts, cancellationToken))
         {
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Failure(EAcknowledgeAlertError.Forbidden);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var now = clock.GetUtcNow();
         var outcome = Acknowledge(alert, command, accountId, now);
         if (outcome == AlertChangeOutcome.Conflict)
         {
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Failure(EAcknowledgeAlertError.Conflict);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertConflict, OperationsMonitoringError.AlertConflict);
         }
 
         if (outcome == AlertChangeOutcome.AlreadyApplied)
         {
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Success(alert);
+            return Result<MonitoringAlert>.Success(alert);
         }
 
         try
         {
             await unitOfWork.CompleteAsync(cancellationToken);
-            return new Result<MonitoringAlert, EAcknowledgeAlertError>.Success(alert);
+            return Result<MonitoringAlert>.Success(alert);
         }
         catch (DbUpdateException ex)
         {
@@ -83,8 +84,8 @@ public class MonitoringAlertCommandService(
             return current is not null
                    && current.HasApplied(command.OperationId)
                    && Acknowledge(current, command, accountId, now) == AlertChangeOutcome.AlreadyApplied
-                ? new Result<MonitoringAlert, EAcknowledgeAlertError>.Success(current)
-                : new Result<MonitoringAlert, EAcknowledgeAlertError>.Failure(EAcknowledgeAlertError.Conflict);
+                ? Result<MonitoringAlert>.Success(current)
+                : Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertConflict, OperationsMonitoringError.AlertConflict);
         }
     }
 
@@ -171,13 +172,12 @@ public class MonitoringAlertCommandService(
                 : AlertResult(entry, SyncEntryStatus.Conflict, "A different alert already uses this identifier.", absorbing.Id);
         }
 
-        var raised = await RaiseAlertAsync(command, type, severity, supporting, cancellationToken);
-        if (raised is Result<MonitoringAlert, string>.Failure rejection)
+        var (candidate, raiseError) = await RaiseAlertAsync(command, type, severity, supporting, cancellationToken);
+        if (candidate is null)
         {
-            return AlertResult(entry, SyncEntryStatus.Rejected, rejection.Error);
+            return AlertResult(entry, SyncEntryStatus.Rejected, raiseError);
         }
 
-        var candidate = ((Result<MonitoringAlert, string>.Success)raised).Value;
         var existing = await alerts.FindByIdAsync(entry.AlertId, cancellationToken);
         if (existing is not null)
         {
@@ -206,7 +206,7 @@ public class MonitoringAlertCommandService(
         return AlertResult(entry, SyncEntryStatus.Accepted, null);
     }
 
-    private async Task<Result<MonitoringAlert, string>> RaiseAlertAsync(
+    private async Task<(MonitoringAlert? Alert, string? Error)> RaiseAlertAsync(
         SynchronizeAlertCommand command,
         AlertType type,
         AlertSeverity severity,
@@ -217,38 +217,38 @@ public class MonitoringAlertCommandService(
         var ruleSet = await ruleSets.FindByRanchAsync(command.RanchId, cancellationToken);
         if (ruleSet is null || entry.ConfigurationRevision > ruleSet.Revision)
         {
-            return new Result<MonitoringAlert, string>.Failure("The alert references a configuration revision that was never published.");
+            return (null, "The alert references a configuration revision that was never published.");
         }
 
         if (type != AlertType.Geofence)
         {
             if (entry.ThresholdMinValue is not { } min || entry.ThresholdMaxValue is not { } max)
             {
-                return new Result<MonitoringAlert, string>.Failure("A threshold alert requires the threshold used to evaluate it.");
+                return (null, "A threshold alert requires the threshold used to evaluate it.");
             }
 
-            return new Result<MonitoringAlert, string>.Success(MonitoringAlert.RaiseForThreshold(entry.AlertId, type, severity,
-                new ThresholdRange(min, max), entry.ConfigurationRevision, command.GatewayId, supporting, command.ReceivedAt));
+            return (MonitoringAlert.RaiseForThreshold(entry.AlertId, type, severity, new ThresholdRange(min, max),
+                entry.ConfigurationRevision, command.GatewayId, supporting, command.ReceivedAt), null);
         }
 
         if (entry.GeofenceId is not { } geofenceId)
         {
-            return new Result<MonitoringAlert, string>.Failure("A geofence alert requires its geofence.");
+            return (null, "A geofence alert requires its geofence.");
         }
 
         var geofence = await geofences.FindByIdAsync(geofenceId, cancellationToken);
         if (geofence is null || geofence.RanchId != command.RanchId)
         {
-            return new Result<MonitoringAlert, string>.Failure("The geofence does not exist for this ranch.");
+            return (null, "The geofence does not exist for this ranch.");
         }
 
         if (entry.DistanceToBoundaryMeters is not { } distance)
         {
-            return new Result<MonitoringAlert, string>.Failure("A geofence alert requires the distance to the boundary.");
+            return (null, "A geofence alert requires the distance to the boundary.");
         }
 
-        return new Result<MonitoringAlert, string>.Success(MonitoringAlert.RaiseForGeofence(entry.AlertId, severity, geofenceId, distance,
-            entry.ConfigurationRevision, command.GatewayId, supporting, command.ReceivedAt));
+        return (MonitoringAlert.RaiseForGeofence(entry.AlertId, severity, geofenceId, distance,
+            entry.ConfigurationRevision, command.GatewayId, supporting, command.ReceivedAt), null);
     }
 
     private async Task<SyncEntryResult> SynchronizeAlertChangeAsync(SynchronizeAlertChangeCommand command, CancellationToken cancellationToken)

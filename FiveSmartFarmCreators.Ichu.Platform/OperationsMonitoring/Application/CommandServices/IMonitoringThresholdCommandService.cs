@@ -1,5 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 
@@ -15,7 +14,7 @@ public interface IMonitoringThresholdCommandService
     /// </summary>
     /// <param name="command">The command containing the threshold definition.</param>
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing the stored threshold on success, or an error enum on failure.</returns>
+    /// <returns>A result containing the stored threshold on success, or the domain error on failure.</returns>
     /// <exception cref="ArgumentException">Thrown when the life stage is invalid.</exception>
-    Task<Result<MonitoringThreshold, EConfigureThresholdError>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken);
+    Task<Result<MonitoringThreshold>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken);
 }

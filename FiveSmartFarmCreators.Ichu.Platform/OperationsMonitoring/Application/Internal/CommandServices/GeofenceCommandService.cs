@@ -1,9 +1,10 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using Microsoft.EntityFrameworkCore;
@@ -29,26 +30,26 @@ public class GeofenceCommandService(
     ILogger<GeofenceCommandService> logger) : IGeofenceCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<Geofence, EDefineGeofenceError>> Handle(DefineGeofenceCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Geofence>> Handle(DefineGeofenceCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.Unauthenticated);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, command.RanchId, MonitoringPermission.ManageRules, cancellationToken))
         {
-            return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.Forbidden);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         if (!await cattleLookup.LotBelongsToRanchAsync(command.LotId, command.RanchId, cancellationToken))
         {
-            return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.LotNotFound);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.LotNotFound, OperationsMonitoringError.LotNotFound);
         }
 
         if (await geofences.FindByLotAsync(command.RanchId, command.LotId, cancellationToken) is not null)
         {
-            return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.GeofenceAlreadyDefined);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.GeofenceAlreadyDefined, OperationsMonitoringError.GeofenceAlreadyDefined);
         }
 
         var revision = await ruleRevisionService.AdvanceAsync(command.RanchId, cancellationToken);
@@ -59,32 +60,32 @@ public class GeofenceCommandService(
         try
         {
             await unitOfWork.CompleteAsync(cancellationToken);
-            return new Result<Geofence, EDefineGeofenceError>.Success(geofence);
+            return Result<Geofence>.Success(geofence);
         }
         catch (DbUpdateException ex)
         {
             logger.LogWarning(ex, "The changes could not be saved.");
-            return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.ConcurrentModification);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.ConcurrentModification, OperationsMonitoringError.ConcurrentModification);
         }
     }
 
     /// <inheritdoc />
-    public async Task<Result<Geofence, ERedefineGeofenceError>> Handle(RedefineGeofenceCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Geofence>> Handle(RedefineGeofenceCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return new Result<Geofence, ERedefineGeofenceError>.Failure(ERedefineGeofenceError.Unauthenticated);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
         }
 
         var geofence = await geofences.FindByIdAsync(command.GeofenceId, cancellationToken);
         if (geofence is null)
         {
-            return new Result<Geofence, ERedefineGeofenceError>.Failure(ERedefineGeofenceError.GeofenceNotFound);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.GeofenceNotFound, OperationsMonitoringError.GeofenceNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, geofence.RanchId, MonitoringPermission.ManageRules, cancellationToken))
         {
-            return new Result<Geofence, ERedefineGeofenceError>.Failure(ERedefineGeofenceError.Forbidden);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
         }
 
         var revision = await ruleRevisionService.AdvanceAsync(geofence.RanchId, cancellationToken);
@@ -93,12 +94,12 @@ public class GeofenceCommandService(
         try
         {
             await unitOfWork.CompleteAsync(cancellationToken);
-            return new Result<Geofence, ERedefineGeofenceError>.Success(geofence);
+            return Result<Geofence>.Success(geofence);
         }
         catch (DbUpdateException ex)
         {
             logger.LogWarning(ex, "The changes could not be saved.");
-            return new Result<Geofence, ERedefineGeofenceError>.Failure(ERedefineGeofenceError.ConcurrentModification);
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.ConcurrentModification, OperationsMonitoringError.ConcurrentModification);
         }
     }
 }

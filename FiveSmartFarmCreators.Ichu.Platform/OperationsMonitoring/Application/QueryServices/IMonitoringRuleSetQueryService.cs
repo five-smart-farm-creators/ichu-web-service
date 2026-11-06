@@ -1,5 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Errors;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
@@ -16,8 +15,8 @@ public interface IMonitoringRuleSetQueryService
     /// <param name="query">The query containing the gateway and the revision it already holds.</param>
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>
-    ///     A result containing the rules on success, or an error enum on failure, including when the gateway already
+    ///     A result containing the rules on success, or the domain error on failure, including when the gateway already
     ///     holds the current revision.
     /// </returns>
-    Task<Result<MonitoringRuleSnapshot, EGetEdgeMonitoringRulesError>> Handle(GetEdgeMonitoringRulesQuery query, CancellationToken cancellationToken);
+    Task<Result<MonitoringRuleSnapshot>> Handle(GetEdgeMonitoringRulesQuery query, CancellationToken cancellationToken);
 }

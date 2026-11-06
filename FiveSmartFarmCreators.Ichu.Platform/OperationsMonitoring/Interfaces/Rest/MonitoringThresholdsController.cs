@@ -37,13 +37,16 @@ public class MonitoringThresholdsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> Configure(ConfigureThresholdResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Configure(ConfigureThresholdResource resource, CancellationToken cancellationToken)
     {
         try
         {
             var command = ConfigureThresholdCommandFromResourceAssembler.ToCommandFromResource(resource);
             var result = await thresholdCommandService.Handle(command, cancellationToken);
-            return ActionResultFromConfigureThresholdResultAssembler.ToActionResultFromConfigureThresholdResult(result, this);
+            return OperationsMonitoringActionResultAssembler.ToActionResultFromConfigureThresholdResult(
+                this,
+                result,
+                threshold => Ok(ThresholdResourceFromEntityAssembler.ToResourceFromEntity(threshold)));
         }
         catch (ArgumentException ex)
         {
@@ -62,9 +65,12 @@ public class MonitoringThresholdsController(
     [ProducesResponseType(typeof(IReadOnlyList<ThresholdResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await thresholdQueryService.Handle(new GetThresholdsByRanchQuery(ranchId), cancellationToken);
-        return ActionResultFromGetThresholdsResultAssembler.ToActionResultFromGetThresholdsResult(result, this);
+        return OperationsMonitoringActionResultAssembler.ToActionResultFromGetThresholdsResult(
+            this,
+            result,
+            thresholds => Ok(thresholds.Select(ThresholdResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
     }
 }
