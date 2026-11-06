@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -46,6 +47,13 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // The Firebase project identifier and Web API key come from configuration, never from source control.
 builder.Services.AddIam(builder.Configuration);
+
+builder.Services.AddOperationsMonitoring(builder.Configuration);
+if (builder.Environment.IsDevelopment())
+{
+    // Simulated cattle, collars and gateways until the IoT Assets and Cattle Information facades replace them.
+    builder.Services.AddOperationsMonitoringSimulation(builder.Configuration);
+}
 
 var app = builder.Build();
 
