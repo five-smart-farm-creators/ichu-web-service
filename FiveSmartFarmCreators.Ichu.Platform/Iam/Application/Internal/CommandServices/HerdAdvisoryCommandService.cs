@@ -9,7 +9,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
 
-/// <summary>Coordinates advisory requests and owner decisions.</summary>
+/// <summary>
+///     Coordinates advisory requests and owner decisions.
+/// </summary>
 public sealed class HerdAdvisoryCommandService(IIamRepository repository, ICurrentAccount currentAccount,
     AuthorizationDomainService authorization, TimeProvider clock) : IHerdAdvisoryCommandService
 {

@@ -4,10 +4,26 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Resources;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Transform;
 
-/// <summary>Transforms IAM boundary representations without invoking business operations.</summary>
+/// <summary>
+///     Builds an account-registration command from REST input.
+/// </summary>
 public static class RegisterAccountCommandFromResourceAssembler
 {
-    /// <summary>Maps the supplied representation to the target contract.</summary>
+    /// <summary>
+    ///     Parses the requested role and copies optional ranch details into a command.
+    /// </summary>
+    /// <param name="resource">
+    ///     The validated account-registration request.
+    /// </param>
+    /// <returns>
+    ///     The command to register the account and optional ranch.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    ///     The request is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///     The requested role is not defined.
+    /// </exception>
     public static RegisterAccountCommand ToCommandFromResource(RegisterAccountResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);

@@ -10,7 +10,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
 
-/// <summary>Coordinates registration and credential authentication.</summary>
+/// <summary>
+///     Coordinates registration and credential authentication.
+/// </summary>
 public sealed class AccountCommandService(IIamRepository repository, IIdentityProvider identityProvider,
     ICurrentAccount currentAccount, TimeProvider clock) : IAccountCommandService
 {

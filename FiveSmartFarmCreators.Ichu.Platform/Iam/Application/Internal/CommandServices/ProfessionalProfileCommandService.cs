@@ -8,7 +8,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
 
-/// <summary>Coordinates professional profile completion.</summary>
+/// <summary>
+///     Coordinates professional profile completion.
+/// </summary>
 public sealed class ProfessionalProfileCommandService(IIamRepository repository, ICurrentAccount currentAccount)
     : IProfessionalProfileCommandService
 {

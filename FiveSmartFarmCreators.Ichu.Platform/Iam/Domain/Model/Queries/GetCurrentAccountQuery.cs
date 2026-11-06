@@ -1,4 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Queries;
 
-/// <summary>Defines the input for GetCurrentAccount.</summary>
+/// <summary>
+///     Requests the account associated with the authenticated identity.
+/// </summary>
 public sealed record GetCurrentAccountQuery();

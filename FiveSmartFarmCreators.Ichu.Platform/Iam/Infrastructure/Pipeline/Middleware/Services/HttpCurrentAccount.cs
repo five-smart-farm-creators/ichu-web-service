@@ -8,7 +8,9 @@ using System.Security.Claims;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Services;
 
-/// <summary>Resolves the request identity without trusting client-supplied account identifiers.</summary>
+/// <summary>
+///     Resolves the request identity without trusting client-supplied account identifiers.
+/// </summary>
 public sealed class HttpCurrentAccount(IHttpContextAccessor accessor, IIamRepository repository, TimeProvider clock) : ICurrentAccount
 {
     /// <inheritdoc />

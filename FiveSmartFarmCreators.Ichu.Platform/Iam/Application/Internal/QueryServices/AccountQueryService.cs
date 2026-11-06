@@ -6,7 +6,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.QueryServices;
 
-/// <summary>Resolves the current account and its authorized ranches.</summary>
+/// <summary>
+///     Resolves the current account and its authorized ranches.
+/// </summary>
 public sealed class AccountQueryService(ICurrentAccount currentAccount, IAuthorizationQueryService authorization) : IAccountQueryService
 {
     /// <inheritdoc />

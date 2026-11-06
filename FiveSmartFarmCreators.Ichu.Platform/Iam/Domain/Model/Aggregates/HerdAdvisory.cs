@@ -3,11 +3,31 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
-/// <summary>Controls the lifecycle of a veterinarian authorization over one ranch.</summary>
+/// <summary>
+///     Controls the lifecycle of a veterinarian authorization over one ranch.
+/// </summary>
 public sealed class HerdAdvisory
 {
     private HerdAdvisory() { }
 
+    /// <summary>
+    ///     Creates a pending veterinarian request for ranch access.
+    /// </summary>
+    /// <param name="veterinarianId">
+    ///     The veterinarian account requesting access.
+    /// </param>
+    /// <param name="ranchId">
+    ///     The ranch for which access is requested.
+    /// </param>
+    /// <param name="reason">
+    ///     The veterinarian's reason for the request.
+    /// </param>
+    /// <param name="now">
+    ///     The request creation instant.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    ///     An identifier or request reason is invalid.
+    /// </exception>
     public HerdAdvisory(Guid veterinarianId, Guid ranchId, string reason, DateTimeOffset now)
     {
         if (veterinarianId == Guid.Empty || ranchId == Guid.Empty || string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
@@ -35,10 +55,38 @@ public sealed class HerdAdvisory
     public Guid? DecidedBy { get; private set; }
     public Guid Revision { get; private set; }
 
-    /// <summary>Checks whether a granted advisory remains effective at the supplied instant.</summary>
+    /// <summary>
+    ///     Checks whether a granted advisory remains effective at the supplied instant.
+    /// </summary>
+    /// <param name="now">
+    ///     The instant used to evaluate the grant period.
+    /// </param>
+    /// <returns>
+    ///     <see langword="true"/> when the grant has started and has not expired.
+    /// </returns>
     public bool IsValidOn(DateTimeOffset now) => Status == AdvisoryStatus.Granted && GrantedAt <= now && ExpiresAt > now;
 
-    /// <summary>Grants a pending advisory with an explicit scope and future expiration.</summary>
+    /// <summary>
+    ///     Grants a pending advisory with an explicit scope and future expiration.
+    /// </summary>
+    /// <param name="actorId">
+    ///     The account making the decision.
+    /// </param>
+    /// <param name="scope">
+    ///     The access scope granted to the veterinarian.
+    /// </param>
+    /// <param name="expiresAt">
+    ///     The instant when the grant stops being effective.
+    /// </param>
+    /// <param name="now">
+    ///     The instant of the grant decision.
+    /// </param>
+    /// <exception cref="IamException">
+    ///     The advisory is not pending.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///     The actor, scope, or expiration is invalid.
+    /// </exception>
     public void Grant(Guid actorId, AccessScope scope, DateTimeOffset expiresAt, DateTimeOffset now)
     {
         if (Status != AdvisoryStatus.Pending) throw new IamException("conflict", "Only pending advisories can be granted.");
@@ -54,7 +102,21 @@ public sealed class HerdAdvisory
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Rejects a pending advisory or revokes an effective grant.</summary>
+    /// <summary>
+    ///     Rejects a pending advisory or revokes an effective grant.
+    /// </summary>
+    /// <param name="actorId">
+    ///     The account making the decision.
+    /// </param>
+    /// <param name="reject">
+    ///     <see langword="true"/> to reject a pending request; otherwise revoke a grant.
+    /// </param>
+    /// <param name="now">
+    ///     The instant of the decision.
+    /// </param>
+    /// <exception cref="IamException">
+    ///     The actor is invalid or the advisory cannot make the requested transition.
+    /// </exception>
     public void End(Guid actorId, bool reject, DateTimeOffset now)
     {
         if (actorId == Guid.Empty || (reject ? Status != AdvisoryStatus.Pending : !IsValidOn(now)))
@@ -67,7 +129,12 @@ public sealed class HerdAdvisory
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Marks a granted advisory expired when its validity period ends.</summary>
+    /// <summary>
+    ///     Marks a granted advisory expired when its validity period ends.
+    /// </summary>
+    /// <param name="now">
+    ///     The instant used to determine whether the grant has expired.
+    /// </param>
     public void Expire(DateTimeOffset now)
     {
         if (Status != AdvisoryStatus.Granted || ExpiresAt > now) return;

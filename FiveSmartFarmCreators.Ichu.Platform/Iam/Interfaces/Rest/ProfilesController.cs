@@ -9,15 +9,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 
-/// <summary>Exposes professional-profile reads and updates for the current account.</summary>
+/// <summary>
+///     Exposes professional-profile reads and updates for the authenticated account.
+/// </summary>
 [ApiController]
 [Route("api/v1/profiles")]
 [Authorize(AuthenticationSchemes = "Firebase")]
 [TypeFilter(typeof(IamExceptionFilter))]
-/// <summary>Defines the Profiles Controller contract.</summary>
 public sealed class ProfilesController(IProfessionalProfileCommandService commands, IAccountQueryService queries) : ControllerBase
 {
-    /// <summary>Returns the current account and its declared professional profile.</summary>
+    /// <summary>
+    ///     Returns the current account and its declared professional profile.
+    /// </summary>
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
     {
@@ -25,7 +28,9 @@ public sealed class ProfilesController(IProfessionalProfileCommandService comman
         return Ok(AccountResourceFromEntityAssembler.ToResourceFromEntity(account));
     }
 
-    /// <summary>Completes the current veterinarian profile.</summary>
+    /// <summary>
+    ///     Completes the current veterinarian profile.
+    /// </summary>
     [HttpPut("me")]
     public async Task<IActionResult> Complete(CompleteProfileResource resource, CancellationToken cancellationToken)
     {

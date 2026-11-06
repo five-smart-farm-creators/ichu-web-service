@@ -9,7 +9,9 @@ using System.Text.Json;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Services;
 
-/// <summary>Translates Firebase authentication responses into application identity data.</summary>
+/// <summary>
+///     Adapts Firebase authentication responses to the IAM identity-provider contract.
+/// </summary>
 public sealed class FirebaseAuthenticationAcl(HttpClient client, IOptions<FirebaseOptions> options, TimeProvider clock) : IIdentityProvider
 {
     /// <inheritdoc />
@@ -48,7 +50,7 @@ public sealed class FirebaseAuthenticationAcl(HttpClient client, IOptions<Fireba
             throw new IamException("invalid_credentials", "The identity token is invalid.");
         }
 
-        // Project and expiry checks above are only prefilters; Google validates the token before any claim is accepted.
+        // Google verifies the token signature; the local checks reject mismatched projects and expired tokens early.
         using var result = await SendAsync("accounts:lookup", new { idToken }, cancellationToken);
         if (!result.RootElement.TryGetProperty("users", out var users) || users.ValueKind != JsonValueKind.Array)
             throw new IamException("unavailable", "The identity provider returned an invalid response.");

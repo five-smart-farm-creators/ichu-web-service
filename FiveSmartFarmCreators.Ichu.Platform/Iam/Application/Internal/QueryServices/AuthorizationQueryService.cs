@@ -7,7 +7,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.QueryServices;
 
-/// <summary>Defines the Authorization Query Service contract.</summary>
+/// <summary>
+///     Evaluates ranch-access queries using repository data and domain rules.
+/// </summary>
 public sealed class AuthorizationQueryService(IIamRepository repository, AuthorizationDomainService authorization, TimeProvider clock) : IAuthorizationQueryService
 {
     /// <inheritdoc />

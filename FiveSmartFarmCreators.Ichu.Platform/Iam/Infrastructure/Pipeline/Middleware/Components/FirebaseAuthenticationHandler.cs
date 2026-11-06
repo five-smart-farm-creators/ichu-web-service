@@ -9,7 +9,9 @@ using System.Text.Encodings.Web;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Components;
 
-/// <summary>Authenticates bearer identity tokens using the external identity provider.</summary>
+/// <summary>
+///     Authenticates bearer identity tokens using the external identity provider.
+/// </summary>
 public sealed class FirebaseAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger, UrlEncoder encoder, IIdentityProvider provider)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)

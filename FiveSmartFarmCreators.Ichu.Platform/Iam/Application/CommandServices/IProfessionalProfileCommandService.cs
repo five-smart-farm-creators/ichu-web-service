@@ -4,9 +4,16 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Commands;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
 
-/// <summary>Defines the ProfessionalProfileCommandService application contract.</summary>
+/// <summary>
+///     Handles veterinarian professional-profile completion.
+/// </summary>
 public interface IProfessionalProfileCommandService
 {
-    /// <summary>Completes the current veterinarian profile while enforcing license uniqueness.</summary>
+    /// <summary>
+    ///     Completes the current veterinarian profile while enforcing license uniqueness.
+    /// </summary>
+    /// <returns>
+    ///     The account with its completed professional profile.
+    /// </returns>
     Task<UserAccount> HandleAsync(CompleteProfessionalProfileCommand command, CancellationToken cancellationToken = default);
 }

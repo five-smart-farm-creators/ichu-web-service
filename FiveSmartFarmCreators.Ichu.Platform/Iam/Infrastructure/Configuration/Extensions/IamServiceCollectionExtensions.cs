@@ -18,10 +18,23 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 
-/// <summary>Registers the IAM application services and infrastructure adapters.</summary>
+/// <summary>
+///     Provides dependency-injection registration for the IAM bounded context.
+/// </summary>
 public static class IamServiceCollectionExtensions
 {
-    /// <summary>Registers IAM application contracts, persistence adapters and Firebase authentication.</summary>
+    /// <summary>
+    ///     Registers IAM application contracts, persistence adapters and Firebase authentication.
+    /// </summary>
+    /// <param name="services">
+    ///     The dependency-injection collection to configure.
+    /// </param>
+    /// <param name="configuration">
+    ///     The application settings containing Firebase options.
+    /// </param>
+    /// <returns>
+    ///     The configured service collection.
+    /// </returns>
     public static IServiceCollection AddIam(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<FirebaseOptions>(configuration.GetSection("Firebase"));

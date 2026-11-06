@@ -1,4 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Resources;
 
-/// <summary>Defines the RanchAccessResource REST representation.</summary>
+/// <summary>
+///     Contains the effective access scope and expiration for a ranch.
+/// </summary>
 public sealed record RanchAccessResource(Guid RanchId, string Scope, DateTimeOffset? ExpiresAt);

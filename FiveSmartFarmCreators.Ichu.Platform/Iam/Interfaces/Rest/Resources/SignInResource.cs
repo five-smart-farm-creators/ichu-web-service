@@ -3,5 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Resources;
 
-/// <summary>Defines the Sign In Resource contract.</summary>
+/// <summary>
+///     Contains the email and password submitted for account sign-in.
+/// </summary>
 public sealed record SignInResource([Required, EmailAddress] string Email, [Required] string Password);

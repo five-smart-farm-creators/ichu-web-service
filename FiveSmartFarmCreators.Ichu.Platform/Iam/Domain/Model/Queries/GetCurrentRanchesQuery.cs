@@ -1,4 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Queries;
 
-/// <summary>Defines the input for GetCurrentRanches.</summary>
+/// <summary>
+///     Requests ranches accessible to the authenticated account.
+/// </summary>
 public sealed record GetCurrentRanchesQuery();

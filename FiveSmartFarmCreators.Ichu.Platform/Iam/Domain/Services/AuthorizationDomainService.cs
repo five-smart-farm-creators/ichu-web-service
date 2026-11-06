@@ -4,10 +4,35 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 
-/// <summary>Evaluates membership and advisory rules for ranch access.</summary>
+/// <summary>
+///     Evaluates membership and advisory rules for ranch access.
+/// </summary>
 public sealed class AuthorizationDomainService
 {
-    /// <summary>Evaluates account status, memberships and effective advisory scope.</summary>
+    /// <summary>
+    ///     Evaluates account status, memberships and effective advisory scope.
+    /// </summary>
+    /// <param name="account">
+    ///     The account whose access is evaluated.
+    /// </param>
+    /// <param name="ranchId">
+    ///     The ranch requested by the account.
+    /// </param>
+    /// <param name="scope">
+    ///     The operation requested on the ranch.
+    /// </param>
+    /// <param name="memberships">
+    ///     Memberships associated with the account.
+    /// </param>
+    /// <param name="advisories">
+    ///     Advisories relevant to the account and ranch.
+    /// </param>
+    /// <param name="now">
+    ///     The instant used to evaluate account and grant validity.
+    /// </param>
+    /// <returns>
+    ///     <see langword="true"/> when an active membership or advisory grants the requested scope.
+    /// </returns>
     public bool CanAccessRanch(UserAccount account, Guid ranchId, AccessScope scope,
         IEnumerable<RanchMembership> memberships, IEnumerable<HerdAdvisory> advisories, DateTimeOffset now)
     {

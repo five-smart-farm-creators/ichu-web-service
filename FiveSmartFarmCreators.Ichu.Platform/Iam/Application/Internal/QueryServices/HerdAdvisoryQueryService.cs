@@ -8,7 +8,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.QueryServices;
 
-/// <summary>Reads advisory history authorized for the current account.</summary>
+/// <summary>
+///     Reads advisory history authorized for the current account.
+/// </summary>
 public sealed class HerdAdvisoryQueryService(IIamRepository repository, ICurrentAccount currentAccount, TimeProvider clock)
     : IHerdAdvisoryQueryService
 {

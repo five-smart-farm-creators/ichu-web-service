@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.
 

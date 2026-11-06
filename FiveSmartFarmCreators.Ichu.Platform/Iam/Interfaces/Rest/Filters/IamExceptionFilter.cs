@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Filters;
 
-/// <summary>Defines the Iam Exception Filter contract.</summary>
+/// <summary>
+///     Converts recognized IAM and request exceptions into HTTP problem responses.
+/// </summary>
 public sealed class IamExceptionFilter : IExceptionFilter
 {
+    /// <inheritdoc />
     public void OnException(ExceptionContext context)
     {
         var status = context.Exception switch

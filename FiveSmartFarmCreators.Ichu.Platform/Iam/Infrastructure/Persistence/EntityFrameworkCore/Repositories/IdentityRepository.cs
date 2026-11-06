@@ -8,7 +8,9 @@ using Npgsql;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
-/// <summary>Persists IAM records through the configured EF Core context.</summary>
+/// <summary>
+///     Persists IAM records through the configured EF Core context.
+/// </summary>
 public sealed class IdentityRepository(DbContext context) : IIamRepository
 {
     /// <inheritdoc />

@@ -9,15 +9,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 
-/// <summary>Exposes registration, sign-in and current-account queries.</summary>
+/// <summary>
+///     Exposes account registration, sign-in, current-account, and ranch-access operations.
+/// </summary>
 [ApiController]
 [Route("api/v1/accounts")]
 [Authorize(AuthenticationSchemes = "Firebase")]
 [TypeFilter(typeof(IamExceptionFilter))]
-/// <summary>Defines the Accounts Controller contract.</summary>
 public sealed class AccountsController(IAccountCommandService commands, IAccountQueryService queries) : ControllerBase
 {
-    /// <summary>Registers an application account for the verified Firebase identity.</summary>
+    /// <summary>
+    ///     Registers an application account for the verified Firebase identity.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Register(RegisterAccountResource resource, CancellationToken cancellationToken)
     {
@@ -26,7 +29,9 @@ public sealed class AccountsController(IAccountCommandService commands, IAccount
         return Created("/api/v1/accounts/me", RegisteredAccountResourceFromResultAssembler.ToResourceFromResult(result));
     }
 
-    /// <summary>Authenticates credentials through Firebase and applies local account lockout.</summary>
+    /// <summary>
+    ///     Authenticates credentials through Firebase and applies local account lockout.
+    /// </summary>
     [HttpPost("sessions")]
     [AllowAnonymous]
     public async Task<IActionResult> SignIn(SignInResource resource, CancellationToken cancellationToken)
@@ -37,7 +42,9 @@ public sealed class AccountsController(IAccountCommandService commands, IAccount
         return Ok(new AuthenticatedAccountResource(token, "Bearer"));
     }
 
-    /// <summary>Returns the authenticated application's account.</summary>
+    /// <summary>
+    ///     Returns the authenticated application's account.
+    /// </summary>
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
     {
@@ -45,7 +52,9 @@ public sealed class AccountsController(IAccountCommandService commands, IAccount
         return Ok(AccountResourceFromEntityAssembler.ToResourceFromEntity(account));
     }
 
-    /// <summary>Lists the current account's effective ranch access.</summary>
+    /// <summary>
+    ///     Lists the current account's effective ranch access.
+    /// </summary>
     [HttpGet("me/ranches")]
     public async Task<IActionResult> GetRanches(CancellationToken cancellationToken)
     {

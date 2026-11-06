@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-/// <summary>Configures the IAM persistence mapping for HerdAdvisory.</summary>
 public sealed class HerdAdvisoryConfiguration : IEntityTypeConfiguration<HerdAdvisory>
 {
-    /// <summary>Applies explicit table, constraint and property mappings.</summary>
     public void Configure(EntityTypeBuilder<HerdAdvisory> builder)
     {
         builder.ToTable("HerdAdvisories", "iam");

@@ -1,6 +1,8 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Configuration;
 
-/// <summary>Configures the Firebase project used for identity verification.</summary>
+/// <summary>
+///     Stores the Firebase project identifier and API key used by IAM identity adapters.
+/// </summary>
 public sealed class FirebaseOptions
 {
     public string ProjectId { get; set; } = string.Empty;

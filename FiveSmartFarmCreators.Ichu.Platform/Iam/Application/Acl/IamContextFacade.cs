@@ -5,7 +5,9 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Acl;
 
-/// <summary>Exposes IAM capabilities through application queries.</summary>
+/// <summary>
+///     Exposes IAM capabilities through application queries.
+/// </summary>
 public sealed class IamContextFacade(IAuthorizationQueryService authorization) : IIamContextFacade
 {
     /// <inheritdoc />
