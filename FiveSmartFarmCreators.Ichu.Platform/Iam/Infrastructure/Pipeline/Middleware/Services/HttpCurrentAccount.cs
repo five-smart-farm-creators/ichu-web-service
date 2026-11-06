@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;

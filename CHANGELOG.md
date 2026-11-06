@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Iam: placed application result and port models alongside their command, query, and outbound service contracts.
 - Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.

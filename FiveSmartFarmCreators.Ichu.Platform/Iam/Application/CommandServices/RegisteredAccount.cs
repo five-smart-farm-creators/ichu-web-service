@@ -1,6 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
+namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
 
 /// <summary>
 ///     Carries the newly created account and its optional ranch identifier.

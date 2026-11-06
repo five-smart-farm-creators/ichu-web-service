@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Queries;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
