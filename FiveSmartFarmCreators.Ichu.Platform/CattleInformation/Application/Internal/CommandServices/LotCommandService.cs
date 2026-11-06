@@ -7,6 +7,9 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.CommandServices;
 
+/// <summary>
+/// Coordinates authorized membership changes while sharing the animal and lot persistence transaction.
+/// </summary>
 public sealed class LotCommandService(
     ILotRepository lotRepository,
     ICattleRepository cattleRepository,
@@ -14,6 +17,7 @@ public sealed class LotCommandService(
     ICattleAccessService accessService,
     TimeProvider timeProvider) : ILotCommandService
 {
+    /// <inheritdoc />
     public async Task<Lot> HandleAsync(CreateLotCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
@@ -23,6 +27,7 @@ public sealed class LotCommandService(
         return lot;
     }
 
+    /// <inheritdoc />
     public async Task<Lot> HandleAsync(AssignCattleToLotCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
@@ -39,6 +44,7 @@ public sealed class LotCommandService(
         return lot;
     }
 
+    /// <inheritdoc />
     public async Task<Lot> HandleAsync(RemoveCattleFromLotCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);

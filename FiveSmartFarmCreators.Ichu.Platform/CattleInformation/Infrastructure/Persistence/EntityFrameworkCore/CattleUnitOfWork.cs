@@ -6,15 +6,19 @@ using Npgsql;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore;
 
+/// <summary>
+/// Saves module state and durable lifecycle events together without claiming downstream delivery.
+/// </summary>
 public sealed class CattleUnitOfWork<TContext>(TContext context) : ICattleUnitOfWork where TContext : DbContext
 {
+    /// <inheritdoc />
     public async Task CommitAsync(Cattle? cattle, CancellationToken cancellationToken)
     {
         var events = cattle?.Events.Select(item => new CattleIntegrationEvent(item)).ToArray() ?? [];
         context.Set<CattleIntegrationEvent>().AddRange(events);
         try
         {
-            // EF saves the animal, its history, lot changes and pending events in one transaction.
+            // Persist events with state changes so a committed exit cannot lose its release notification.
             await context.SaveChangesAsync(cancellationToken);
             cattle?.ClearEvents();
         }

@@ -1,6 +1,8 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 
-/// <summary>Immutable identity and lifecycle facts; all dates are calendar dates, not timestamps.</summary>
+/// <summary>
+/// Transfers immutable identity and lifecycle facts to other contexts; dates have calendar-day precision.
+/// </summary>
 public sealed record CattleSnapshot(
     Guid Id,
     Guid RanchId,

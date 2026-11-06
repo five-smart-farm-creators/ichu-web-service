@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
+/// <summary>
+/// Maps retained stage periods with client-generated identifiers so new history is tracked as inserts.
+/// </summary>
 public sealed class StagePeriodConfiguration : IEntityTypeConfiguration<StagePeriod>
 {
     public void Configure(EntityTypeBuilder<StagePeriod> builder)

@@ -8,11 +8,15 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.QueryServices;
 
+/// <summary>
+/// Composes authorized animal profiles using external device data without storing copies.
+/// </summary>
 public sealed class CattleQueryService(
     ICattleRepository cattleRepository,
     ICattleAccessService accessService,
     ICattleProfileIntegrationService profileIntegrationService) : ICattleQueryService
 {
+    /// <inheritdoc />
     public async Task<CattleProfile> HandleAsync(GetCattleByIdQuery query, CancellationToken cancellationToken)
     {
         await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);
@@ -27,6 +31,7 @@ public sealed class CattleQueryService(
         return new CattleProfile(cattle, device);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Cattle>> HandleAsync(SearchCattleQuery query, CancellationToken cancellationToken)
     {
         await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);

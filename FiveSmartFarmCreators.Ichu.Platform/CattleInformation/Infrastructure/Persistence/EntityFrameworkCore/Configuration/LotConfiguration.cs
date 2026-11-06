@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
+/// <summary>
+/// Maps ranch lots with concurrency tokens and field-backed membership collections.
+/// </summary>
 public sealed class LotConfiguration : IEntityTypeConfiguration<Lot>
 {
     public void Configure(EntityTypeBuilder<Lot> builder)

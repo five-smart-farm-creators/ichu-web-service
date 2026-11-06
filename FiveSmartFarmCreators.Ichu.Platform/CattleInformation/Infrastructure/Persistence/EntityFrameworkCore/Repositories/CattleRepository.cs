@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
+/// <summary>
+/// Tracks animal state and history in the host context using ranch-scoped predicates.
+/// </summary>
 public sealed class CattleRepository<TContext> : ICattleRepository where TContext : DbContext
 {
     private readonly TContext _context;
@@ -16,6 +19,7 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
         _context = context;
     }
 
+    /// <inheritdoc />
     public Task<Cattle?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
     {
         return _context.Set<Cattle>()
@@ -23,6 +27,7 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
             .SingleOrDefaultAsync(cattle => cattle.RanchId == ranchId && cattle.Id == cattleId, cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task<Cattle?> FindByEarTagAsync(Guid ranchId, string earTag, CancellationToken cancellationToken)
     {
         var normalizedEarTag = new EarTag(earTag);
@@ -32,6 +37,7 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
                 cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Cattle>> SearchAsync(SearchCattleQuery query,
         CancellationToken cancellationToken)
     {
@@ -65,6 +71,7 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
             .ToListAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task AddAsync(Cattle cattle, CancellationToken cancellationToken)
     {
         await _context.Set<Cattle>().AddAsync(cattle, cancellationToken);

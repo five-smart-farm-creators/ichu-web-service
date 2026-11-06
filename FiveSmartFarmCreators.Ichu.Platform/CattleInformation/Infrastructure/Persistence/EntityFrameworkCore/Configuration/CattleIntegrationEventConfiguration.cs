@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
+/// <summary>
+/// Maps durable pending lifecycle events to JSONB payloads within the module schema.
+/// </summary>
 public sealed class CattleIntegrationEventConfiguration : IEntityTypeConfiguration<CattleIntegrationEvent>
 {
     public void Configure(EntityTypeBuilder<CattleIntegrationEvent> builder)

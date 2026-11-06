@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
+/// <summary>
+/// Enforces same-ranch membership through composite foreign keys and permits client-side orphan removal.
+/// </summary>
 public sealed class LotMembershipConfiguration : IEntityTypeConfiguration<LotMembership>
 {
     public void Configure(EntityTypeBuilder<LotMembership> builder)

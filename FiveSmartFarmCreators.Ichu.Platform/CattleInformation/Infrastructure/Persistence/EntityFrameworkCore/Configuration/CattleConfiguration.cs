@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
+/// <summary>
+/// Maps animal identity, ranch-scoped ear-tag uniqueness and optimistic concurrency in the module schema.
+/// </summary>
 public sealed class CattleConfiguration : IEntityTypeConfiguration<Cattle>
 {
     public void Configure(EntityTypeBuilder<Cattle> builder)

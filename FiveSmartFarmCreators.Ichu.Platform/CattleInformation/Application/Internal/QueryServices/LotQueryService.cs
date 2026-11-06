@@ -7,8 +7,12 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.QueryServices;
 
+/// <summary>
+/// Checks ranch read access before retrieving lots and their stored memberships.
+/// </summary>
 public sealed class LotQueryService(ILotRepository lotRepository, ICattleAccessService accessService) : ILotQueryService
 {
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Lot>> HandleAsync(GetLotsByRanchQuery query, CancellationToken cancellationToken)
     {
         await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);

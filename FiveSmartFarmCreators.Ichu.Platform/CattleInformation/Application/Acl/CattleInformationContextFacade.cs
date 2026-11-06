@@ -8,9 +8,13 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Acl;
 
+/// <summary>
+/// Protects cross-context animal queries with ranch access checks and returns immutable snapshots.
+/// </summary>
 public sealed class CattleInformationContextFacade(ICattleRepository cattleRepository, ICattleAccessService accessService)
     : ICattleInformationContextFacade
 {
+    /// <inheritdoc />
     public async Task<CattleSnapshot?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
     {
         await accessService.EnsureReadAccessAsync(ranchId, cancellationToken);
@@ -19,6 +23,7 @@ public sealed class CattleInformationContextFacade(ICattleRepository cattleRepos
         return cattle is null ? null : ToSnapshot(cattle);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId,
         CancellationToken cancellationToken)
     {

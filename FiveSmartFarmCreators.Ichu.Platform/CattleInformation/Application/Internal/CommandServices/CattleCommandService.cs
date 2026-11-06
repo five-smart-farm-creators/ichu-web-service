@@ -8,12 +8,16 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.CommandServices;
 
+/// <summary>
+/// Coordinates authorized animal changes and commits their pending lifecycle facts with their state.
+/// </summary>
 public sealed class CattleCommandService(
     ICattleRepository cattleRepository,
     ICattleUnitOfWork unitOfWork,
     ICattleAccessService accessService,
     TimeProvider timeProvider) : ICattleCommandService
 {
+    /// <inheritdoc />
     public async Task<Cattle> HandleAsync(RegisterCattleCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
@@ -24,6 +28,7 @@ public sealed class CattleCommandService(
         return cattle;
     }
 
+    /// <inheritdoc />
     public async Task<Cattle> HandleAsync(UpdateCattleCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
@@ -35,6 +40,7 @@ public sealed class CattleCommandService(
         return cattle;
     }
 
+    /// <inheritdoc />
     public async Task<Cattle> HandleAsync(ChangeLifeStageCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
@@ -44,6 +50,7 @@ public sealed class CattleCommandService(
         return cattle;
     }
 
+    /// <inheritdoc />
     public async Task<Cattle> HandleAsync(DeactivateCattleCommand command, CancellationToken cancellationToken)
     {
         await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);

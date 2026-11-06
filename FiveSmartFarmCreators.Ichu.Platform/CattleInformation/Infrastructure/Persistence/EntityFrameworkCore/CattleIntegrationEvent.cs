@@ -3,13 +3,18 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Events;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore;
 
-/// <summary>A durable event awaiting delivery by the host's integration relay.</summary>
+/// <summary>
+/// Retains a lifecycle event for delivery by the host's relay independently of the originating request.
+/// </summary>
 public sealed class CattleIntegrationEvent
 {
     private CattleIntegrationEvent()
     {
     }
 
+    /// <summary>
+    /// Serializes the concrete event using its stable identity, camelCase fields and numeric enum values.
+    /// </summary>
     public CattleIntegrationEvent(ICattleEvent domainEvent)
     {
         Id = domainEvent.EventId;
@@ -22,9 +27,16 @@ public sealed class CattleIntegrationEvent
     public DateTimeOffset OccurredAt { get; private set; }
     public string EventType { get; private set; } = string.Empty;
     public string Payload { get; private set; } = string.Empty;
+    /// <summary>
+    /// Gets the first acknowledged delivery time in UTC, or null while delivery remains pending.
+    /// </summary>
     public DateTimeOffset? PublishedAt { get; private set; }
 
-    /// <summary>Call only after all required consumers acknowledge this stable event identifier.</summary>
+    /// <summary>
+    /// Marks delivery after all required consumers acknowledge the event, retaining the first publication time.
+    /// </summary>
+    /// <param name="publishedAt">The UTC acknowledgement instant, no earlier than the event's occurrence.</param>
+    /// <exception cref="ArgumentException">The timestamp has a nonzero offset or precedes the event.</exception>
     public void MarkPublished(DateTimeOffset publishedAt)
     {
         if (publishedAt.Offset != TimeSpan.Zero || publishedAt < OccurredAt)

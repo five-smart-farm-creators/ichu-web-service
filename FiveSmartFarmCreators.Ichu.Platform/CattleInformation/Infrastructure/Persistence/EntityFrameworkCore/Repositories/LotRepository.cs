@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
+/// <summary>
+/// Tracks ranch lots and memberships in the same host context used by the module's unit of work.
+/// </summary>
 public sealed class LotRepository<TContext> : ILotRepository where TContext : DbContext
 {
     private readonly TContext _context;
@@ -13,6 +16,7 @@ public sealed class LotRepository<TContext> : ILotRepository where TContext : Db
         _context = context;
     }
 
+    /// <inheritdoc />
     public Task<Lot?> FindByIdAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
     {
         return _context.Set<Lot>()
@@ -20,6 +24,7 @@ public sealed class LotRepository<TContext> : ILotRepository where TContext : Db
             .SingleOrDefaultAsync(lot => lot.RanchId == ranchId && lot.Id == lotId, cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Lot>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken)
     {
         return await _context.Set<Lot>()
@@ -30,6 +35,7 @@ public sealed class LotRepository<TContext> : ILotRepository where TContext : Db
             .ToListAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
     public async Task AddAsync(Lot lot, CancellationToken cancellationToken)
     {
         await _context.Set<Lot>().AddAsync(lot, cancellationToken);

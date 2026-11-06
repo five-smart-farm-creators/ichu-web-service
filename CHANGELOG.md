@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Documented Cattle Information domain types, lifecycle invariants, event semantics, and ranch-scoped repository contracts.
+- Documented application and persistence contracts for access checks, versioned changes, host integration adapters, and atomic event delivery.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.
 
