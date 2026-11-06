@@ -1,3 +1,4 @@
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,5 +24,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // IAM maps its entities with entity type configuration classes, so they are applied from the assembly.
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        builder.ApplyOperationsMonitoringConfiguration();
     }
 }

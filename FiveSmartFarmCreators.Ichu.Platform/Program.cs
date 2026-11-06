@@ -1,4 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.OpenApi;
@@ -15,7 +17,11 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
+});
 builder.Services.AddSwaggerGen();
 
 var planningConnectionString = builder.Configuration.GetConnectionString("Planning")
@@ -54,6 +60,13 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // The Firebase project identifier and Web API key come from configuration, never from source control.
 builder.Services.AddIam(builder.Configuration);
+
+builder.Services.AddOperationsMonitoring(builder.Configuration);
+if (builder.Environment.IsDevelopment())
+{
+    // Simulated cattle, collars and gateways until the IoT Assets and Cattle Information facades replace them.
+    builder.Services.AddOperationsMonitoringSimulation(builder.Configuration);
+}
 
 var app = builder.Build();
 
