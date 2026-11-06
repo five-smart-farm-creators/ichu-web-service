@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Cattle Information registration, identification updates, ranch-scoped searches, productive-stage history, deactivation reasons, and same-ranch lot membership with optimistic concurrency.
 - Added Cattle Information REST resources, explicit authorization and profile integration ports, cross-context identity queries, EF Core mappings, and atomic persistence of pending lifecycle events.
 - Added Cattle Information contract documentation, Report traceability, and coordinator integration requirements for authentication, persistence, device information, and event delivery.
+- Planning: Added campaign, activity, application, follow-up, calendar, and withdrawal-period contracts behind explicit persistence and bounded-context ports.
+- Planning: Added PostgreSQL EF Core persistence, automatic schema initialization for a new Planning database, and Swagger UI for Development.
 - Added IoT Assets inventory, collar assignment history, unlimited water-controller assignment, water-trough configuration, REST resources, EF Core mappings and integration contracts; Shared and host wiring remain pending.
 - Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
 - Iam: separated command and query service contracts, implementations and the application ACL facade.
