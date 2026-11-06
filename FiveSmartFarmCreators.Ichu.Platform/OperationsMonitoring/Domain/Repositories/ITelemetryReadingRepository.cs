@@ -1,21 +1,14 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 
 /// <summary>
 ///     Domain repository interface for managing <see cref="TelemetryReading"/> aggregates.
 /// </summary>
-public interface ITelemetryReadingRepository
+public interface ITelemetryReadingRepository : IBaseRepository<TelemetryReading>
 {
-    /// <summary>
-    ///     Adds a new reading asynchronously to the repository.
-    /// </summary>
-    /// <param name="reading">The reading to add.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A task representing the asynchronous add operation.</returns>
-    Task AddAsync(TelemetryReading reading, CancellationToken cancellationToken = default);
-
     /// <summary>
     ///     Finds a reading by the device that captured it and its firmware identifier asynchronously.
     /// </summary>

@@ -1,5 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -8,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="Geofence"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public class GeofenceRepository(DbContext context) : IGeofenceRepository
+public class GeofenceRepository(AppDbContext context) : IGeofenceRepository
 {
     private DbSet<Geofence> Geofences => context.Set<Geofence>();
 

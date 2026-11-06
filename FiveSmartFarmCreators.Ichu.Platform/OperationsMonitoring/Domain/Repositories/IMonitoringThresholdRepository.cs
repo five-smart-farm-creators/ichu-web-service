@@ -1,21 +1,14 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 
 /// <summary>
 ///     Domain repository interface for managing <see cref="MonitoringThreshold"/> aggregates.
 /// </summary>
-public interface IMonitoringThresholdRepository
+public interface IMonitoringThresholdRepository : IBaseRepository<MonitoringThreshold>
 {
-    /// <summary>
-    ///     Adds a new threshold asynchronously to the repository.
-    /// </summary>
-    /// <param name="threshold">The threshold to add.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A task representing the asynchronous add operation.</returns>
-    Task AddAsync(MonitoringThreshold threshold, CancellationToken cancellationToken = default);
-
     /// <summary>
     ///     Finds the threshold of a ranch for one life stage and metric asynchronously.
     /// </summary>

@@ -1,6 +1,7 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -9,7 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="MonitoringAlert"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public class MonitoringAlertRepository(DbContext context) : IMonitoringAlertRepository
+public class MonitoringAlertRepository(AppDbContext context) : IMonitoringAlertRepository
 {
     private DbSet<MonitoringAlert> Alerts => context.Set<MonitoringAlert>();
 
