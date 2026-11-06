@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 
 /// <summary>
 ///     Anti-corruption port towards IoT Assets.

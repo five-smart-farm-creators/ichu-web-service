@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 
 /// <summary>
 ///     The ranch that owns a device and the animal assigned to it at a given instant, if any.

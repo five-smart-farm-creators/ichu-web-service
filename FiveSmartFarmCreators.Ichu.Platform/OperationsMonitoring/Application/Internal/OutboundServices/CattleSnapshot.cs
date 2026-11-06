@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 
 /// <summary>
 ///     The minimal animal data that monitoring rules need from Cattle Information.

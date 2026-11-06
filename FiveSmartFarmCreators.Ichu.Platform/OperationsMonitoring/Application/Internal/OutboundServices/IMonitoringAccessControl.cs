@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 
 /// <summary>
 ///     Authorization required by Operations and Monitoring. The host implements it with the IAM context; decisions
