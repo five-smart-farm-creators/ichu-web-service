@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Iam: registered the module in the application host with Firebase settings read from configuration.
 - Added the initial EF Core migration for the IAM schema, applied automatically on startup, and the local `dotnet-ef` tool.
 - Added Swagger UI at `/swagger` in Development, reading the built-in OpenAPI document.
+- Added the bearer security scheme to the OpenAPI document so Swagger UI can send the Firebase identity token.
 - Iam: exposed the current account identifier to other contexts through the context facade.
 
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
