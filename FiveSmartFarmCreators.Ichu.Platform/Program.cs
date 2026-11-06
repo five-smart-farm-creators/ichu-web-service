@@ -48,6 +48,12 @@ builder.Services.AddIam(builder.Configuration);
 
 var app = builder.Build();
 
+// Pending migrations are applied on startup; the call does nothing when the schema is already up to date.
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+}
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
