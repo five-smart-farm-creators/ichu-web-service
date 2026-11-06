@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added Cattle Information registration, identification updates, ranch-scoped searches, productive-stage history, deactivation reasons, and same-ranch lot membership with optimistic concurrency.
+- Added Cattle Information REST resources, explicit authorization and profile integration ports, cross-context identity queries, EF Core mappings, and atomic persistence of pending lifecycle events.
+- Added Cattle Information contract documentation, Report traceability, and coordinator integration requirements for authentication, persistence, device information, and event delivery.
 - Added IoT Assets inventory, collar assignment history, unlimited water-controller assignment, water-trough configuration, REST resources, EF Core mappings and integration contracts; Shared and host wiring remain pending.
 - Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
 - Iam: separated command and query service contracts, implementations and the application ACL facade.
@@ -27,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Placed Cattle Information query results and integration responses alongside their application contracts, removing the generic Application model folder.
+- Documented Cattle Information domain types, lifecycle invariants, event semantics, and ranch-scoped repository contracts.
+- Documented application and persistence contracts for access checks, versioned changes, host integration adapters, and atomic event delivery.
+- Documented Cattle Information REST resources, endpoint behavior, and cross-context interfaces.
 - DashboardAnalytics: separated typed query contracts, internal query services, outbound ports, domain value objects, and REST resources following the reference module structure.
 - Iam: placed application result and port models alongside their command, query, and outbound service contracts.
 - Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
@@ -35,4 +42,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the module-level Cattle Information README.
 - Removed the template `WeatherForecast` model and controller.
