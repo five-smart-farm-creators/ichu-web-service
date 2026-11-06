@@ -4,6 +4,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using Microsoft.Extensions.Options;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.CommandServices;

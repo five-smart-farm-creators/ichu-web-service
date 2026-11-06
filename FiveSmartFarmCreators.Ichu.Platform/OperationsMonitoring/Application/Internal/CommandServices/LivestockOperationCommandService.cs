@@ -7,6 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Comm
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 

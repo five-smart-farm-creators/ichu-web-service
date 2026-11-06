@@ -1,3 +1,5 @@
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Errors;
+
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 
 /// <summary>
