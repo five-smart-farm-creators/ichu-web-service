@@ -1,7 +1,7 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
+namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
 
 /// <summary>
 ///     Projects advisory history and professional data without changing persisted state.

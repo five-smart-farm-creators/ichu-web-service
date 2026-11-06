@@ -1,6 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;

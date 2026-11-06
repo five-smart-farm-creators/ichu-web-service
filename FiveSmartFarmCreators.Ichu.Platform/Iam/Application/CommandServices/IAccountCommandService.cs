@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Commands;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;

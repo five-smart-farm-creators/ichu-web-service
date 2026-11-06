@@ -1,4 +1,3 @@
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;

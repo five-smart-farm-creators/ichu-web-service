@@ -1,4 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Resources;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Transform;
