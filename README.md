@@ -8,7 +8,7 @@
 
 Backend for the ICHU livestock management platform by SmartFarm. It is designed to serve the web and mobile applications and receive synchronized data from the Edge Gateway.
 
-The project currently contains the ASP.NET Core service foundation and OpenAPI configuration. Business modules, authentication, and database integration are planned work.
+The project contains the ASP.NET Core service foundation, the shared kernel, and the IAM module with Firebase authentication and PostgreSQL persistence. The remaining business modules are in progress.
 
 
 ## Run locally
@@ -25,7 +25,15 @@ dotnet run --project FiveSmartFarmCreators.Ichu.Platform --launch-profile http
 
 The HTTP profile starts the service at `http://localhost:5099` in Development. View the OpenAPI document at [http://localhost:5099/openapi/v1.json](http://localhost:5099/openapi/v1.json). Business endpoints will appear as controllers are implemented.
 
-The current startup does not connect to a database. Database configuration will be needed when persistence is implemented. Keep credentials outside version-controlled settings.
+The service needs a local PostgreSQL 17 database named `ichu` and applies pending EF Core migrations on startup. Keep credentials outside version-controlled settings and provide them as environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `ICHU_DB_PASSWORD` | Password of the `postgres` user, expanded into `ConnectionStrings:DefaultConnection`. |
+| `Firebase__ProjectId` | Firebase project identifier used to verify identity tokens. |
+| `Firebase__ApiKey` | Firebase Web API key used by the identity adapters. |
+
+Create a new migration after changing a mapping with `dotnet tool restore` and `dotnet ef migrations add <Name> --project FiveSmartFarmCreators.Ichu.Platform --output-dir Migrations`.
 
 
 ## Repository structure

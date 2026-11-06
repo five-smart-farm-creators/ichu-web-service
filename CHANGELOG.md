@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
+- Iam: separated command and query service contracts, implementations and the application ACL facade.
+- Iam: added scoped EF Core mappings and repositories, Firebase identity adapters and request identity resolution.
+- Iam: added REST resources, assemblers, controllers and module registration following the reference DDD structure.
+- Shared: added the shared kernel with the result and domain error model, base repository and unit of work, the PostgreSQL application context with audit timestamps, kebab-case routes and a global problem details exception handler.
+- Iam: registered the module in the application host with Firebase settings read from configuration.
+- Added the initial EF Core migration for the IAM schema, applied automatically on startup, and the local `dotnet-ef` tool.
+- Added the Scalar API reference at `/scalar` in Development.
+- Iam: exposed the current account identifier to other contexts through the context facade.
+
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
 - Added Humanizer and OpenAPI support.
@@ -20,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Iam: placed application result and port models alongside their command, query, and outbound service contracts.
+- Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.
 
