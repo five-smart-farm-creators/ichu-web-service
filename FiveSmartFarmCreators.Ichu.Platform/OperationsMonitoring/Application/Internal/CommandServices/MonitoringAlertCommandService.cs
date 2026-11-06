@@ -24,6 +24,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
 /// <param name="options">The technical limits of the module.</param>
 /// <param name="clock">The clock that provides the server time.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class MonitoringAlertCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
@@ -33,7 +34,8 @@ public class MonitoringAlertCommandService(
     IMonitoringRuleSetRepository ruleSets,
     IUnitOfWork unitOfWork,
     IOptions<OperationsMonitoringOptions> options,
-    TimeProvider clock) : IMonitoringAlertCommandService
+    TimeProvider clock,
+    ILogger<MonitoringAlertCommandService> logger) : IMonitoringAlertCommandService
 {
     /// <inheritdoc />
     public async Task<Result<MonitoringAlert, EAcknowledgeAlertError>> Handle(AcknowledgeAlertCommand command, CancellationToken cancellationToken)
@@ -71,8 +73,9 @@ public class MonitoringAlertCommandService(
             await unitOfWork.CompleteAsync(cancellationToken);
             return new Result<MonitoringAlert, EAcknowledgeAlertError>.Success(alert);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             unitOfWork.DiscardChanges();
             var current = await alerts.FindByIdAsync(command.AlertId, cancellationToken);
 
@@ -94,10 +97,12 @@ public class MonitoringAlertCommandService(
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(ex, "Rejected a synchronization entry: {Reason}", ex.Message);
             return AlertResult(command.Entry, SyncEntryStatus.Rejected, ex.Message);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             unitOfWork.DiscardChanges();
             return AlertResult(command.Entry, SyncEntryStatus.Conflict, "The alert changed concurrently or already exists; send it again if it was not stored.");
         }
@@ -112,10 +117,12 @@ public class MonitoringAlertCommandService(
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(ex, "Rejected a synchronization entry: {Reason}", ex.Message);
             return ChangeResult(command.Entry, SyncEntryStatus.Rejected, ex.Message);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             unitOfWork.DiscardChanges();
             return ChangeResult(command.Entry, SyncEntryStatus.Conflict, "The alert changed concurrently; send the change again if it was not applied.");
         }

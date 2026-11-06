@@ -19,12 +19,14 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="geofences">The geofence repository.</param>
 /// <param name="ruleRevisionService">The domain service that advances the rule revision.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class GeofenceCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     IGeofenceRepository geofences,
     IMonitoringRuleRevisionService ruleRevisionService,
-    IUnitOfWork unitOfWork) : IGeofenceCommandService
+    IUnitOfWork unitOfWork,
+    ILogger<GeofenceCommandService> logger) : IGeofenceCommandService
 {
     /// <inheritdoc />
     public async Task<Result<Geofence, EDefineGeofenceError>> Handle(DefineGeofenceCommand command, CancellationToken cancellationToken)
@@ -59,8 +61,9 @@ public class GeofenceCommandService(
             await unitOfWork.CompleteAsync(cancellationToken);
             return new Result<Geofence, EDefineGeofenceError>.Success(geofence);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             return new Result<Geofence, EDefineGeofenceError>.Failure(EDefineGeofenceError.ConcurrentModification);
         }
     }
@@ -92,8 +95,9 @@ public class GeofenceCommandService(
             await unitOfWork.CompleteAsync(cancellationToken);
             return new Result<Geofence, ERedefineGeofenceError>.Success(geofence);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             return new Result<Geofence, ERedefineGeofenceError>.Failure(ERedefineGeofenceError.ConcurrentModification);
         }
     }

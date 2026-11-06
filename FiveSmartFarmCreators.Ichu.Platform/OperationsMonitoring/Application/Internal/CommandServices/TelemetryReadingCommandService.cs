@@ -18,12 +18,14 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="readings">The telemetry reading repository.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
 /// <param name="options">The technical limits of the module.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class TelemetryReadingCommandService(
     IDeviceAttributionLookup deviceAttributions,
     ICattleLookup cattleLookup,
     ITelemetryReadingRepository readings,
     IUnitOfWork unitOfWork,
-    IOptions<OperationsMonitoringOptions> options) : ITelemetryReadingCommandService
+    IOptions<OperationsMonitoringOptions> options,
+    ILogger<TelemetryReadingCommandService> logger) : ITelemetryReadingCommandService
 {
     /// <inheritdoc />
     public async Task<SyncEntryResult> Handle(SynchronizeReadingCommand command, CancellationToken cancellationToken)
@@ -34,10 +36,12 @@ public class TelemetryReadingCommandService(
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(ex, "Rejected a synchronization entry: {Reason}", ex.Message);
             return EntryResult(command, SyncEntryStatus.Rejected, ex.Message);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             unitOfWork.DiscardChanges();
             return EntryResult(command, SyncEntryStatus.Conflict, "The reading changed concurrently or already exists; send it again if it was not stored.");
         }

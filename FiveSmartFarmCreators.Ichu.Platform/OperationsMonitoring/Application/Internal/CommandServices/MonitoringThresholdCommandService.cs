@@ -18,11 +18,13 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="thresholds">The monitoring threshold repository.</param>
 /// <param name="ruleRevisionService">The domain service that advances the rule revision.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class MonitoringThresholdCommandService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds,
     IMonitoringRuleRevisionService ruleRevisionService,
-    IUnitOfWork unitOfWork) : IMonitoringThresholdCommandService
+    IUnitOfWork unitOfWork,
+    ILogger<MonitoringThresholdCommandService> logger) : IMonitoringThresholdCommandService
 {
     /// <inheritdoc />
     public async Task<Result<MonitoringThreshold, EConfigureThresholdError>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken)
@@ -56,8 +58,9 @@ public class MonitoringThresholdCommandService(
             await unitOfWork.CompleteAsync(cancellationToken);
             return new Result<MonitoringThreshold, EConfigureThresholdError>.Success(threshold);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             return new Result<MonitoringThreshold, EConfigureThresholdError>.Failure(EConfigureThresholdError.ConcurrentModification);
         }
     }

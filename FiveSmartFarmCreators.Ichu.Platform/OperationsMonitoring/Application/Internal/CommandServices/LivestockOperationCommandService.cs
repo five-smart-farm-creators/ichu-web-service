@@ -21,13 +21,15 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
 /// <param name="options">The technical limits of the module.</param>
 /// <param name="clock">The clock that provides the server time.</param>
+/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class LivestockOperationCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     ILivestockOperationRepository operations,
     IUnitOfWork unitOfWork,
     IOptions<OperationsMonitoringOptions> options,
-    TimeProvider clock) : ILivestockOperationCommandService
+    TimeProvider clock,
+    ILogger<LivestockOperationCommandService> logger) : ILivestockOperationCommandService
 {
     /// <inheritdoc />
     public async Task<Result<LivestockOperationRegistration, ERegisterLivestockOperationError>> Handle(RegisterLivestockOperationCommand command, CancellationToken cancellationToken)
@@ -97,10 +99,12 @@ public class LivestockOperationCommandService(
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(ex, "Rejected a synchronization entry: {Reason}", ex.Message);
             return EntryResult(command, SyncEntryStatus.Rejected, ex.Message);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            logger.LogWarning(ex, "The changes could not be saved.");
             unitOfWork.DiscardChanges();
             return EntryResult(command, SyncEntryStatus.Conflict, "The operation changed concurrently or already exists; send it again if it was not stored.");
         }
