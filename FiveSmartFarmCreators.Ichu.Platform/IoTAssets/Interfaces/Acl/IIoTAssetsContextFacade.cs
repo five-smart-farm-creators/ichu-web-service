@@ -1,0 +1,28 @@
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+
+namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
+
+/// <summary>Exposes authorized device facts and integration operations without sharing IoT domain entities.</summary>
+public interface IIoTAssetsContextFacade
+{
+    /// <summary>Returns the current collar assignment, or null when no collar is currently assigned.</summary>
+    Task<Result<DeviceAssignmentSnapshot?>> GetCurrentCollarAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken);
+
+    /// <summary>Resolves the assignment at capture time using a start-inclusive, end-exclusive interval.</summary>
+    Task<Result<DeviceAssignmentSnapshot?>> ResolveAssignmentAtAsync(Guid ranchId, Guid deviceId,
+        DateTimeOffset instant, CancellationToken cancellationToken);
+
+    /// <summary>Returns active assignments for authorized configuration consumers; it does not implement the Edge API.</summary>
+    Task<Result<IReadOnlyList<DeviceAssignmentSnapshot>>> GetActiveAssignmentsAsync(Guid ranchId, CancellationToken cancellationToken);
+
+    Task<Result<WaterTroughConfiguration>> GetWaterTroughConfigurationAsync(Guid ranchId, Guid waterTroughId,
+        CancellationToken cancellationToken);
+
+    /// <summary>Accepts validated communication facts from an authorized integration, retaining original Edge and backend receipt times.</summary>
+    Task<Result> RegisterCommunicationAsync(Guid ranchId, Guid deviceId, DateTimeOffset communicatedAt,
+        DateTimeOffset receivedAt, int? batteryPercentage, CancellationToken cancellationToken);
+
+    /// <summary>Releases the inactive animal's current collar; a repeated notification returns zero without changing history.</summary>
+    Task<Result<int>> ReleaseCollarForInactiveCattleAsync(Guid ranchId, Guid cattleId, DateTimeOffset deactivatedAt,
+        CancellationToken cancellationToken);
+}
