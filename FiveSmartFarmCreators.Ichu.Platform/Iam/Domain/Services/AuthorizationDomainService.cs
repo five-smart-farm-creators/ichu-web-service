@@ -4,10 +4,10 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 
-/// <summary>Defines the Authorization Domain Service contract.</summary>
+/// <summary>Evaluates membership and advisory rules for ranch access.</summary>
 public sealed class AuthorizationDomainService
 {
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Evaluates account status, memberships and effective advisory scope.</summary>
     public bool CanAccessRanch(UserAccount account, Guid ranchId, AccessScope scope,
         IEnumerable<RanchMembership> memberships, IEnumerable<HerdAdvisory> advisories, DateTimeOffset now)
     {

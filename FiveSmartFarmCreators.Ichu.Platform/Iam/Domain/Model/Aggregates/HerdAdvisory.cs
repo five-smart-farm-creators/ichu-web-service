@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
-/// <summary>Defines the Herd Advisory contract.</summary>
+/// <summary>Controls the lifecycle of a veterinarian authorization over one ranch.</summary>
 public sealed class HerdAdvisory
 {
     private HerdAdvisory() { }
@@ -35,10 +35,10 @@ public sealed class HerdAdvisory
     public Guid? DecidedBy { get; private set; }
     public Guid Revision { get; private set; }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Checks whether a granted advisory remains effective at the supplied instant.</summary>
     public bool IsValidOn(DateTimeOffset now) => Status == AdvisoryStatus.Granted && GrantedAt <= now && ExpiresAt > now;
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Grants a pending advisory with an explicit scope and future expiration.</summary>
     public void Grant(Guid actorId, AccessScope scope, DateTimeOffset expiresAt, DateTimeOffset now)
     {
         if (Status != AdvisoryStatus.Pending) throw new IamException("conflict", "Only pending advisories can be granted.");
@@ -54,7 +54,7 @@ public sealed class HerdAdvisory
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Rejects a pending advisory or revokes an effective grant.</summary>
     public void End(Guid actorId, bool reject, DateTimeOffset now)
     {
         if (actorId == Guid.Empty || (reject ? Status != AdvisoryStatus.Pending : !IsValidOn(now)))
@@ -67,7 +67,7 @@ public sealed class HerdAdvisory
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Marks a granted advisory expired when its validity period ends.</summary>
     public void Expire(DateTimeOffset now)
     {
         if (Status != AdvisoryStatus.Granted || ExpiresAt > now) return;

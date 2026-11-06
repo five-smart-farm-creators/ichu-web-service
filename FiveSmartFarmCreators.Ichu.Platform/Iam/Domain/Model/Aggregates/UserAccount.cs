@@ -4,7 +4,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
-/// <summary>Defines the User Account contract.</summary>
+/// <summary>Protects account activation, professional role and temporary access lockout.</summary>
 public sealed class UserAccount
 {
     private UserAccount() { }
@@ -37,14 +37,14 @@ public sealed class UserAccount
     public int FailedAttempts { get; private set; }
     public Guid Revision { get; private set; }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Checks verification and temporary lockout at the supplied instant.</summary>
     public bool IsActive(DateTimeOffset now) =>
         Status != AccountStatus.PendingVerification && (BlockedUntil is null || BlockedUntil <= now);
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Checks whether the temporary account block is still effective.</summary>
     public bool IsBlocked(DateTimeOffset now) => BlockedUntil > now;
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Activates an account after external email verification.</summary>
     public void Verify()
     {
         if (Status == AccountStatus.PendingVerification)
@@ -54,7 +54,7 @@ public sealed class UserAccount
         }
     }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Records a failed attempt and applies the five-attempt lockout rule.</summary>
     public void RecordFailedAttempt(DateTimeOffset now)
     {
         if (IsBlocked(now)) return;
@@ -69,7 +69,7 @@ public sealed class UserAccount
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Clears failed attempts after an authorized sign-in.</summary>
     public void RecordSuccessfulAccess(DateTimeOffset now)
     {
         if (!IsActive(now)) throw new UnauthorizedAccessException("The account cannot access the platform.");
@@ -79,7 +79,7 @@ public sealed class UserAccount
         Revision = Guid.NewGuid();
     }
 
-    /// <summary>Executes the operation defined by this contract.</summary>
+    /// <summary>Updates professional data for a veterinarian account.</summary>
     public void CompleteProfile(ProfessionalProfile profile)
     {
         if (Role != UserRole.Veterinarian) throw new IamException("forbidden", "Only veterinarians have professional profiles.");

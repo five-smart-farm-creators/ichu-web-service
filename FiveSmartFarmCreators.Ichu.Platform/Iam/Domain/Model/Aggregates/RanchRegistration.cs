@@ -1,6 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
-/// <summary>Defines the Ranch Registration contract.</summary>
+/// <summary>Records the initial productive-unit registration.</summary>
 public sealed class RanchRegistration
 {
     private RanchRegistration() { }

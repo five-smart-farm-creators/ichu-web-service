@@ -1,4 +1,4 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
-/// <summary>Defines the Account Status contract.</summary>
+/// <summary>Identifies the verification and temporary blocking state of an account.</summary>
 public enum AccountStatus { PendingVerification, Active, TemporarilyBlocked }

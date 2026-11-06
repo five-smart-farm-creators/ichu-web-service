@@ -1,6 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 
-/// <summary>Defines the Professional Profile contract.</summary>
+/// <summary>Records the professional information declared by a veterinarian.</summary>
 public sealed class ProfessionalProfile
 {
     private ProfessionalProfile() { }

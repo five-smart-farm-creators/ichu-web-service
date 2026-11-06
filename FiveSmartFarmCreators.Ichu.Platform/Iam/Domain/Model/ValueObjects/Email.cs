@@ -2,7 +2,7 @@ using System.Net.Mail;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
-/// <summary>Defines the Email contract.</summary>
+/// <summary>Normalizes and validates an account email address.</summary>
 public sealed record Email
 {
     public Email(string value)

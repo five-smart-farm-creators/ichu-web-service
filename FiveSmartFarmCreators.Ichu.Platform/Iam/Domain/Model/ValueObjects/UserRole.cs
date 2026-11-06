@@ -1,4 +1,4 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
-/// <summary>Defines the User Role contract.</summary>
+/// <summary>Identifies the business role of an application account.</summary>
 public enum UserRole { RanchManager, FieldOperator, Veterinarian }

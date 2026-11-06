@@ -1,6 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 
-/// <summary>Defines the Ranch Membership contract.</summary>
+/// <summary>Associates an account with a ranch and its owner status.</summary>
 public sealed class RanchMembership
 {
     private RanchMembership() { }
@@ -17,7 +17,6 @@ public sealed class RanchMembership
     public Guid Id { get; private set; }
     public Guid UserAccountId { get; private set; }
     public Guid RanchId { get; private set; }
-    /// <summary>Executes the operation defined by this contract.</summary>
     public bool IsOwner { get; private set; }
 
 }

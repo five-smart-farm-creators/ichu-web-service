@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 
-/// <summary>Defines the I Iam Repository contract.</summary>
+/// <summary>Defines persistence operations needed by IAM use cases.</summary>
 public interface IIamRepository
 {
     Task<UserAccount?> FindAccountAsync(Guid id, CancellationToken cancellationToken);

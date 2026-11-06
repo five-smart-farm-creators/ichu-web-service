@@ -1,6 +1,6 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 
-/// <summary>Defines the Access Attempt contract.</summary>
+/// <summary>Records an account access attempt without retaining credentials.</summary>
 public sealed class AccessAttempt
 {
     private AccessAttempt() { }
@@ -17,7 +17,6 @@ public sealed class AccessAttempt
     public Guid Id { get; private set; }
     public Guid UserAccountId { get; private set; }
     public DateTimeOffset RecordedAt { get; private set; }
-    /// <summary>Executes the operation defined by this contract.</summary>
     public bool Succeeded { get; private set; }
 
 }
