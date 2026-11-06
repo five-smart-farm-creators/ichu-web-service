@@ -2,7 +2,6 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Error
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
