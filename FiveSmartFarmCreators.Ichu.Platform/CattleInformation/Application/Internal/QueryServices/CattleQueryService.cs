@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;

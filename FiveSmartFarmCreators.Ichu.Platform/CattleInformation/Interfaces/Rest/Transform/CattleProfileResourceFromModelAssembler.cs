@@ -1,4 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Resources;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest.Transform;
