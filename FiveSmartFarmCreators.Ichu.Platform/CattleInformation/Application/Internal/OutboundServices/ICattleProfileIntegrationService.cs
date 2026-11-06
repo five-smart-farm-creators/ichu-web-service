@@ -1,4 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.OutboundServices;
 

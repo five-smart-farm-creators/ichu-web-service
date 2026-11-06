@@ -1,4 +1,3 @@
-using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
 

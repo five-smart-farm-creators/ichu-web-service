@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Placed Cattle Information query results and integration responses alongside their application contracts, removing the generic Application model folder.
 - Documented Cattle Information domain types, lifecycle invariants, event semantics, and ranch-scoped repository contracts.
 - Documented application and persistence contracts for access checks, versioned changes, host integration adapters, and atomic event delivery.
 - Documented Cattle Information REST resources, endpoint behavior, and cross-context interfaces.
