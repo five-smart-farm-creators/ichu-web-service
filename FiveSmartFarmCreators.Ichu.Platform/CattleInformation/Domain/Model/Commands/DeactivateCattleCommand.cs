@@ -2,4 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Commands;
 
+/// <summary>
+/// Requests a dated exit while retaining the animal's identity and distinguishing death from other exit reasons.
+/// </summary>
 public sealed record DeactivateCattleCommand(Guid RanchId, Guid CattleId, ExitReason Reason, DateOnly ExitDate, Guid ExpectedVersion);

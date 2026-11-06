@@ -1,5 +1,8 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities;
 
+/// <summary>
+/// Links an animal to a lot in the same ranch and records the assignment instant in UTC.
+/// </summary>
 public sealed class LotMembership
 {
     private LotMembership()

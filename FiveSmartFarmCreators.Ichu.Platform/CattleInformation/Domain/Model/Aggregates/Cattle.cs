@@ -6,6 +6,9 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 
+/// <summary>
+/// Owns an animal's identity, productive-stage history and lifecycle within one ranch.
+/// </summary>
 public sealed class Cattle
 {
     private readonly List<StagePeriod> _stagePeriods = [];
@@ -15,6 +18,12 @@ public sealed class Cattle
     {
     }
 
+    /// <summary>
+    /// Registers an active animal whose first known stage starts on the registration date.
+    /// </summary>
+    /// <param name="command">The ranch, identity and current productive details to register.</param>
+    /// <param name="today">The registration date and upper bound for the birth date.</param>
+    /// <exception cref="CattleInformationException">An identifier, ear tag, classification or birth date is invalid.</exception>
     public Cattle(RegisterCattleCommand command, DateOnly today)
     {
         if (command.RanchId == Guid.Empty)
@@ -51,10 +60,22 @@ public sealed class Cattle
     public LifeStage CurrentStage { get; private set; }
     public ExitReason? ExitReason { get; private set; }
     public DateOnly? ExitDate { get; private set; }
+    /// <summary>
+    /// Gets the concurrency token advanced by animal changes and new lot assignments.
+    /// </summary>
     public Guid Version { get; private set; }
     public IReadOnlyCollection<StagePeriod> StagePeriods => _stagePeriods.AsReadOnly();
+    /// <summary>
+    /// Gets lifecycle facts awaiting persistence with the animal's state changes.
+    /// </summary>
     public IReadOnlyCollection<ICattleEvent> Events => _events.AsReadOnly();
 
+    /// <summary>
+    /// Corrects an active animal's details while keeping its birth date consistent with recorded stages.
+    /// </summary>
+    /// <param name="command">The proposed identity corrections and expected animal version.</param>
+    /// <param name="today">The latest permitted birth date.</param>
+    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the details violate its history.</exception>
     public void Update(UpdateCattleCommand command, DateOnly today)
     {
         ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
@@ -73,6 +94,12 @@ public sealed class Cattle
         Version = Guid.NewGuid();
     }
 
+    /// <summary>
+    /// Changes an active animal's stage and retains the preceding period, including same-day changes.
+    /// </summary>
+    /// <param name="command">The new stage, its effective date and the expected animal version.</param>
+    /// <param name="today">The latest permitted effective date.</param>
+    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the stage or effective date is invalid.</exception>
     public void ChangeStage(ChangeLifeStageCommand command, DateOnly today)
     {
         ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
@@ -100,6 +127,12 @@ public sealed class Cattle
             previousStage, CurrentStage, command.ValidFrom));
     }
 
+    /// <summary>
+    /// Records an exit and closes the current stage without deleting the animal or its history.
+    /// </summary>
+    /// <param name="command">The exit reason, calendar event date and expected animal version.</param>
+    /// <param name="today">The latest permitted exit date.</param>
+    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the exit reason or date is invalid.</exception>
     public void Deactivate(DeactivateCattleCommand command, DateOnly today)
     {
         ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
@@ -121,6 +154,9 @@ public sealed class Cattle
             Guid.NewGuid(), DateTimeOffset.UtcNow, RanchId, Id, command.Reason, command.ExitDate));
     }
 
+    /// <summary>
+    /// Clears pending lifecycle facts after their successful persistence with the animal.
+    /// </summary>
     public void ClearEvents()
     {
         _events.Clear();

@@ -2,4 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Commands;
 
+/// <summary>
+/// Requests an effective-dated stage change guarded by the animal's expected version.
+/// </summary>
 public sealed record ChangeLifeStageCommand(Guid RanchId, Guid CattleId, LifeStage LifeStage, DateOnly ValidFrom, Guid ExpectedVersion);

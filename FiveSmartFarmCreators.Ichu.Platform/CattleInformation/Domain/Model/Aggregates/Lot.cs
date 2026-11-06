@@ -5,6 +5,9 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 
+/// <summary>
+/// Groups animals for management while keeping their identities independent of lot membership.
+/// </summary>
 public sealed class Lot
 {
     private readonly List<LotMembership> _memberships = [];
@@ -44,6 +47,14 @@ public sealed class Lot
     public Guid Version { get; private set; }
     public IReadOnlyCollection<LotMembership> Memberships => _memberships.AsReadOnly();
 
+    /// <summary>
+    /// Adds active cattle from the same ranch; a new membership advances both versions to guard against concurrent deactivation.
+    /// </summary>
+    /// <param name="cattle">The animal whose identity remains independent of the lot.</param>
+    /// <param name="expectedVersion">The lot version observed by the caller.</param>
+    /// <param name="assignedAt">The assignment instant, stored in UTC for a new membership.</param>
+    /// <remarks>A duplicate membership leaves both versions unchanged when the expected lot version is current.</remarks>
+    /// <exception cref="CattleInformationException">The lot version is stale, the animal belongs to another ranch or is inactive, or the timestamp is missing.</exception>
     public void AddCattle(Cattle cattle, Guid expectedVersion, DateTimeOffset assignedAt)
     {
         ValidateVersion(expectedVersion);
@@ -72,6 +83,10 @@ public sealed class Lot
         Version = Guid.NewGuid();
     }
 
+    /// <summary>
+    /// Removes membership without deleting the animal; an absent membership leaves a current lot version unchanged.
+    /// </summary>
+    /// <exception cref="CattleInformationException">The lot version is stale or the animal identifier is empty.</exception>
     public void RemoveCattle(Guid cattleId, Guid expectedVersion)
     {
         ValidateVersion(expectedVersion);
