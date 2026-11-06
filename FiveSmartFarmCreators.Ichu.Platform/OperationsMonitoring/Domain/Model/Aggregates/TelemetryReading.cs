@@ -66,7 +66,7 @@ public sealed class TelemetryReading
         Id = Guid.NewGuid();
         ReadingId = readingId;
         DeviceId = deviceId;
-        RecordedAt = recordedAt.ToUniversalTime();
+        RecordedAt = MonitoringTime.Normalize(recordedAt);
         BodyTemperature = bodyTemperature;
         ActivityIndex = activityIndex;
         RuminationMinutes = ruminationMinutes;
@@ -75,7 +75,7 @@ public sealed class TelemetryReading
         GatewayId = gatewayId;
         RanchId = ranchId;
         CattleId = cattleId;
-        ReceivedAt = receivedAt.ToUniversalTime();
+        ReceivedAt = MonitoringTime.Normalize(receivedAt);
     }
 
     /// <summary>Gets the internal identifier of the stored reading.</summary>

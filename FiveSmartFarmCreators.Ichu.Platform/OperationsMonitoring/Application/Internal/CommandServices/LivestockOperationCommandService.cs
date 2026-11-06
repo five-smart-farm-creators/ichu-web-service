@@ -2,6 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Error
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
@@ -181,6 +182,6 @@ public sealed class LivestockOperationCommandService(
             throw new ArgumentException($"Missing or invalid required fields: {string.Join(", ", missing)}.");
         }
 
-        return (command.AnimalId!.Value, command.Type!.Value, command.OccurredAt!.Value.ToUniversalTime());
+        return (command.AnimalId!.Value, command.Type!.Value, MonitoringTime.Normalize(command.OccurredAt!.Value));
     }
 }

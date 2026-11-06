@@ -140,8 +140,7 @@ public sealed class Geofence
         return vertices;
     }
 
-    // Geofences cover grazing areas, so a planar test on longitude and latitude is enough to reject
-    // self-intersecting, overlapping or zero-area boundaries.
+    // A planar test on longitude and latitude is enough for grazing areas to reject crossing, overlapping or zero-area boundaries.
     private static void EnsureSimplePolygon(IReadOnlyList<GeoCoordinate> vertices)
     {
         var count = vertices.Count;

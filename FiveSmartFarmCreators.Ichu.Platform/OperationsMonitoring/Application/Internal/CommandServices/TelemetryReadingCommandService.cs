@@ -1,5 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
@@ -51,7 +52,7 @@ public sealed class TelemetryReadingCommandService(
             return EntryResult(command, SyncEntryStatus.Rejected, "The capture time is required.");
         }
 
-        var recordedAt = capturedAt.ToUniversalTime();
+        var recordedAt = MonitoringTime.Normalize(capturedAt);
         if (recordedAt > command.ReceivedAt + options.Value.ClockSkewTolerance)
         {
             return EntryResult(command, SyncEntryStatus.Rejected, "The capture time is ahead of the server clock beyond the configured tolerance.");

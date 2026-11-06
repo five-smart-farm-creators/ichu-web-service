@@ -67,7 +67,7 @@ public sealed class MonitoringAlert
         Status = AlertStatus.Pending;
         ConfigurationRevision = configurationRevision;
         RaisedAt = trigger.RecordedAt;
-        ReceivedAt = receivedAt.ToUniversalTime();
+        ReceivedAt = MonitoringTime.Normalize(receivedAt);
         Version = 1;
     }
 
@@ -334,7 +334,7 @@ public sealed class MonitoringAlert
             throw new ArgumentException("Only geofence alerts record a return to the permitted area.");
         }
 
-        var at = clearedAt.ToUniversalTime();
+        var at = MonitoringTime.Normalize(clearedAt);
         var operationData = at.ToString("O");
         if (FindReplay(operationId, AlertChangeKind.Cleared, operationData) is { } replay)
         {
@@ -393,7 +393,7 @@ public sealed class MonitoringAlert
             return replay;
         }
 
-        var at = acknowledgedAt.ToUniversalTime();
+        var at = MonitoringTime.Normalize(acknowledgedAt);
         if (at < RaisedAt)
         {
             throw new ArgumentException("Alert attention cannot precede the alert event.");

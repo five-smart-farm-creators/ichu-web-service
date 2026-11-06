@@ -18,8 +18,8 @@ public sealed record TimePeriod
             throw new ArgumentException("The period start must precede its end.");
         }
 
-        From = from.ToUniversalTime();
-        To = to.ToUniversalTime();
+        From = MonitoringTime.Normalize(from);
+        To = MonitoringTime.Normalize(to);
     }
 
     /// <summary>Gets the first instant of the period, in UTC.</summary>

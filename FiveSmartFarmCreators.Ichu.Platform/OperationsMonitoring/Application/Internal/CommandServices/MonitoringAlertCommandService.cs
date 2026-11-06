@@ -2,6 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Error
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices.ACL;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Patterns;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
@@ -375,7 +376,7 @@ public sealed class MonitoringAlertCommandService(
             return (default, "The event time is required.");
         }
 
-        var instant = eventTime.ToUniversalTime();
+        var instant = MonitoringTime.Normalize(eventTime);
         return instant > receivedAt + options.Value.ClockSkewTolerance
             ? (default, "The event time is ahead of the server clock beyond the configured tolerance.")
             : (instant, null);
