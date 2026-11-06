@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Entity representing a telemetry reading that supports an alert.
 /// </summary>
-public sealed class AlertEvidence
+public class AlertEvidence
 {
     private AlertEvidence()
     {

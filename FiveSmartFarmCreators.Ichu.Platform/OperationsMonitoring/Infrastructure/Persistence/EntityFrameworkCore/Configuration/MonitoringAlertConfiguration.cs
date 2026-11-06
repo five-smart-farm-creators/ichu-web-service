@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="MonitoringAlert"/> aggregate. The shared database context
 ///     applies it through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class MonitoringAlertConfiguration : IEntityTypeConfiguration<MonitoringAlert>
+public class MonitoringAlertConfiguration : IEntityTypeConfiguration<MonitoringAlert>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<MonitoringAlert> builder)

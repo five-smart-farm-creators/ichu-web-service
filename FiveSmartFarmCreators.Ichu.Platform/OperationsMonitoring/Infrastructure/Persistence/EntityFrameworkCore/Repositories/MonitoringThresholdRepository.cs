@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="MonitoringThreshold"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class MonitoringThresholdRepository(DbContext context) : IMonitoringThresholdRepository
+public class MonitoringThresholdRepository(DbContext context) : IMonitoringThresholdRepository
 {
     private DbSet<MonitoringThreshold> Thresholds => context.Set<MonitoringThreshold>();
 

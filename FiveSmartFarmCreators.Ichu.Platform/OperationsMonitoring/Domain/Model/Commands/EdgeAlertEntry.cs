@@ -16,7 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="ThresholdMaxValue">The upper bound of the evaluated threshold, for threshold alerts.</param>
 /// <param name="GeofenceId">The geofence that was left, for geofence alerts.</param>
 /// <param name="DistanceToBoundaryMeters">The distance to the geofence boundary in meters, for geofence alerts.</param>
-public sealed record EdgeAlertEntry(
+public record EdgeAlertEntry(
     Guid AlertId,
     Guid DeviceId,
     AlertType? Type,

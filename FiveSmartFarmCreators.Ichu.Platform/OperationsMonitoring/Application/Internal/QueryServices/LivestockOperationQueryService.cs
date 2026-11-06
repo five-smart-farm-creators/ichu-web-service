@@ -15,7 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="accessControl">The authorization port implemented with the IAM context.</param>
 /// <param name="cattleLookup">The anti-corruption port towards Cattle Information.</param>
 /// <param name="operations">The livestock operation repository.</param>
-public sealed class LivestockOperationQueryService(
+public class LivestockOperationQueryService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     ILivestockOperationRepository operations) : ILivestockOperationQueryService

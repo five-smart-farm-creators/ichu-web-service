@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <summary>
 ///     Technical limits bound from the "OperationsMonitoring" configuration section.
 /// </summary>
-public sealed class OperationsMonitoringOptions
+public class OperationsMonitoringOptions
 {
     /// <summary>Name of the configuration section the options are bound from.</summary>
     public const string SectionName = "OperationsMonitoring";

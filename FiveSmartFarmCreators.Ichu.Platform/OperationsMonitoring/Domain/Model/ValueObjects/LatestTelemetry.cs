@@ -13,7 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="ActivityIndex">The reading with the latest valid activity index.</param>
 /// <param name="RuminationMinutes">The reading with the latest valid rumination minutes.</param>
 /// <param name="LastKnownPosition">The reading with the latest valid position.</param>
-public sealed record LatestTelemetry(
+public record LatestTelemetry(
     Guid AnimalId,
     DateTimeOffset EvaluatedAt,
     TelemetryReading? LastReading,

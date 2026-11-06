@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Value object representing a half-open period: the start is included and the end is excluded.
 /// </summary>
-public sealed record TimePeriod
+public record TimePeriod
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="TimePeriod"/> value object.

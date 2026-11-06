@@ -5,7 +5,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     advances it so that Edge Gateways can detect new configuration and alerts can reference the revision used
 ///     to evaluate them.
 /// </summary>
-public sealed class MonitoringRuleSet
+public class MonitoringRuleSet
 {
     private MonitoringRuleSet()
     {

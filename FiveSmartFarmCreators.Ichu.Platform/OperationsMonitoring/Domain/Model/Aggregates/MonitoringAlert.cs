@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     The alert is raised at the capture time of its triggering reading, and every supporting reading must satisfy
 ///     the alert condition.
 /// </summary>
-public sealed class MonitoringAlert
+public class MonitoringAlert
 {
     /// <summary>Maximum number of characters of a finding or an action.</summary>
     public const int MaximumTextLength = 400;

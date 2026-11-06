@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="LivestockOperation"/> aggregate. The shared database context
 ///     applies it through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class LivestockOperationConfiguration : IEntityTypeConfiguration<LivestockOperation>
+public class LivestockOperationConfiguration : IEntityTypeConfiguration<LivestockOperation>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<LivestockOperation> builder)

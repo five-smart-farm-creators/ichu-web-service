@@ -9,4 +9,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     <see langword="false"/> when the same operation was already registered and its stored record is returned.
 /// </param>
 /// <param name="Operation">The stored livestock operation.</param>
-public sealed record LivestockOperationRegistration(bool Created, LivestockOperation Operation);
+public record LivestockOperationRegistration(bool Created, LivestockOperation Operation);

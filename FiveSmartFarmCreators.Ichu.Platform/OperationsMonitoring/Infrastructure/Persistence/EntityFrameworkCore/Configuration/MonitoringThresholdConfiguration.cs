@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="MonitoringThreshold"/> aggregate. The shared database context
 ///     applies it through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class MonitoringThresholdConfiguration : IEntityTypeConfiguration<MonitoringThreshold>
+public class MonitoringThresholdConfiguration : IEntityTypeConfiguration<MonitoringThreshold>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<MonitoringThreshold> builder)

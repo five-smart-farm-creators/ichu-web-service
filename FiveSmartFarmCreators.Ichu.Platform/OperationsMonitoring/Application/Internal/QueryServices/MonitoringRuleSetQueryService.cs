@@ -14,7 +14,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// </summary>
 /// <param name="gatewayAuthenticator">The port that verifies the gateway credentials.</param>
 /// <param name="ruleSets">The monitoring rule set repository.</param>
-public sealed class MonitoringRuleSetQueryService(
+public class MonitoringRuleSetQueryService(
     IEdgeGatewayAuthenticator gatewayAuthenticator,
     IMonitoringRuleSetRepository ruleSets) : IMonitoringRuleSetQueryService
 {

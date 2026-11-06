@@ -4,4 +4,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Query to retrieve an alert by its identifier.
 /// </summary>
 /// <param name="AlertId">The alert identifier.</param>
-public sealed record GetAlertByIdQuery(Guid AlertId);
+public record GetAlertByIdQuery(Guid AlertId);

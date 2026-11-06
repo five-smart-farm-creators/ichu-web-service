@@ -10,7 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="MonitoringRuleSet"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class MonitoringRuleSetRepository(DbContext context) : IMonitoringRuleSetRepository
+public class MonitoringRuleSetRepository(DbContext context) : IMonitoringRuleSetRepository
 {
     /// <inheritdoc />
     public async Task AddAsync(MonitoringRuleSet ruleSet, CancellationToken cancellationToken = default)

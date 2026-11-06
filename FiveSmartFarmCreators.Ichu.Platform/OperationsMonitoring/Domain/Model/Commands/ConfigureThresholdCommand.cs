@@ -10,7 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Metric">The metric the threshold applies to.</param>
 /// <param name="Range">The normal range of the metric.</param>
 /// <param name="Severity">The severity of the alerts raised when the range is exceeded.</param>
-public sealed record ConfigureThresholdCommand(
+public record ConfigureThresholdCommand(
     Guid RanchId,
     string LifeStage,
     MonitoredMetric Metric,

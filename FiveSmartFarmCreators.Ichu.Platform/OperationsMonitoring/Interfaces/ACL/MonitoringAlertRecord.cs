@@ -12,7 +12,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.AC
 /// <param name="RaisedAt">The capture time of the triggering reading.</param>
 /// <param name="AcknowledgedAt">The instant the alert received attention, if it did.</param>
 /// <param name="ClearedAt">The instant the animal returned to the permitted area, if it did.</param>
-public sealed record MonitoringAlertRecord(
+public record MonitoringAlertRecord(
     Guid AlertId,
     Guid CattleId,
     AlertType Type,

@@ -10,7 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Period">The requested half-open period.</param>
 /// <param name="OldestRetainedRecordedAt">The capture time of the oldest stored reading of the animal.</param>
 /// <param name="Readings">The requested page of readings.</param>
-public sealed record TelemetryHistory(
+public record TelemetryHistory(
     Guid AnimalId,
     TimePeriod Period,
     DateTimeOffset? OldestRetainedRecordedAt,

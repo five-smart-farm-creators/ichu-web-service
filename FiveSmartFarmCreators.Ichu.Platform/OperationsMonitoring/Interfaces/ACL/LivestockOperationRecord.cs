@@ -15,7 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.AC
 /// <param name="Product">The administered product, if any.</param>
 /// <param name="Dose">The administered dose, if any.</param>
 /// <param name="Observation">The free-text observation, if any.</param>
-public sealed record LivestockOperationRecord(
+public record LivestockOperationRecord(
     Guid OperationId,
     Guid RanchId,
     Guid CattleId,

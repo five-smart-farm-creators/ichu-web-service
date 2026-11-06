@@ -4,7 +4,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Value object representing a metric captured by a device: a finite value, an explicitly invalid capture with
 ///     its reason, or no capture at all. Absent and invalid captures never carry a substitute value.
 /// </summary>
-public sealed record Measurement
+public record Measurement
 {
     /// <summary>Maximum number of characters of an invalid-capture reason.</summary>
     public const int MaximumReasonLength = 200;

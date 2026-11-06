@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="MonitoringRuleSet"/> aggregate. The shared database context
 ///     applies it through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class MonitoringRuleSetConfiguration : IEntityTypeConfiguration<MonitoringRuleSet>
+public class MonitoringRuleSetConfiguration : IEntityTypeConfiguration<MonitoringRuleSet>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<MonitoringRuleSet> builder)

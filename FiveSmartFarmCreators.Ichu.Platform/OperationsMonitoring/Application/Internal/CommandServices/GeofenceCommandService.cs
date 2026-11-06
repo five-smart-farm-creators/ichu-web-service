@@ -19,7 +19,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="geofences">The geofence repository.</param>
 /// <param name="ruleRevisionService">The domain service that advances the rule revision.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
-public sealed class GeofenceCommandService(
+public class GeofenceCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     IGeofenceRepository geofences,

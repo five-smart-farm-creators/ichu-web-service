@@ -18,7 +18,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="readings">The telemetry reading repository.</param>
 /// <param name="options">The technical limits of the module.</param>
 /// <param name="clock">The clock that provides the evaluation time.</param>
-public sealed class TelemetryReadingQueryService(
+public class TelemetryReadingQueryService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     ITelemetryReadingRepository readings,

@@ -13,7 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// </summary>
 /// <param name="accessControl">The authorization port implemented with the IAM context.</param>
 /// <param name="thresholds">The monitoring threshold repository.</param>
-public sealed class MonitoringThresholdQueryService(
+public class MonitoringThresholdQueryService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds) : IMonitoringThresholdQueryService
 {

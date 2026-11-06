@@ -16,7 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="accessControl">The authorization port implemented with the IAM context.</param>
 /// <param name="alerts">The monitoring alert repository.</param>
 /// <param name="options">The technical limits of the module.</param>
-public sealed class MonitoringAlertQueryService(
+public class MonitoringAlertQueryService(
     IMonitoringAccessControl accessControl,
     IMonitoringAlertRepository alerts,
     IOptions<OperationsMonitoringOptions> options) : IMonitoringAlertQueryService

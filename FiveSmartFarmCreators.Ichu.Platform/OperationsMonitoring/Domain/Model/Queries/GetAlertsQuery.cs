@@ -10,4 +10,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="AnimalId">Only alerts of this animal, when given.</param>
 /// <param name="Page">The one-based page number.</param>
 /// <param name="PageSize">The maximum number of alerts per page.</param>
-public sealed record GetAlertsQuery(Guid RanchId, AlertStatus? Status, Guid? AnimalId, int Page, int PageSize);
+public record GetAlertsQuery(Guid RanchId, AlertStatus? Status, Guid? AnimalId, int Page, int PageSize);

@@ -7,7 +7,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Unit of work implementation that commits the monitoring changes through the shared database context.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class UnitOfWork(DbContext context) : IUnitOfWork
+public class UnitOfWork(DbContext context) : IUnitOfWork
 {
     private const string ModelNamespace = "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model";
 

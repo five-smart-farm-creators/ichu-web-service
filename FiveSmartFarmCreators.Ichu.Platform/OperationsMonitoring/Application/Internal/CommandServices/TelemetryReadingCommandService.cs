@@ -18,7 +18,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="readings">The telemetry reading repository.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
 /// <param name="options">The technical limits of the module.</param>
-public sealed class TelemetryReadingCommandService(
+public class TelemetryReadingCommandService(
     IDeviceAttributionLookup deviceAttributions,
     ICattleLookup cattleLookup,
     ITelemetryReadingRepository readings,

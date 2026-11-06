@@ -6,7 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Entity representing an operation applied to an alert. The operation identifier makes retries idempotent and
 ///     the stored operation data distinguishes an identical retry from a different operation that reuses the identifier.
 /// </summary>
-public sealed class AlertChange
+public class AlertChange
 {
     private AlertChange()
     {

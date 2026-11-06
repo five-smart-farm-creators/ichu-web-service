@@ -10,7 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.AC
 /// <param name="readings">The telemetry reading repository.</param>
 /// <param name="alerts">The monitoring alert repository.</param>
 /// <param name="operations">The livestock operation repository.</param>
-public sealed class OperationsMonitoringContextFacade(
+public class OperationsMonitoringContextFacade(
     ITelemetryReadingRepository readings,
     IMonitoringAlertRepository alerts,
     ILivestockOperationRepository operations) : IOperationsMonitoringContextFacade

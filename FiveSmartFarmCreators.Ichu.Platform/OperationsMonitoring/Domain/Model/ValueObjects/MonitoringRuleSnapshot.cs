@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Revision">The rule revision the view corresponds to.</param>
 /// <param name="Thresholds">The thresholds configured at that revision.</param>
 /// <param name="Geofences">The geofences defined at that revision.</param>
-public sealed record MonitoringRuleSnapshot(
+public record MonitoringRuleSnapshot(
     Guid RanchId,
     long Revision,
     IReadOnlyList<MonitoringThreshold> Thresholds,

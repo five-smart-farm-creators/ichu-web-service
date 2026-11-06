@@ -13,7 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// </summary>
 /// <param name="accessControl">The authorization port implemented with the IAM context.</param>
 /// <param name="geofences">The geofence repository.</param>
-public sealed class GeofenceQueryService(
+public class GeofenceQueryService(
     IMonitoringAccessControl accessControl,
     IGeofenceRepository geofences) : IGeofenceQueryService
 {

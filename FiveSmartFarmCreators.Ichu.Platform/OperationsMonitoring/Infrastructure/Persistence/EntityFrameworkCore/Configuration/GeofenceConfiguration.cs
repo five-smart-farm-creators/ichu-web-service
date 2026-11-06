@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="Geofence"/> aggregate. The shared database context applies it
 ///     through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class GeofenceConfiguration : IEntityTypeConfiguration<Geofence>
+public class GeofenceConfiguration : IEntityTypeConfiguration<Geofence>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<Geofence> builder)

@@ -16,7 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Finding">What the author found, for attention changes.</param>
 /// <param name="Action">What the author did, for attention changes.</param>
 /// <param name="ExpectedVersion">The alert version last read by the author, for attention changes.</param>
-public sealed record EdgeAlertChangeEntry(
+public record EdgeAlertChangeEntry(
     Guid OperationId,
     Guid AlertId,
     AlertChangeKind? Kind,

@@ -21,7 +21,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
 /// <param name="options">The technical limits of the module.</param>
 /// <param name="clock">The clock that provides the server time.</param>
-public sealed class LivestockOperationCommandService(
+public class LivestockOperationCommandService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
     ILivestockOperationRepository operations,

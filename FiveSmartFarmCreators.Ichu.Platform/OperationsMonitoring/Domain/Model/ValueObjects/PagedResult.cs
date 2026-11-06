@@ -8,4 +8,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Page">The one-based page number.</param>
 /// <param name="PageSize">The maximum number of items per page.</param>
 /// <param name="TotalCount">The total number of items across all pages.</param>
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
+public record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);

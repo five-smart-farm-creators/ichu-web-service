@@ -17,7 +17,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="alertCommandService">The command service that synchronizes alerts and alert changes.</param>
 /// <param name="options">The technical limits of the module.</param>
 /// <param name="clock">The clock that provides the reception time.</param>
-public sealed class EdgeSynchronizationCommandService(
+public class EdgeSynchronizationCommandService(
     IEdgeGatewayAuthenticator gatewayAuthenticator,
     ITelemetryReadingCommandService readingCommandService,
     IMonitoringAlertCommandService alertCommandService,

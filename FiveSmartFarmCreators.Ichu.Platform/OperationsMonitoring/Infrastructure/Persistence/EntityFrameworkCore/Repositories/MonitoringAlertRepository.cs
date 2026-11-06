@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="MonitoringAlert"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class MonitoringAlertRepository(DbContext context) : IMonitoringAlertRepository
+public class MonitoringAlertRepository(DbContext context) : IMonitoringAlertRepository
 {
     private DbSet<MonitoringAlert> Alerts => context.Set<MonitoringAlert>();
 

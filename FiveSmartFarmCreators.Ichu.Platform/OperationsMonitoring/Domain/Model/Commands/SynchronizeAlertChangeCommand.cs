@@ -7,4 +7,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="RanchId">The ranch served by the gateway.</param>
 /// <param name="Entry">The alert change to synchronize.</param>
 /// <param name="ReceivedAt">The instant the cloud received the batch.</param>
-public sealed record SynchronizeAlertChangeCommand(Guid GatewayId, Guid RanchId, EdgeAlertChangeEntry Entry, DateTimeOffset ReceivedAt);
+public record SynchronizeAlertChangeCommand(Guid GatewayId, Guid RanchId, EdgeAlertChangeEntry Entry, DateTimeOffset ReceivedAt);

@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Value object representing a geographic point in decimal degrees.
 /// </summary>
-public sealed record GeoCoordinate
+public record GeoCoordinate
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="GeoCoordinate"/> value object.

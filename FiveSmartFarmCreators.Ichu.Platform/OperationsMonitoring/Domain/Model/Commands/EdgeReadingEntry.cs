@@ -11,7 +11,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="RuminationMinutes">The captured rumination minutes.</param>
 /// <param name="BatteryPercent">The captured battery level in percent.</param>
 /// <param name="Position">The captured GPS position.</param>
-public sealed record EdgeReadingEntry(
+public record EdgeReadingEntry(
     Guid ReadingId,
     Guid DeviceId,
     DateTimeOffset? RecordedAt,

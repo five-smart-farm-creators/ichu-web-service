@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// </summary>
 /// <param name="GatewayId">The gateway identifier.</param>
 /// <param name="RanchId">The ranch the gateway serves.</param>
-public sealed record EdgeGatewayPrincipal(Guid GatewayId, Guid RanchId);
+public record EdgeGatewayPrincipal(Guid GatewayId, Guid RanchId);

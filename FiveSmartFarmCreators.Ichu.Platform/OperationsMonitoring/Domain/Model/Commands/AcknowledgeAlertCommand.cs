@@ -8,4 +8,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Finding">What the user found.</param>
 /// <param name="Action">What the user did, if anything.</param>
 /// <param name="ExpectedVersion">The alert version last read by the client.</param>
-public sealed record AcknowledgeAlertCommand(Guid AlertId, Guid OperationId, string Finding, string? Action, int ExpectedVersion);
+public record AcknowledgeAlertCommand(Guid AlertId, Guid OperationId, string Finding, string? Action, int ExpectedVersion);

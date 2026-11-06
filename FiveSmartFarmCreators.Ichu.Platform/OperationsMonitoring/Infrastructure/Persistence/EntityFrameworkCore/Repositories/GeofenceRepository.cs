@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="Geofence"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class GeofenceRepository(DbContext context) : IGeofenceRepository
+public class GeofenceRepository(DbContext context) : IGeofenceRepository
 {
     private DbSet<Geofence> Geofences => context.Set<Geofence>();
 

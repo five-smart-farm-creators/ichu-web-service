@@ -18,7 +18,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="thresholds">The monitoring threshold repository.</param>
 /// <param name="ruleRevisionService">The domain service that advances the rule revision.</param>
 /// <param name="unitOfWork">The unit of work used to commit changes.</param>
-public sealed class MonitoringThresholdCommandService(
+public class MonitoringThresholdCommandService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds,
     IMonitoringRuleRevisionService ruleRevisionService,

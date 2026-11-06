@@ -7,7 +7,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     does not supply default clinical ranges; an animal whose stage has no configured threshold cannot produce a
 ///     threshold alert.
 /// </summary>
-public sealed class MonitoringThreshold
+public class MonitoringThreshold
 {
     /// <summary>Maximum number of characters of a life stage name.</summary>
     public const int MaximumLifeStageLength = 40;

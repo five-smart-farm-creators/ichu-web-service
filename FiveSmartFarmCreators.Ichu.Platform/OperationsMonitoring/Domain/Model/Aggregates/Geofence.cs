@@ -7,7 +7,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Aggregate root representing the permitted grazing area of one lot. Its boundary is a closed, simple polygon;
 ///     positions whose declared accuracy exceeds the tolerance are not conclusive for the geofence.
 /// </summary>
-public sealed class Geofence
+public class Geofence
 {
     /// <summary>Maximum number of characters of a geofence name.</summary>
     public const int MaximumNameLength = 80;

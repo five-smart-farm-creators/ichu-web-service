@@ -4,7 +4,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Value object representing a captured GPS position with its declared accuracy in meters, an invalid capture
 ///     with its reason, or no capture.
 /// </summary>
-public sealed record PositionMeasurement
+public record PositionMeasurement
 {
     private PositionMeasurement(double? latitude, double? longitude, double? accuracyMeters, string? invalidReason)
     {

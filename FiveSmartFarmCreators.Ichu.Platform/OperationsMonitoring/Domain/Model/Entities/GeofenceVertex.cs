@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Entity representing one vertex of a geofence boundary.
 /// </summary>
-public sealed class GeofenceVertex
+public class GeofenceVertex
 {
     private GeofenceVertex()
     {

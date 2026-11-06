@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Entity Framework Core mapping of the <see cref="TelemetryReading"/> aggregate. The shared database context
 ///     applies it through ApplyConfigurationsFromAssembly.
 /// </summary>
-public sealed class TelemetryReadingConfiguration : IEntityTypeConfiguration<TelemetryReading>
+public class TelemetryReadingConfiguration : IEntityTypeConfiguration<TelemetryReading>
 {
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<TelemetryReading> builder)

@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="LivestockOperation"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class LivestockOperationRepository(DbContext context) : ILivestockOperationRepository
+public class LivestockOperationRepository(DbContext context) : ILivestockOperationRepository
 {
     private DbSet<LivestockOperation> Operations => context.Set<LivestockOperation>();
 

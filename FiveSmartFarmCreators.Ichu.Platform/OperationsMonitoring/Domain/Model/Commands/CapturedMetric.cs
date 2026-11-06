@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// </summary>
 /// <param name="Value">The captured value, if any.</param>
 /// <param name="InvalidReason">The reason the device marked the capture as invalid, if it did.</param>
-public sealed record CapturedMetric(double? Value, string? InvalidReason);
+public record CapturedMetric(double? Value, string? InvalidReason);

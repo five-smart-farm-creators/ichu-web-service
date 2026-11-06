@@ -9,7 +9,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 ///     Repository implementation for <see cref="TelemetryReading"/> aggregates using Entity Framework Core.
 /// </summary>
 /// <param name="context">The shared database context.</param>
-public sealed class TelemetryReadingRepository(DbContext context) : ITelemetryReadingRepository
+public class TelemetryReadingRepository(DbContext context) : ITelemetryReadingRepository
 {
     private IQueryable<TelemetryReading> Readings => context.Set<TelemetryReading>().AsNoTracking();
 

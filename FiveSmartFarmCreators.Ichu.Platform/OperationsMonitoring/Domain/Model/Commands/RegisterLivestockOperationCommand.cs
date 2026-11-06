@@ -13,7 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Observation">A free-text observation, if any.</param>
 /// <param name="Product">The administered product, only for clinical interventions.</param>
 /// <param name="Dose">The administered dose, only for clinical interventions.</param>
-public sealed record RegisterLivestockOperationCommand(
+public record RegisterLivestockOperationCommand(
     Guid OperationId,
     Guid? AnimalId,
     OperationType? Type,

@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Value object representing the configured normal range of a metric. Values outside it exceed the threshold.
 /// </summary>
-public sealed record ThresholdRange
+public record ThresholdRange
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="ThresholdRange"/> value object.

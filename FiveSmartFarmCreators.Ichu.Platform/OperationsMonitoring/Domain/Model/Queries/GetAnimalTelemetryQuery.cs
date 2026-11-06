@@ -9,4 +9,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Period">The half-open period of the capture times.</param>
 /// <param name="Page">The one-based page number.</param>
 /// <param name="PageSize">The maximum number of readings per page.</param>
-public sealed record GetAnimalTelemetryQuery(Guid AnimalId, TimePeriod Period, int Page, int PageSize);
+public record GetAnimalTelemetryQuery(Guid AnimalId, TimePeriod Period, int Page, int PageSize);

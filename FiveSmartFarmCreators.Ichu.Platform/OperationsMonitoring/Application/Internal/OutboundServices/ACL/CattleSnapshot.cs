@@ -7,7 +7,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <param name="RanchId">The ranch that owns the animal.</param>
 /// <param name="IncorporatedAt">The instant the animal joined the herd.</param>
 /// <param name="DeactivatedAt">The instant the animal left the herd, if it did.</param>
-public sealed record CattleSnapshot(Guid CattleId, Guid RanchId, DateTimeOffset IncorporatedAt, DateTimeOffset? DeactivatedAt)
+public record CattleSnapshot(Guid CattleId, Guid RanchId, DateTimeOffset IncorporatedAt, DateTimeOffset? DeactivatedAt)
 {
     /// <summary>
     ///     Determines whether the animal belonged to the herd at an instant.

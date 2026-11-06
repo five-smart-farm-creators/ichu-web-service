@@ -7,7 +7,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Servic
 ///     Domain service that implements <see cref="IMonitoringRuleRevisionService"/> over the rule set repository.
 /// </summary>
 /// <param name="ruleSets">The rule set repository.</param>
-public sealed class MonitoringRuleRevisionService(IMonitoringRuleSetRepository ruleSets) : IMonitoringRuleRevisionService
+public class MonitoringRuleRevisionService(IMonitoringRuleSetRepository ruleSets) : IMonitoringRuleRevisionService
 {
     /// <inheritdoc />
     public async Task<long> AdvanceAsync(Guid ranchId, CancellationToken cancellationToken = default)

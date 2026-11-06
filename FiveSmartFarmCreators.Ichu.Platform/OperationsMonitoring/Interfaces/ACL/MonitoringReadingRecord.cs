@@ -13,7 +13,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.AC
 /// <param name="Latitude">The latitude in decimal degrees.</param>
 /// <param name="Longitude">The longitude in decimal degrees.</param>
 /// <param name="AccuracyMeters">The declared position accuracy in meters.</param>
-public sealed record MonitoringReadingRecord(
+public record MonitoringReadingRecord(
     Guid ReadingId,
     Guid DeviceId,
     Guid CattleId,

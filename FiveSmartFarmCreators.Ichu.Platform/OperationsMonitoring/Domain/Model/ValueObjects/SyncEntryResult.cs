@@ -8,4 +8,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <param name="Status">The outcome of the entry.</param>
 /// <param name="Reason">The reason for the outcome, when it needs one.</param>
 /// <param name="RelatedAlertId">The stored alert the entry belongs to, when it joined or changed an alert.</param>
-public sealed record SyncEntryResult(SyncEntryKind Kind, Guid Id, SyncEntryStatus Status, string? Reason, Guid? RelatedAlertId = null);
+public record SyncEntryResult(SyncEntryKind Kind, Guid Id, SyncEntryStatus Status, string? Reason, Guid? RelatedAlertId = null);
