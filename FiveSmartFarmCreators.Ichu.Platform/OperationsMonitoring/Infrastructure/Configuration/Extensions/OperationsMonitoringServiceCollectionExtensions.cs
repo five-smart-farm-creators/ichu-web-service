@@ -10,7 +10,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Pe
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 
 /// <summary>
 ///     Registers the services of the Operations and Monitoring bounded context.
