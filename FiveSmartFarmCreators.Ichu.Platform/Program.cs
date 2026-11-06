@@ -8,6 +8,8 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.Enti
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 using Microsoft.EntityFrameworkCore;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.DependencyInjection;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,12 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
 });
+builder.Services.AddSwaggerGen();
+
+var planningConnectionString = builder.Configuration.GetConnectionString("Planning")
+    ?? throw new InvalidOperationException(
+        "Configure the Planning PostgreSQL connection string using ConnectionStrings:Planning.");
+builder.Services.AddPlanning(planningConnectionString);
 
 builder.Services.AddCors(options =>
 {
@@ -73,8 +81,14 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "ICHU API v1"));
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ICHU API v1");
+    });
 }
+
+await app.Services.InitializePlanningDatabaseAsync();
 
 app.UseCors("AllowAllPolicy");
 app.UseHttpsRedirection();
