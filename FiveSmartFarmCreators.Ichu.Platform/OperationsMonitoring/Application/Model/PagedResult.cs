@@ -1,7 +1,7 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
-///     Value object representing one page of a query result.
+///     Read model of one page of a query result.
 /// </summary>
 /// <typeparam name="T">The type of the listed items.</typeparam>
 /// <param name="Items">The items of the page.</param>

@@ -1,9 +1,10 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
-///     Value object representing the readings of an animal for a period, with the oldest retained capture so that
+///     Read model of the readings of an animal for a period, with the oldest retained capture so that
 ///     callers can detect truncated history.
 /// </summary>
 /// <param name="AnimalId">The animal the readings belong to.</param>

@@ -1,9 +1,9 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
-///     Value object representing the most recent valid value of each indicator, each from its own reading. A missing
+///     Read model of the most recent valid value of each indicator, each from its own reading. A missing
 ///     reading means that no valid measurement exists; staleness is evaluated against <paramref name="EvaluatedAt"/>.
 /// </summary>
 /// <param name="AnimalId">The animal the readings belong to.</param>

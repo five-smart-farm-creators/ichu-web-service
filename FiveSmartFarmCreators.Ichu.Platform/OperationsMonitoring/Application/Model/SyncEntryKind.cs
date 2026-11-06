@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
 ///     Identifies the kind of entry that a client synchronizes.

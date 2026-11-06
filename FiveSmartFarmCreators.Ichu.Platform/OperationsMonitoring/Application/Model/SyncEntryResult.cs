@@ -1,7 +1,7 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
-///     Value object representing the individual result of one synchronized entry.
+///     Read model of the individual result of one synchronized entry.
 /// </summary>
 /// <param name="Kind">The kind of entry.</param>
 /// <param name="Id">The identifier the client generated for the entry.</param>

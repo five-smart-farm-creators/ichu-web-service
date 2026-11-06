@@ -1,5 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;

@@ -1,6 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 
