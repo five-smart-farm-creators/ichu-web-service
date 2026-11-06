@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Iam: added scoped EF Core mappings and repositories, Firebase identity adapters and request identity resolution.
 - Iam: added REST resources, assemblers, controllers and module registration following the reference DDD structure.
 - DashboardAnalytics: added authorized herd indicators, trends, animal comparisons, epidemiological curves, portfolio summaries and subscription-gated JSON and CSV exports.
+- Shared: added the shared kernel with the result and domain error model, base repository and unit of work, the PostgreSQL application context with audit timestamps, kebab-case routes and a global problem details exception handler.
+- Iam: registered the module in the application host with Firebase settings read from configuration.
 
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
