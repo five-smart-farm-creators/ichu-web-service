@@ -15,4 +15,11 @@ public interface IIamContextFacade
     ///     Checks a requested scope, including grant expiry and account lockout.
     /// </summary>
     Task<bool> CanAccessRanchAsync(Guid accountId, Guid ranchId, AccessScope scope, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Resolves the active verified account of the current request.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
+    /// <returns>The account identifier, or null when the request has no active verified account.</returns>
+    Task<Guid?> FetchCurrentAccountIdAsync(CancellationToken cancellationToken);
 }
