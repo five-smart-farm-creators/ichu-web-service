@@ -1,8 +1,9 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Acl;
 
 /// <summary>
 ///     Implements <see cref="IOperationsMonitoringContextFacade"/> over the monitoring repositories.

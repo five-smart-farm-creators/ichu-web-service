@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 
 /// <summary>
 ///     Read contract of Operations and Monitoring for other bounded contexts. It returns immutable projections and

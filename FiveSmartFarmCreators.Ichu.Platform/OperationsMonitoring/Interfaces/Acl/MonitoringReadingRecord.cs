@@ -1,4 +1,4 @@
-namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.ACL;
+namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 
 /// <summary>
 ///     A reading attributed to an animal. Null metrics were invalid or not captured; they are never zero substitutes.
