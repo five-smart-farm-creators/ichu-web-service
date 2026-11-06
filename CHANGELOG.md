@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added IoT Assets inventory, collar assignment history, unlimited water-controller assignment, water-trough configuration, REST resources, EF Core mappings and integration contracts; Shared and host wiring remain pending.
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
 - Added Humanizer and OpenAPI support.
