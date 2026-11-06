@@ -2,6 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
@@ -18,8 +19,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 public static class OperationsMonitoringServiceCollectionExtensions
 {
     /// <summary>
-    ///     Registers the module services. The host must also register the shared DbContext and real implementations
-    ///     of IMonitoringAccessControl, IEdgeGatewayAuthenticator, ICattleLookup and IDeviceAttributionLookup; no
+    ///     Registers the module services. The host must also register the shared application context, the IAM module
+    ///     and real implementations of IEdgeGatewayAuthenticator, ICattleLookup and IDeviceAttributionLookup; no
     ///     permissive or empty implementation is registered here.
     /// </summary>
     /// <param name="services">The service collection of the host.</param>
@@ -39,6 +40,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IOperationsMonitoringUnitOfWork, OperationsMonitoringUnitOfWork>();
 
         services.AddScoped<IMonitoringRuleRevisionService, MonitoringRuleRevisionService>();
+        services.AddScoped<IMonitoringAccessControl, IamOperationsMonitoringAccessControl>();
 
         services.AddScoped<ITelemetryReadingCommandService, TelemetryReadingCommandService>();
         services.AddScoped<IMonitoringAlertCommandService, MonitoringAlertCommandService>();
