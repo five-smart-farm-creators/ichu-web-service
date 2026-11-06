@@ -15,7 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         builder.AddInterceptors(new AuditableEntityInterceptor());
         base.OnConfiguring(builder);
-    }
+    } 
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder builder)
