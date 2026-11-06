@@ -32,6 +32,8 @@ public class TelemetryController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing one result per entry, or the failure of the request.</returns>
     [HttpPost("api/v1/telemetry/batch")]
+    [EndpointSummary("Synchronize an Edge Gateway batch")]
+    [EndpointDescription("Receives readings, alerts and alert changes from an Edge Gateway with an individual result per entry. Requires Edge Gateway credentials.")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -57,6 +59,8 @@ public class TelemetryController(
     /// <param name="pageSize">The maximum number of readings per page.</param>
     /// <returns>A response as an action result containing the readings, or the failure of the request.</returns>
     [HttpGet("api/v1/animals/{animalId:guid}/telemetry")]
+    [EndpointSummary("List the telemetry of an animal")]
+    [EndpointDescription("Returns the readings of an authorized animal captured within the half-open period, ordered by capture time.")]
     [Authorize]
     [ProducesResponseType(typeof(TelemetryHistoryResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -96,6 +100,8 @@ public class TelemetryController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the latest indicators, or the failure of the request.</returns>
     [HttpGet("api/v1/animals/{animalId:guid}/telemetry/latest")]
+    [EndpointSummary("Get the latest telemetry of an animal")]
+    [EndpointDescription("Returns the latest valid value of each indicator and the last known position of an authorized animal, with their capture times.")]
     [Authorize]
     [ProducesResponseType(typeof(LatestTelemetryResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

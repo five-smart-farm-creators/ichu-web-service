@@ -32,6 +32,8 @@ public class LivestockOperationsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the stored operation, or the failure of the request.</returns>
     [HttpPost("api/v1/field-events")]
+    [EndpointSummary("Register a field event")]
+    [EndpointDescription("Registers a field event observed by an operator. A retry with the same operation returns 200 with the stored record.")]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -67,6 +69,8 @@ public class LivestockOperationsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the stored operation, or the failure of the request.</returns>
     [HttpPost("api/v1/clinical-interventions")]
+    [EndpointSummary("Register a clinical intervention")]
+    [EndpointDescription("Registers a clinical intervention applied by an authorized veterinarian. A retry with the same operation returns 200 with the stored record.")]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -102,6 +106,8 @@ public class LivestockOperationsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing one result per operation, or the failure of the request.</returns>
     [HttpPost("api/v1/mobile-sync/batch")]
+    [EndpointSummary("Synchronize a mobile batch")]
+    [EndpointDescription("Synchronizes operations recorded offline by the mobile application, with an individual result per operation.")]
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -124,6 +130,8 @@ public class LivestockOperationsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the operations, or the failure of the request.</returns>
     [HttpGet("api/v1/animals/{animalId:guid}/livestock-operations")]
+    [EndpointSummary("List the livestock operations of an animal")]
+    [EndpointDescription("Returns the field events and clinical interventions of an authorized animal within the half-open period.")]
     [ProducesResponseType(typeof(IReadOnlyList<LivestockOperationResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

@@ -38,6 +38,8 @@ public class AlertsController(
     /// <param name="pageSize">The maximum number of alerts per page.</param>
     /// <returns>A response as an action result containing the page of alerts, or the failure of the request.</returns>
     [HttpGet]
+    [EndpointSummary("List the alerts of a ranch")]
+    [EndpointDescription("Lists the alerts of an authorized ranch, newest event first, optionally filtered by status (Pending or Acknowledged) and animal.")]
     [ProducesResponseType(typeof(AlertPageResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -75,6 +77,8 @@ public class AlertsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the stored alert, or the failure of the request.</returns>
     [HttpPatch("{alertId:guid}")]
+    [EndpointSummary("Acknowledge an alert")]
+    [EndpointDescription("Acknowledges a pending alert. Repeating the same operation returns the stored result; a stale version or a different operation returns 409 with the current alert.")]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AlertResource), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

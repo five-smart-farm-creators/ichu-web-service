@@ -32,6 +32,8 @@ public class MonitoringThresholdsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the stored threshold, or the failure of the request.</returns>
     [HttpPut]
+    [EndpointSummary("Configure a threshold")]
+    [EndpointDescription("Creates or replaces the threshold of a ranch for one life stage and metric, advancing the rule revision.")]
     [ProducesResponseType(typeof(ThresholdResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -62,6 +64,8 @@ public class MonitoringThresholdsController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the thresholds, or the failure of the request.</returns>
     [HttpGet]
+    [EndpointSummary("List the thresholds of a ranch")]
+    [EndpointDescription("Lists the thresholds configured by an authorized ranch.")]
     [ProducesResponseType(typeof(IReadOnlyList<ThresholdResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

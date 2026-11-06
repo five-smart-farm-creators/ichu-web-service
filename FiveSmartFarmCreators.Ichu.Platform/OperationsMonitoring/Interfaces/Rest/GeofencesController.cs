@@ -32,6 +32,8 @@ public class GeofencesController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the created geofence, or the failure of the request.</returns>
     [HttpPost]
+    [EndpointSummary("Define a geofence")]
+    [EndpointDescription("Defines the permitted grazing area of a lot. A lot has at most one geofence.")]
     [ProducesResponseType(typeof(GeofenceResource), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -65,6 +67,8 @@ public class GeofencesController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the stored geofence, or the failure of the request.</returns>
     [HttpPut("{geofenceId:guid}")]
+    [EndpointSummary("Redefine a geofence")]
+    [EndpointDescription("Replaces the name, tolerance, severity and boundary of an existing geofence.")]
     [ProducesResponseType(typeof(GeofenceResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -96,6 +100,8 @@ public class GeofencesController(
     /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
     /// <returns>A response as an action result containing the geofences, or the failure of the request.</returns>
     [HttpGet]
+    [EndpointSummary("List the geofences of a ranch")]
+    [EndpointDescription("Lists the geofences defined by an authorized ranch.")]
     [ProducesResponseType(typeof(IReadOnlyList<GeofenceResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
