@@ -37,7 +37,7 @@ The service needs a local PostgreSQL 17 database named `ichu` and applies pendin
 
 Until the IoT Assets and Cattle Information modules exist, Development reads lots, cattle, collars and Edge Gateways from `OperationsMonitoring:Simulation` in `appsettings.Development.json`. These values are examples with fixed identifiers and are never used outside Development.
 
-The `RanchId` values must match a ranch registered through IAM. Registering the development user as a `RanchManager` generates a new ranch identifier, so replace `11111111-1111-4111-8111-111111111111` with that identifier after registering. A simulated gateway authenticates by sending its `Key` in the `X-Gateway-Key` header, for example `POST /api/v1/telemetry/batch`; a request without a known key returns 401.
+The `RanchId` values must match a ranch registered through IAM. Registering the development user as a `RanchManager` generates a new ranch identifier, so replace `11111111-1111-4111-8111-111111111111` with that identifier after registering. A simulated gateway authenticates by sending its `Key` in the `X-Gateway-Key` header, for example `POST /api/v1/telemetry/batch`; a request without a known key returns 401. In Swagger UI at `/swagger`, the telemetry batch and Edge Gateway monitoring rules operations show a required `X-Gateway-Key` input for that key.
 
 Create a new migration after changing a mapping with `dotnet tool restore` and `dotnet ef migrations add <Name> --project FiveSmartFarmCreators.Ichu.Platform --output-dir Migrations`.
 
