@@ -12,5 +12,8 @@ public enum ERedefineGeofenceError
     GeofenceNotFound,
 
     /// <summary>The account lacks the required permission on the ranch.</summary>
-    Forbidden
+    Forbidden,
+
+    /// <summary>The rules changed concurrently; reload them before retrying.</summary>
+    ConcurrentModification
 }

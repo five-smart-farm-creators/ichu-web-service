@@ -15,5 +15,8 @@ public enum EDefineGeofenceError
     LotNotFound,
 
     /// <summary>The lot already has a geofence.</summary>
-    GeofenceAlreadyDefined
+    GeofenceAlreadyDefined,
+
+    /// <summary>The rules changed concurrently; reload them before retrying.</summary>
+    ConcurrentModification
 }
