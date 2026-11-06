@@ -8,6 +8,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Query
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Configuration;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -57,6 +59,23 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<ILivestockOperationQueryService, LivestockOperationQueryService>();
 
         services.AddScoped<IOperationsMonitoringContextFacade, OperationsMonitoringContextFacade>();
+        return services;
+    }
+
+    /// <summary>
+    ///     Registers the development-only simulation of Cattle Information and IoT Assets, read from the
+    ///     "OperationsMonitoring:Simulation" section. The host calls it only in Development.
+    /// </summary>
+    /// <param name="services">The service collection of the host.</param>
+    /// <param name="configuration">The configuration that holds the simulated data.</param>
+    /// <returns>The same service collection, to chain calls.</returns>
+    public static IServiceCollection AddOperationsMonitoringSimulation(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MonitoringSimulationOptions>(configuration.GetSection(MonitoringSimulationOptions.SectionName));
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICattleLookup, SimulatedCattleLookup>();
+        services.AddScoped<IDeviceAttributionLookup, SimulatedDeviceAttributionLookup>();
+        services.AddScoped<IEdgeGatewayAuthenticator, SimulatedEdgeGatewayAuthenticator>();
         return services;
     }
 }
