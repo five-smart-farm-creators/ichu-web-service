@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Iam: added identity and ranch domain models, typed commands and queries, repository contracts and authorization rules.
+- Iam: separated command and query service contracts, implementations and the application ACL facade.
+- Iam: added scoped EF Core mappings and repositories, Firebase identity adapters and request identity resolution.
+- Iam: added REST resources, assemblers, controllers and module registration following the reference DDD structure.
+
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
 - Added Humanizer and OpenAPI support.
@@ -19,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.
 
