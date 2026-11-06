@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added Cattle Information registration, identification updates, ranch-scoped searches, productive-stage history, deactivation reasons, and same-ranch lot membership with optimistic concurrency.
 - Added the initial ASP.NET Core web service foundation targeting .NET 10.
 - Added PostgreSQL and Entity Framework Core dependencies for persistence.
 - Added Humanizer and OpenAPI support.
