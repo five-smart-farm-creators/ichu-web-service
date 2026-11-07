@@ -102,12 +102,14 @@ Use Git Flow with `main` as the released, production-ready history and `develop`
 
 Use lowercase kebab-case descriptions, keep branches focused, and avoid committing directly to `main` or `develop`. Delete merged topic branches.
 
+Never open a pull request from `develop` to `main`; releases always go through `release/vX.Y.Z`. Do not use other branch prefixes, such as `fix/`, `docs/`, `refactor/`, `chore/`, or `audit/`.
+
 ## Commit messages
 
 Write commit messages in English using [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```text
-<type>[optional scope][!]: <imperative summary>
+<type>(<scope>)[!]: <imperative summary>
 
 [optional body]
 
@@ -123,13 +125,30 @@ Use a concise, imperative summary without a trailing period. Common types:
 - `refactor`: restructuring without changing behavior.
 - `perf`: a performance improvement.
 - `build`, `ci`, `chore`, or `style`: build, automation, maintenance, or non-functional style changes.
+- `revert`: revert a previous commit.
+
+Commit messages must also follow these rules:
+
+- Start the summary with a lowercase letter, and keep the header at most 72 characters.
+- Use only these scopes: `iam`, `cattle-information`, `iot-assets`, `operations-monitoring`, `planning`, `dashboard-analytics`, `subscription-plans`, `shared`, `persistence`, `openapi`, `i18n`.
+- Use `feat` only for new functionality, `docs` for documentation and diagram changes, and `chore` for changelog, version, or maintenance changes.
+- Do not use the default message of the GitHub web editor, such as `Update file.md`.
 
 Examples:
 
 ```text
-feat(plots): record irrigation schedules
-fix(readings): reject measurements outside valid bounds
+feat(planning): schedule vaccination activities
+fix(operations-monitoring): reject telemetry outside valid bounds
 docs: clarify domain model contribution guidance
+```
+
+Invalid examples:
+
+```text
+(Docs): Add user personas
+Update chapter02.md
+feat: add controllers.
+faet: add planning service
 ```
 
 Mark breaking changes with `!` after the type/scope and explain them in the body or a `BREAKING CHANGE: <description>` footer. Reference issues in the body or footer when useful. Keep each commit coherent; do not use vague summaries such as `update` or `fix stuff`.
@@ -160,3 +179,9 @@ Open pull requests against `develop`, except release and hotfix pull requests, w
 - Pass the solution build and available tests, and receive review before merging.
 
 Reviewers should focus on correctness, domain invariants, security, maintainability, tests, and compatibility. Resolve review feedback or explain why a proposed change is not needed before merging.
+
+## Enforcement
+
+- After cloning, run once: `git config core.hooksPath .githooks`. The `commit-msg` hook rejects invalid messages locally.
+- The `Git Flow checks` GitHub Actions workflow validates the branch name, the pull request target, and every commit message on pull requests to `main` and `develop`.
+- Configure Git with your real name and the email linked to your GitHub account (`git config user.name` and `git config user.email`). `.mailmap` maps previously used alternative identities.
