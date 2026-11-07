@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operations and Monitoring: adopted the shared result, error, unit of work and repository model, authorized ranch operations through the IAM context facade, and added the EF Core migration for the monitoring schema.
 - Operations and Monitoring: registered the module in the application host and simulated cattle, collars and Edge Gateways from configuration in Development.
 - Operations and Monitoring: documented the required `X-Gateway-Key` header on the Edge Gateway operations in the OpenAPI document so Swagger UI can send the gateway key.
+- Commit message hook and Git Flow pull request checks to enforce branch and Conventional Commits conventions.
+- Git mailmap to unify contributor identities.
 
 ### Changed
 
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Iam: standardized XML documentation across domain, application, infrastructure, and REST contracts.
 - Updated project dependencies to support the initial platform configuration.
 - Required each logical code, configuration, documentation, or architecture change to have a concise changelog entry.
+- Contribution guide aligned with the team's Git Flow, Conventional Commits and Semantic Versioning conventions.
 
 ### Removed
 
