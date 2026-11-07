@@ -1,0 +1,107 @@
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+
+namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Acl;
+
+public class IoTAssetsContextFacade(
+    IDeviceCommandService deviceCommandService,
+    IDeviceQueryService deviceQueryService,
+    IWaterTroughQueryService waterTroughQueryService,
+    IIoTDeviceRepository deviceRepository,
+    IIoTAssetsAccessService accessService,
+    TimeProvider timeProvider) : IIoTAssetsContextFacade
+{
+    public async Task<Result<DeviceAssignmentSnapshot?>> GetCurrentCollarAsync(Guid ranchId, Guid cattleId,
+        CancellationToken cancellationToken)
+    {
+        if (ranchId == Guid.Empty || cattleId == Guid.Empty)
+        {
+            return Result<DeviceAssignmentSnapshot?>.Failure(IoTAssetsErrors.InvalidInput);
+        }
+
+        var access = await accessService.EnsureReadAccessAsync(ranchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<DeviceAssignmentSnapshot?>.Failure(access.DomainError);
+        }
+
+        var device = await deviceRepository.FindByAssignedCattleAsNoTrackingAsync(ranchId, cattleId, cancellationToken);
+        var assignment = device?.Assignments.Single(a => a.IsOpen());
+        return Result<DeviceAssignmentSnapshot?>.Success(assignment is null ? null : ToSnapshot(assignment));
+    }
+
+    public async Task<Result<DeviceAssignmentSnapshot?>> ResolveAssignmentAtAsync(Guid ranchId, Guid deviceId,
+        DateTimeOffset instant, CancellationToken cancellationToken)
+    {
+        if (instant == default || instant > timeProvider.GetUtcNow())
+        {
+            return Result<DeviceAssignmentSnapshot?>.Failure(IoTAssetsErrors.InvalidInput);
+        }
+
+        var result = await deviceQueryService.HandleAsync(new GetDeviceByIdQuery(ranchId, deviceId), cancellationToken);
+        if (result.IsFailure)
+        {
+            return Result<DeviceAssignmentSnapshot?>.Failure(result.DomainError);
+        }
+
+        var assignment = result.Value!.Assignments.SingleOrDefault(a => a.CoversInstant(instant));
+        return Result<DeviceAssignmentSnapshot?>.Success(assignment is null ? null : ToSnapshot(assignment));
+    }
+
+    public async Task<Result<IReadOnlyList<DeviceAssignmentSnapshot>>> GetActiveAssignmentsAsync(Guid ranchId,
+        CancellationToken cancellationToken)
+    {
+        var result = await deviceQueryService.HandleAsync(new GetDeviceInventoryQuery(ranchId), cancellationToken);
+        if (result.IsFailure)
+        {
+            return Result<IReadOnlyList<DeviceAssignmentSnapshot>>.Failure(result.DomainError);
+        }
+
+        var assignments = result.Value!.SelectMany(d => d.Assignments).Where(a => a.IsOpen())
+            .OrderBy(a => a.StartedAt).ThenBy(a => a.Id).Select(ToSnapshot).ToArray();
+        return Result<IReadOnlyList<DeviceAssignmentSnapshot>>.Success(assignments);
+    }
+
+    public async Task<Result<WaterTroughConfiguration>> GetWaterTroughConfigurationAsync(Guid ranchId, Guid waterTroughId,
+        CancellationToken cancellationToken)
+    {
+        var result = await waterTroughQueryService.HandleAsync(
+            new GetWaterTroughByIdQuery(ranchId, waterTroughId), cancellationToken);
+        if (result.IsFailure)
+        {
+            return Result<WaterTroughConfiguration>.Failure(result.DomainError);
+        }
+
+        var trough = result.Value!;
+        return Result<WaterTroughConfiguration>.Success(new WaterTroughConfiguration(trough.Id, trough.RanchId,
+            trough.Name, trough.LotId, trough.TemperatureRange?.MinimumCelsius, trough.TemperatureRange?.MaximumCelsius,
+            trough.Version));
+    }
+
+    public async Task<Result> RegisterCommunicationAsync(Guid ranchId, Guid deviceId, DateTimeOffset communicatedAt,
+        DateTimeOffset receivedAt, int? batteryPercentage, CancellationToken cancellationToken)
+    {
+        var result = await deviceCommandService.HandleAsync(new RegisterDeviceCommunicationCommand(
+            ranchId, deviceId, communicatedAt, receivedAt, batteryPercentage), cancellationToken);
+        return result.IsSuccess ? Result.Success() : Result.Failure(result.DomainError);
+    }
+
+    public Task<Result<int>> ReleaseCollarForInactiveCattleAsync(Guid ranchId, Guid cattleId,
+        DateTimeOffset deactivatedAt, CancellationToken cancellationToken)
+    {
+        return deviceCommandService.HandleAsync(new ReleaseCollarForInactiveCattleCommand(ranchId, cattleId, deactivatedAt),
+            cancellationToken);
+    }
+
+    private static DeviceAssignmentSnapshot ToSnapshot(DeviceAssignment assignment) =>
+        new(assignment.Id, assignment.DeviceId, assignment.RanchId, assignment.TargetId,
+            assignment.TargetType.ToString(), assignment.StartedAt, assignment.EndedAt);
+}
