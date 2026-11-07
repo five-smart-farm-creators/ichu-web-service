@@ -546,6 +546,137 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.ToTable("TelemetryReadings", "monitoring");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Plan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("DeviceLimit")
+                        .HasColumnType("integer")
+                        .HasColumnName("device_limit");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_published");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Tier")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("tier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("plans", "subscription");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000001"),
+                            DeviceLimit = 50,
+                            IsPublished = true,
+                            Name = "Basic",
+                            Tier = "Basic"
+                        },
+                        new
+                        {
+                            Id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                            DeviceLimit = 200,
+                            IsPublished = true,
+                            Name = "Standard",
+                            Tier = "Standard"
+                        },
+                        new
+                        {
+                            Id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                            DeviceLimit = 500,
+                            IsPublished = true,
+                            Name = "Pro",
+                            Tier = "Pro"
+                        });
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Subscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AcquisitionSource")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("acquisition_source");
+
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("activated_at");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cancellation_reason");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<int>("HeadCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("head_count");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_id");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_id");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TermsVersion")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("terms_version");
+
+                    b.Property<DateTimeOffset?>("ValidUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("valid_until");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationId")
+                        .IsUnique();
+
+                    b.HasIndex("RanchId")
+                        .IsUnique()
+                        .HasFilter("status IN ('Pending', 'Active')");
+
+                    b.HasIndex("RanchId", "Status");
+
+                    b.ToTable("subscriptions", "subscription");
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.HerdAdvisory", b =>
                 {
                     b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.RanchRegistration", null)
@@ -709,6 +840,270 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.Navigation("Changes");
 
                     b.Navigation("Evidence");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Plan", b =>
+                {
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "AnnualFee", b1 =>
+                        {
+                            b1.Property<Guid>("PlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(12, 2)
+                                .HasColumnType("numeric(12,2)")
+                                .HasColumnName("annual_fee_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("annual_fee_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("PlanId");
+
+                            b1.ToTable("plans", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlanId");
+
+                            b1.HasData(
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000001"),
+                                    Amount = 600m,
+                                    Currency = "PEN"
+                                },
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Amount = 1800m,
+                                    Currency = "PEN"
+                                },
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Amount = 3900m,
+                                    Currency = "PEN"
+                                });
+                        });
+
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "DeviceUnitPrice", b1 =>
+                        {
+                            b1.Property<Guid>("PlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(12, 2)
+                                .HasColumnType("numeric(12,2)")
+                                .HasColumnName("device_unit_price_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("device_unit_price_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("PlanId");
+
+                            b1.ToTable("plans", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlanId");
+
+                            b1.HasData(
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000001"),
+                                    Amount = 120m,
+                                    Currency = "PEN"
+                                },
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Amount = 120m,
+                                    Currency = "PEN"
+                                },
+                                new
+                                {
+                                    PlanId = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Amount = 120m,
+                                    Currency = "PEN"
+                                });
+                        });
+
+                    b.OwnsMany("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Plan+IncludedFeature", "_features", b1 =>
+                        {
+                            b1.Property<Guid>("plan_id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("plan_id");
+
+                            b1.Property<string>("Code")
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("feature");
+
+                            b1.HasKey("plan_id", "Code");
+
+                            b1.ToTable("plan_features", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("plan_id");
+
+                            b1.HasData(
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000001"),
+                                    Code = "Monitoring"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000001"),
+                                    Code = "Alerts"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Code = "Monitoring"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Code = "Alerts"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Code = "Planning"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000002"),
+                                    Code = "Analytics"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Code = "Monitoring"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Code = "Alerts"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Code = "Planning"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Code = "Analytics"
+                                },
+                                new
+                                {
+                                    plan_id = new Guid("5b1f0d2e-0c11-4a51-9b01-000000000003"),
+                                    Code = "ReportExport"
+                                });
+                        });
+
+                    b.Navigation("AnnualFee")
+                        .IsRequired();
+
+                    b.Navigation("DeviceUnitPrice")
+                        .IsRequired();
+
+                    b.Navigation("_features");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Subscription", b =>
+                {
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "AnnualFee", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(12, 2)
+                                .HasColumnType("numeric(12,2)")
+                                .HasColumnName("annual_fee_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("annual_fee_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("SubscriptionId");
+
+                            b1.ToTable("subscriptions", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionId");
+                        });
+
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "DevicesCost", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(12, 2)
+                                .HasColumnType("numeric(12,2)")
+                                .HasColumnName("devices_cost_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("devices_cost_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("SubscriptionId");
+
+                            b1.ToTable("subscriptions", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionId");
+                        });
+
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "Total", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(12, 2)
+                                .HasColumnType("numeric(12,2)")
+                                .HasColumnName("total_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("total_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("SubscriptionId");
+
+                            b1.ToTable("subscriptions", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionId");
+                        });
+
+                    b.Navigation("AnnualFee")
+                        .IsRequired();
+
+                    b.Navigation("DevicesCost")
+                        .IsRequired();
+
+                    b.Navigation("Total")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

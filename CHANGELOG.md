@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Subscription Plans: added the plan catalog with annual price quotes by head count, subscription requests with idempotent retries, activation and cancellation rules, and an entitlements facade for other contexts.
+- Subscription Plans: added the plans and subscriptions persistence mapping with the seeded catalog, a configurable terms version, and a Development-only Standard subscription for the simulated ranch.
+- Subscription Plans: added English and Spanish messages, with request-based culture selection and English as the default.
+- Subscription Plans: the database allows only one pending or active subscription per ranch.
+
+### Changed
+
+- Shared: unique-constraint violations are answered with 409 Conflict instead of 500 Internal Server Error.
+
 ## [0.1.0] - 2026-11-07
 
 ### Added

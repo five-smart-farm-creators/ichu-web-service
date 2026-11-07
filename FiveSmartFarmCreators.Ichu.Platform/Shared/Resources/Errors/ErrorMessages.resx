@@ -6,6 +6,9 @@
     <data name="OperationCancelled" xml:space="preserve">
     <value>The operation was cancelled.</value>
   </data>
+    <data name="ConcurrentModification" xml:space="preserve">
+    <value>The resource changed concurrently; retry the request.</value>
+  </data>
     <data name="IamError.UserNotFound" xml:space="preserve">
     <value>User not found.</value>
   </data>

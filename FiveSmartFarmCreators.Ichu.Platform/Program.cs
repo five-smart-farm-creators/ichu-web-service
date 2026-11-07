@@ -10,12 +10,16 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middlew
 using Microsoft.EntityFrameworkCore;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.DependencyInjection;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Simulation;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 builder.Services.AddProblemDetails();
+builder.Services.AddLocalization();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi(options =>
 {
@@ -60,6 +64,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // The Firebase project identifier and Web API key come from configuration, never from source control.
 builder.Services.AddIam(builder.Configuration);
+builder.Services.AddSubscriptionPlans(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
 if (builder.Environment.IsDevelopment())
@@ -76,7 +81,21 @@ using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    using var seedScope = app.Services.CreateScope();
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentSubscriptionSeeder>()
+        .SeedAsync(CancellationToken.None);
+}
+
 app.UseExceptionHandler();
+
+// English is the default; Spanish is served when the request asks for it through Accept-Language.
+var supportedCultures = new[] { "en", "es" };
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures));
 
 if (app.Environment.IsDevelopment())
 {
