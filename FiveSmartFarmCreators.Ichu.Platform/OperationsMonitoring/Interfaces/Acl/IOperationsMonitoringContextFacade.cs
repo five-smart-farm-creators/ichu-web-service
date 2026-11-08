@@ -20,6 +20,16 @@ public interface IOperationsMonitoringContextFacade
     Task<IReadOnlyList<LivestockOperationRecord>> GetLivestockOperationsAsync(Guid cattleId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 
     /// <summary>
+    ///     Returns the field events and clinical interventions of every animal of the ranch in the period.
+    /// </summary>
+    Task<IReadOnlyList<LivestockOperationRecord>> GetRanchLivestockOperationsAsync(Guid ranchId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Open means not cleared, so acknowledged threshold alerts keep counting because only geofence alerts can be cleared.
+    /// </summary>
+    Task<OpenAlertCounts> GetOpenAlertCountsAsync(Guid ranchId, CancellationToken cancellationToken);
+
+    /// <summary>
     ///     Returns null for field events as well as unknown operations, so a caller cannot link a field event as a clinical intervention.
     /// </summary>
     Task<ClinicalInterventionRecord?> FindClinicalInterventionAsync(Guid operationId, CancellationToken cancellationToken);

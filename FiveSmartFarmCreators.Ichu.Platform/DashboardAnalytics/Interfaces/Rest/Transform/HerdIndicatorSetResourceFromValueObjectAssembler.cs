@@ -3,14 +3,8 @@ using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest.Res
 
 namespace FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Maps HerdIndicatorSet values to the REST response contract.
-/// </summary>
 public static class HerdIndicatorSetResourceFromValueObjectAssembler
 {
-    /// <summary>
-    ///     Copies analytics values into the response without recalculating domain results.
-    /// </summary>
     public static HerdIndicatorSetResource ToResourceFromValueObject(HerdIndicatorSet value) =>
         new(value.RanchId, DateRangeResourceFromValueObjectAssembler.ToResourceFromValueObject(value.Period),
             value.UpdatedAt, value.Source,

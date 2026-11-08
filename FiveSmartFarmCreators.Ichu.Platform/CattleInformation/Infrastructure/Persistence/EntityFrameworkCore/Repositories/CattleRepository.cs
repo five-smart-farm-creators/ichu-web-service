@@ -26,6 +26,13 @@ public sealed class CattleRepository(AppDbContext context) : ICattleRepository
             .FirstOrDefaultAsync(cattle => cattle.Id == cattleId, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Cattle>> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+        await context.Set<Cattle>()
+            .AsNoTracking()
+            .Where(cattle => cattle.RanchId == ranchId)
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
     public async Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default)
     {
         var holder = await context.Set<Cattle>()

@@ -27,4 +27,10 @@ public interface ICattleInformationContextFacade
     ///     Returns the birth and exit dates of an animal in any ranch, for trusted in-process callers that authorize the result themselves.
     /// </summary>
     Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Lists every animal of the ranch, active and exited.
+    /// </summary>
+    /// <returns>Herd member snapshots, or an empty list when the ranch is not visible to the caller.</returns>
+    Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken);
 }
