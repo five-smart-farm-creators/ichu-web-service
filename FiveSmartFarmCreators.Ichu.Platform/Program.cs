@@ -20,6 +20,7 @@ using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Confi
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,6 +101,8 @@ if (app.Environment.IsDevelopment())
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentCattleSeeder>()
         .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentIoTAssetsSeeder>()
+        .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentMonitoringRulesSeeder>()
         .SeedAsync(CancellationToken.None);
 }
 

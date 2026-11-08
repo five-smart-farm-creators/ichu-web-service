@@ -9,6 +9,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositori
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Integration;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -58,6 +59,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IEdgeGatewayAuthenticator, IoTAssetsEdgeGatewayAuthenticator>();
 
         services.AddScoped<IOperationsMonitoringContextFacade, OperationsMonitoringContextFacade>();
+        services.AddScoped<DevelopmentMonitoringRulesSeeder>();
         return services;
     }
 }

@@ -30,6 +30,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Query
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
@@ -101,6 +102,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<DevelopmentSubscriptionSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentCattleSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentIoTAssetsSeeder>());
+        Assert.NotNull(services.GetRequiredService<DevelopmentMonitoringRulesSeeder>());
     }
 
     [Fact]
