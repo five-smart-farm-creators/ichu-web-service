@@ -1,22 +1,21 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 
 /// <summary>
-/// Reads animal information after checking the current caller's ranch access.
+///     Reads animal information after checking the caller's ranch read access.
 /// </summary>
 public interface ICattleQueryService
 {
     /// <summary>
-    /// Combines an authorized animal's identity and stage history with external device availability.
+    ///     Combines an animal's identity and stage history with its device details.
     /// </summary>
-    /// <returns>A profile that distinguishes unavailable integration data from an unassigned collar.</returns>
-    Task<CattleProfile> HandleAsync(GetCattleByIdQuery query, CancellationToken cancellationToken);
+    Task<Result<CattleProfile>> HandleAsync(GetCattleByIdQuery query, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Searches one authorized ranch, including inactive cattle unless a status filter is supplied.
+    ///     Returns one page of matching animals in the caller's ranch.
     /// </summary>
-    /// <returns>An ordered page of matching animals, or an empty page when none match.</returns>
-    Task<IReadOnlyList<Cattle>> HandleAsync(SearchCattleQuery query, CancellationToken cancellationToken);
+    Task<Result<IReadOnlyList<Cattle>>> HandleAsync(SearchCattleQuery query, CancellationToken cancellationToken);
 }
