@@ -13,10 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subscription Plans: added the plans and subscriptions persistence mapping with the seeded catalog, a configurable terms version, and a Development-only Standard subscription for the simulated ranch.
 - Subscription Plans: added English and Spanish messages, with request-based culture selection and English as the default.
 - Subscription Plans: the database allows only one pending or active subscription per ranch.
+- Cattle Information: added the cattle schema migration for animals, stage periods, lots and lot memberships.
+- Cattle Information: registered the module in the application host, with IAM ranch access checks and device details from IoT Assets and Operations and Monitoring.
+- IoT Assets: added the iot schema migration for devices, device assignments and water troughs.
+- IoT Assets: registered the module in the application host, with IAM access checks, animal lookups from Cattle Information and the collar limit from Subscription Plans.
+- IoT Assets: a collar is released when its animal is deactivated, after the exit is saved.
+- Shared: domain events are published after their changes are saved, and each handler runs in its own scope.
+- Shared: the mediator pipeline behaviors and event handlers are registered for every bounded context.
+- Cattle Information and IoT Assets: English and Spanish messages for business failures.
 
 ### Changed
 
-- Shared: unique-constraint violations are answered with 409 Conflict instead of 500 Internal Server Error.
+- Shared: unique-constraint violations and concurrent updates are answered with 409 Conflict instead of 500 Internal Server Error.
+- Cattle Information: business failures are returned as results with stable error codes instead of exceptions, and duplicate ear tags report the animal that holds them.
+- IoT Assets: business failures are returned as results with stable error codes, and problem responses carry the localized message.
+
+### Removed
+
+- Cattle Information: removed the lifecycle outbox table and its mapping, since lifecycle events are now handled in-process after they are saved.
 
 ## [0.1.0] - 2026-11-07
 
