@@ -1,8 +1,16 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Events;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Events;
 
 /// <summary>
-/// Captures an animal's identity and current stage when it enters the ranch's registered inventory.
+///     Raised when an animal enters the ranch inventory with its identity and the stage known at registration.
 /// </summary>
-public sealed record CattleRegisteredEvent(Guid EventId, DateTimeOffset OccurredAt, Guid RanchId, Guid CattleId, string EarTag, Breed Breed, Sex Sex, DateOnly BirthDate, LifeStage LifeStage) : ICattleEvent;
+public sealed record CattleRegisteredEvent(
+    Guid RanchId,
+    CattleId CattleId,
+    string EarTag,
+    Breed Breed,
+    Sex Sex,
+    DateOnly BirthDate,
+    LifeStage LifeStage) : IEvent;

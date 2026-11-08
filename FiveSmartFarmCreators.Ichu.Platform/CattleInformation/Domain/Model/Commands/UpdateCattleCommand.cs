@@ -3,6 +3,13 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Commands;
 
 /// <summary>
-/// Proposes identity corrections guarded by the animal's version; stage and exit changes use separate commands.
+///     Proposes identity corrections guarded by the animal's version; stage and exit changes use separate commands.
 /// </summary>
-public sealed record UpdateCattleCommand(Guid RanchId, Guid CattleId, string EarTag, Breed Breed, Sex Sex, DateOnly BirthDate, Guid ExpectedVersion);
+public sealed record UpdateCattleCommand(
+    Guid RanchId,
+    CattleId CattleId,
+    string EarTag,
+    Breed Breed,
+    Sex Sex,
+    DateOnly BirthDate,
+    Guid ExpectedVersion);

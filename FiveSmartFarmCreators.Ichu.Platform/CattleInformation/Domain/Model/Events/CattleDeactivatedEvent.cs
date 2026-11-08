@@ -1,8 +1,14 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Events;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Events;
 
 /// <summary>
-/// Announces a retained animal's exit so consumers can release its collar and distinguish mortality from other exits.
+///     Raised when a retained animal exits the ranch, so that consumers can release its collar and count deaths apart.
 /// </summary>
-public sealed record CattleDeactivatedEvent(Guid EventId, DateTimeOffset OccurredAt, Guid RanchId, Guid CattleId, ExitReason Reason, DateOnly ExitDate) : ICattleEvent;
+public sealed record CattleDeactivatedEvent(
+    Guid RanchId,
+    CattleId CattleId,
+    ExitReason Reason,
+    DateOnly ExitDate,
+    DateTimeOffset DeactivatedAt) : IEvent;
