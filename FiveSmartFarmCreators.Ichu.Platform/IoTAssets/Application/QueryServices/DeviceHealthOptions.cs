@@ -2,6 +2,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryService
 
 public sealed class DeviceHealthOptions
 {
+    public const string SectionName = "IoTAssets:DeviceHealth";
+
     private int? _lowBatteryThreshold;
 
     public int? LowBatteryThreshold
