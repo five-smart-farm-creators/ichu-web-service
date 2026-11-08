@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Resources;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transform;
@@ -6,5 +7,5 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transfor
 public static class SetDeviceMaintenanceCommandFromResourceAssembler
 {
     public static SetDeviceMaintenanceCommand ToCommandFromResource(Guid ranchId, Guid deviceId, SetDeviceMaintenanceResource resource) =>
-        new(ranchId, deviceId, resource.InMaintenance, resource.ExpectedVersion);
+        new(ranchId, new DeviceId(deviceId), resource.InMaintenance, resource.ExpectedVersion);
 }

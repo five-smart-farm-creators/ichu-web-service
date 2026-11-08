@@ -1,10 +1,13 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Resources;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
@@ -18,7 +21,8 @@ public class DeviceAssignmentsController(
     IDeviceCommandService commandService,
     IDeviceQueryService queryService,
     TimeProvider timeProvider,
-    IOptions<DeviceHealthOptions> healthOptions) : ControllerBase
+    IOptions<DeviceHealthOptions> healthOptions,
+    IStringLocalizer<IoTAssetsMessages> localizer) : ControllerBase
 {
     private readonly int? _lowBatteryThreshold = healthOptions.Value.LowBatteryThreshold;
 
@@ -30,7 +34,7 @@ public class DeviceAssignmentsController(
     {
         var result = await commandService.HandleAsync(
             AssignDeviceCommandFromResourceAssembler.ToCommandFromResource(ranchId, deviceId, resource), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             device => CreatedAtAction(nameof(GetDeviceAssignments), new { ranchId, deviceId },
                 DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, timeProvider.GetUtcNow(), _lowBatteryThreshold)));
     }
@@ -40,8 +44,8 @@ public class DeviceAssignmentsController(
     [ProducesResponseType(typeof(IEnumerable<DeviceAssignmentResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDeviceAssignments(Guid ranchId, Guid deviceId, CancellationToken cancellationToken)
     {
-        var result = await queryService.HandleAsync(new GetDeviceAssignmentsQuery(ranchId, deviceId), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        var result = await queryService.HandleAsync(new GetDeviceAssignmentsQuery(ranchId, new DeviceId(deviceId)), cancellationToken);
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             assignments => Ok(assignments.Select(DeviceAssignmentResourceFromEntityAssembler.ToResourceFromEntity).ToArray()));
     }
 
@@ -53,7 +57,7 @@ public class DeviceAssignmentsController(
     {
         var result = await commandService.HandleAsync(
             ReleaseDeviceCommandFromResourceAssembler.ToCommandFromResource(ranchId, deviceId, resource), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             device => Ok(DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, timeProvider.GetUtcNow(), _lowBatteryThreshold)));
     }
 }

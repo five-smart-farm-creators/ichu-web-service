@@ -6,7 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transfor
 public static class WaterTroughResourceFromEntityAssembler
 {
     public static WaterTroughResource ToResourceFromEntity(WaterTrough waterTrough) =>
-        new(waterTrough.Id, waterTrough.RanchId, waterTrough.Name, waterTrough.LotId,
+        new(waterTrough.Id.Value, waterTrough.RanchId, waterTrough.Name, waterTrough.LotId,
             waterTrough.TemperatureRange is null ? null : new TemperatureRangeResource(
                 waterTrough.TemperatureRange.MinimumCelsius, waterTrough.TemperatureRange.MaximumCelsius),
             waterTrough.Version);
