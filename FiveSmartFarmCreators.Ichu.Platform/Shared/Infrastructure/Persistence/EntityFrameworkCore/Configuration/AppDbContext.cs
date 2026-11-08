@@ -1,5 +1,9 @@
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -22,8 +26,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(builder);
 
-        // IAM maps its entities with entity type configuration classes, so they are applied from the assembly.
-        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        builder.ApplyConfigurationsFromAssembly(
+            typeof(AppDbContext).Assembly,
+            type => type.Namespace is not null && type.Namespace.StartsWith("FiveSmartFarmCreators.Ichu.Platform.Iam.", StringComparison.Ordinal));
         builder.ApplyOperationsMonitoringConfiguration();
+        builder.ApplySubscriptionPlansConfiguration();
+        builder.ApplyCattleInformationConfiguration();
+        builder.ApplyIoTAssetsConfiguration();
+        builder.ApplyPlanningConfiguration();
     }
 }

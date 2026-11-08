@@ -1,7 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
@@ -13,13 +12,8 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
 
 /// <summary>
-///     Application query service that implements <see cref="ITelemetryReadingQueryService"/> to read the telemetry of an animal.
+///     Reads the telemetry of an animal for accounts that may read its monitoring. The latest indicators are evaluated at the server time.
 /// </summary>
-/// <param name="accessControl">The authorization port implemented with the IAM context.</param>
-/// <param name="cattleLookup">The anti-corruption port towards Cattle Information.</param>
-/// <param name="readings">The telemetry reading repository.</param>
-/// <param name="options">The technical limits of the module.</param>
-/// <param name="clock">The clock that provides the evaluation time.</param>
 public class TelemetryReadingQueryService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
@@ -32,23 +26,23 @@ public class TelemetryReadingQueryService(
     {
         if (query.Page < 1 || query.PageSize < 1 || query.PageSize > options.Value.MaximumPageSize)
         {
-            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.InvalidPage, OperationsMonitoringError.InvalidPage);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.InvalidPage);
         }
 
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
         if (cattle is null)
         {
-            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
         var skip = (query.Page - 1) * query.PageSize;
@@ -64,18 +58,18 @@ public class TelemetryReadingQueryService(
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
         if (cattle is null)
         {
-            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
         var latest = new LatestTelemetry(

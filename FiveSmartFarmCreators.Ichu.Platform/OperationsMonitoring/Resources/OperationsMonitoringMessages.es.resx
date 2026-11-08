@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="OperationsMonitoring.Unauthenticated" xml:space="preserve">
+    <value>Se requiere una cuenta verificada.</value>
+  </data>
+  <data name="OperationsMonitoring.GatewayUnauthenticated" xml:space="preserve">
+    <value>Se requieren credenciales válidas del Edge Gateway.</value>
+  </data>
+  <data name="OperationsMonitoring.Forbidden" xml:space="preserve">
+    <value>La cuenta no está autorizada para esta operación del rancho.</value>
+  </data>
+  <data name="OperationsMonitoring.GatewayMismatch" xml:space="preserve">
+    <value>Un gateway solo puede leer su propia configuración.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertGatewayAccessDenied" xml:space="preserve">
+    <value>El gateway no tiene acceso al rancho de esta alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertChangeGatewayAccessDenied" xml:space="preserve">
+    <value>El gateway no tiene acceso a esta alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.DeviceGatewayAccessDenied" xml:space="preserve">
+    <value>El gateway no tiene acceso al rancho de este dispositivo.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertNotFound" xml:space="preserve">
+    <value>La alerta no existe.</value>
+  </data>
+  <data name="OperationsMonitoring.AnimalNotFound" xml:space="preserve">
+    <value>El animal no existe.</value>
+  </data>
+  <data name="OperationsMonitoring.LotNotFound" xml:space="preserve">
+    <value>El lote no existe en este rancho.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceNotFound" xml:space="preserve">
+    <value>La geocerca no existe.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceNotInRanch" xml:space="preserve">
+    <value>La geocerca no existe para este rancho.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertNotSynchronized" xml:space="preserve">
+    <value>La alerta no ha sido sincronizada.</value>
+  </data>
+  <data name="OperationsMonitoring.DeviceNotRegistered" xml:space="preserve">
+    <value>El dispositivo no está registrado.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceAlreadyDefined" xml:space="preserve">
+    <value>El lote ya tiene una geocerca; redefina la existente en su lugar.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertConflict" xml:space="preserve">
+    <value>La alerta ya fue atendida o modificada por otra operación.</value>
+  </data>
+  <data name="OperationsMonitoring.OperationConflict" xml:space="preserve">
+    <value>Otra operación ya usa este identificador.</value>
+  </data>
+  <data name="OperationsMonitoring.AnimalNotActive" xml:space="preserve">
+    <value>El animal no estaba activo en el hato cuando ocurrió la operación.</value>
+  </data>
+  <data name="OperationsMonitoring.ConcurrentModification" xml:space="preserve">
+    <value>Las reglas cambiaron de forma concurrente. Recárguelas antes de reintentar.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertIdentifierConflict" xml:space="preserve">
+    <value>Otra alerta ya usa este identificador.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertChangeConflict" xml:space="preserve">
+    <value>Otra operación modificó la alerta; se conservó la atención vigente.</value>
+  </data>
+  <data name="OperationsMonitoring.ReadingIdentifierConflict" xml:space="preserve">
+    <value>Otra lectura ya usa este identificador.</value>
+  </data>
+  <data name="OperationsMonitoring.ReadingConcurrentlyStored" xml:space="preserve">
+    <value>La lectura cambió de forma concurrente o ya existe; envíela de nuevo si no se almacenó.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertConcurrentlyStored" xml:space="preserve">
+    <value>La alerta cambió de forma concurrente o ya existe; envíela de nuevo si no se almacenó.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertChangeConcurrentlyStored" xml:space="preserve">
+    <value>La alerta cambió de forma concurrente; envíe el cambio de nuevo si no se aplicó.</value>
+  </data>
+  <data name="OperationsMonitoring.LivestockOperationConcurrentlyStored" xml:space="preserve">
+    <value>La operación cambió de forma concurrente o ya existe; envíela de nuevo si no se almacenó.</value>
+  </data>
+  <data name="OperationsMonitoring.ReadingAssignedAnimalNotActive" xml:space="preserve">
+    <value>El animal asignado no estaba activo en el hato en el momento de la captura.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertAnimalNotActive" xml:space="preserve">
+    <value>Un animal que no está activo en el hato no genera alertas.</value>
+  </data>
+  <data name="OperationsMonitoring.EventTimeAhead" xml:space="preserve">
+    <value>La hora del evento está adelantada al reloj del servidor más allá de la tolerancia configurada.</value>
+  </data>
+  <data name="OperationsMonitoring.InvalidPage" xml:space="preserve">
+    <value>La página debe ser positiva y el tamaño de página debe estar dentro del rango permitido.</value>
+  </data>
+  <data name="OperationsMonitoring.InvalidRevision" xml:space="preserve">
+    <value>La revisión conocida no puede ser negativa.</value>
+  </data>
+  <data name="OperationsMonitoring.InvalidEdgeBatchSize" xml:space="preserve">
+    <value>Un lote debe contener al menos una entrada y no más del máximo configurado.</value>
+  </data>
+  <data name="OperationsMonitoring.InvalidMobileBatchSize" xml:space="preserve">
+    <value>Un lote debe contener al menos una operación y no más del máximo configurado.</value>
+  </data>
+  <data name="OperationsMonitoring.RulesNotModified" xml:space="preserve">
+    <value>El gateway ya tiene la revisión vigente.</value>
+  </data>
+  <data name="OperationsMonitoring.PeriodRequired" xml:space="preserve">
+    <value>Se requieren las marcas de tiempo ISO 8601 de inicio (from) y de fin (to).</value>
+  </data>
+  <data name="OperationsMonitoring.PeriodStartNotBeforeEnd" xml:space="preserve">
+    <value>El inicio del periodo debe ser anterior a su fin.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertStatusUnknown" xml:space="preserve">
+    <value>El estado debe ser uno de: Pending, Acknowledged.</value>
+  </data>
+  <data name="OperationsMonitoring.AcknowledgedStatusOnly" xml:space="preserve">
+    <value>Solo se puede solicitar el estado Acknowledged.</value>
+  </data>
+  <data name="OperationsMonitoring.ExpectedAlertVersionRequired" xml:space="preserve">
+    <value>Se requiere la versión esperada de la alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdBoundsRequired" xml:space="preserve">
+    <value>Se requieren los valores mínimo y máximo.</value>
+  </data>
+  <data name="OperationsMonitoring.MetricUnknown" xml:space="preserve">
+    <value>La métrica debe ser una de: BodyTemperature, ActivityIndex.</value>
+  </data>
+  <data name="OperationsMonitoring.SeverityUnknown" xml:space="preserve">
+    <value>La severidad debe ser una de: Informative, Warning, Critical.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertSeverityUnknown" xml:space="preserve">
+    <value>La severidad de la alerta debe ser una de: Informative, Warning, Critical.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertTypeUnknown" xml:space="preserve">
+    <value>El tipo de alerta debe ser uno de: Temperature, Activity, Geofence.</value>
+  </data>
+  <data name="OperationsMonitoring.ChangeKindUnknown" xml:space="preserve">
+    <value>El tipo de cambio debe ser uno de: Evidence, Cleared, Acknowledged.</value>
+  </data>
+  <data name="OperationsMonitoring.ToleranceRequired" xml:space="preserve">
+    <value>Se requiere la tolerancia en metros.</value>
+  </data>
+  <data name="OperationsMonitoring.VertexCoordinatesRequired" xml:space="preserve">
+    <value>Cada vértice requiere latitud y longitud.</value>
+  </data>
+  <data name="OperationsMonitoring.ClinicalInterventionTypeOnly" xml:space="preserve">
+    <value>Las intervenciones clínicas son Vaccination, Treatment o Insemination.</value>
+  </data>
+  <data name="OperationsMonitoring.FieldEventTypeOnly" xml:space="preserve">
+    <value>Los eventos de campo son HealthEvent o Birth.</value>
+  </data>
+  <data name="OperationsMonitoring.RequiredFieldsMissing" xml:space="preserve">
+    <value>Faltan campos obligatorios o no son válidos.</value>
+  </data>
+  <data name="OperationsMonitoring.OperationIdentifierRequired" xml:space="preserve">
+    <value>Se requiere un identificador de operación.</value>
+  </data>
+  <data name="OperationsMonitoring.LivestockIdentifiersRequired" xml:space="preserve">
+    <value>Se requieren los identificadores de la operación, el rancho, el animal y el autor.</value>
+  </data>
+  <data name="OperationsMonitoring.ProductOrDoseNotClinical" xml:space="preserve">
+    <value>Solo las intervenciones clínicas registran un producto o una dosis administrados.</value>
+  </data>
+  <data name="OperationsMonitoring.ObservationTooLong" xml:space="preserve">
+    <value>La observación no puede superar los 500 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.ProductTooLong" xml:space="preserve">
+    <value>El producto no puede superar los 120 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.DoseTooLong" xml:space="preserve">
+    <value>La dosis no puede superar los 60 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.CaptureTimeRequired" xml:space="preserve">
+    <value>Se requiere la hora de captura.</value>
+  </data>
+  <data name="OperationsMonitoring.CaptureTimeAhead" xml:space="preserve">
+    <value>La hora de captura está adelantada al reloj del servidor más allá de la tolerancia configurada.</value>
+  </data>
+  <data name="OperationsMonitoring.EventTimeRequired" xml:space="preserve">
+    <value>Se requiere la hora del evento.</value>
+  </data>
+  <data name="OperationsMonitoring.ReadingIdentifiersRequired" xml:space="preserve">
+    <value>Se requieren los identificadores de la lectura, el dispositivo, el gateway y el rancho.</value>
+  </data>
+  <data name="OperationsMonitoring.AttributedAnimalRequired" xml:space="preserve">
+    <value>El identificador del animal asignado no puede estar vacío.</value>
+  </data>
+  <data name="OperationsMonitoring.ActivityIndexNegative" xml:space="preserve">
+    <value>El índice de actividad no puede ser negativo.</value>
+  </data>
+  <data name="OperationsMonitoring.RuminationMinutesNegative" xml:space="preserve">
+    <value>Los minutos de rumia no pueden ser negativos.</value>
+  </data>
+  <data name="OperationsMonitoring.BatteryLevelOutOfRange" xml:space="preserve">
+    <value>El nivel de batería debe estar entre 0 y 100 por ciento.</value>
+  </data>
+  <data name="OperationsMonitoring.MeasurementValidAndInvalid" xml:space="preserve">
+    <value>Una medición no puede ser válida e inválida al mismo tiempo.</value>
+  </data>
+  <data name="OperationsMonitoring.MeasurementNotFinite" xml:space="preserve">
+    <value>El valor de una medición debe ser un número finito.</value>
+  </data>
+  <data name="OperationsMonitoring.InvalidMeasurementReason" xml:space="preserve">
+    <value>El motivo de medición inválida debe tener entre 1 y 200 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.PositionValidAndInvalid" xml:space="preserve">
+    <value>Una posición no puede ser válida e inválida al mismo tiempo.</value>
+  </data>
+  <data name="OperationsMonitoring.PositionIncomplete" xml:space="preserve">
+    <value>Una posición válida requiere latitud, longitud y precisión.</value>
+  </data>
+  <data name="OperationsMonitoring.PositionCoordinatesOutOfRange" xml:space="preserve">
+    <value>Las coordenadas de la posición están fuera del rango válido de latitud o longitud.</value>
+  </data>
+  <data name="OperationsMonitoring.PositionAccuracyInvalid" xml:space="preserve">
+    <value>La precisión de la posición debe ser un número de metros no negativo.</value>
+  </data>
+  <data name="OperationsMonitoring.CoordinateOutOfRange" xml:space="preserve">
+    <value>Las coordenadas están fuera del rango válido de latitud o longitud.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdRangeInvalid" xml:space="preserve">
+    <value>Un umbral requiere valores finitos con el mínimo menor que el máximo.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdLifeStageLength" xml:space="preserve">
+    <value>Una etapa productiva debe tener entre 1 y 40 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.RanchIdentifierRequired" xml:space="preserve">
+    <value>Se requiere un identificador de rancho.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceIdentifiersRequired" xml:space="preserve">
+    <value>Se requieren los identificadores del rancho y del lote.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceNameLength" xml:space="preserve">
+    <value>El nombre de la geocerca debe tener entre 1 y 80 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceToleranceRange" xml:space="preserve">
+    <value>La tolerancia debe estar entre 1 y 32767 metros.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceVertexCount" xml:space="preserve">
+    <value>Una geocerca requiere entre 3 y 500 vértices distintos.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceRepeatedVertices" xml:space="preserve">
+    <value>El perímetro de una geocerca no puede repetir vértices.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceNotEnclosing" xml:space="preserve">
+    <value>El perímetro de una geocerca debe encerrar un área.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceBoundaryCrossing" xml:space="preserve">
+    <value>El perímetro de una geocerca no puede tener lados que se crucen o se superpongan.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertIdentifiersRequired" xml:space="preserve">
+    <value>Se requieren los identificadores de la alerta y del gateway.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertRevisionRequired" xml:space="preserve">
+    <value>Una alerta debe referenciar la revisión de configuración usada para evaluarla.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertSupportingReadingRequired" xml:space="preserve">
+    <value>Una alerta requiere al menos una lectura de respaldo.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertEvidenceNotAttributed" xml:space="preserve">
+    <value>La evidencia de una alerta debe estar asignada a un animal.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertTypeNotThreshold" xml:space="preserve">
+    <value>Este tipo de alerta no se evalúa contra un umbral de métrica.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceAlertRequiresGeofence" xml:space="preserve">
+    <value>Una alerta de geocerca debe referenciar su geocerca.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceAlertDistanceInvalid" xml:space="preserve">
+    <value>La distancia al perímetro de la geocerca debe ser un número de metros no negativo.</value>
+  </data>
+  <data name="OperationsMonitoring.GeofenceAlertDistanceRequired" xml:space="preserve">
+    <value>Una alerta de geocerca requiere la distancia al perímetro.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdAlertRequiresThreshold" xml:space="preserve">
+    <value>Una alerta de umbral requiere el umbral usado para evaluarla.</value>
+  </data>
+  <data name="OperationsMonitoring.AlertRevisionNotPublished" xml:space="preserve">
+    <value>La alerta referencia una revisión de configuración que nunca se publicó.</value>
+  </data>
+  <data name="OperationsMonitoring.ReadingNotSupportsAlert" xml:space="preserve">
+    <value>La lectura no respalda la condición de la alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.EvidenceRequiresReading" xml:space="preserve">
+    <value>La evidencia requiere al menos una lectura.</value>
+  </data>
+  <data name="OperationsMonitoring.ReturnRequiresGeofenceAlert" xml:space="preserve">
+    <value>Solo las alertas de geocerca registran el regreso al área permitida.</value>
+  </data>
+  <data name="OperationsMonitoring.ReturnPrecedesAlert" xml:space="preserve">
+    <value>El regreso al área permitida no puede ser anterior al evento de la alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.AttentionAuthorRequired" xml:space="preserve">
+    <value>La atención de una alerta requiere su autor.</value>
+  </data>
+  <data name="OperationsMonitoring.AttentionFindingRequired" xml:space="preserve">
+    <value>La atención de una alerta requiere un hallazgo.</value>
+  </data>
+  <data name="OperationsMonitoring.AttentionFindingTooLong" xml:space="preserve">
+    <value>El hallazgo no puede superar los 400 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.AttentionActionTooLong" xml:space="preserve">
+    <value>La acción no puede superar los 400 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.AttentionPrecedesAlert" xml:space="preserve">
+    <value>La atención de una alerta no puede ser anterior al evento de la alerta.</value>
+  </data>
+  <data name="OperationsMonitoring.SupportingReadingRequired" xml:space="preserve">
+    <value>Se requiere al menos una lectura de respaldo.</value>
+  </data>
+  <data name="OperationsMonitoring.SupportingReadingsRepeated" xml:space="preserve">
+    <value>Las lecturas de respaldo no pueden repetirse.</value>
+  </data>
+  <data name="OperationsMonitoring.SupportingReadingNotSynchronized" xml:space="preserve">
+    <value>Una lectura de respaldo no ha sido sincronizada.</value>
+  </data>
+  <data name="OperationsMonitoring.EdgeAttentionAuthorRequired" xml:space="preserve">
+    <value>La atención desde el Edge requiere su autor.</value>
+  </data>
+  <data name="OperationsMonitoring.EdgeAttentionVersionRequired" xml:space="preserve">
+    <value>La atención desde el Edge requiere la versión esperada de la alerta.</value>
+  </data>
+</root>

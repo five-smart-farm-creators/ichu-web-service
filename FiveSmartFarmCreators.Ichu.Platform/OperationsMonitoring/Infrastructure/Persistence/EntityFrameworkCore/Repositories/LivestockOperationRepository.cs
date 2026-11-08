@@ -7,9 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Repository implementation for <see cref="LivestockOperation"/> aggregates using Entity Framework Core.
+///     Stores livestock operations with Entity Framework Core.
 /// </summary>
-/// <param name="context">The shared database context.</param>
 public class LivestockOperationRepository(AppDbContext context) : ILivestockOperationRepository
 {
     private DbSet<LivestockOperation> Operations => context.Set<LivestockOperation>();
@@ -21,7 +20,7 @@ public class LivestockOperationRepository(AppDbContext context) : ILivestockOper
     }
 
     /// <inheritdoc />
-    public Task<LivestockOperation?> FindByIdAsync(Guid operationId, CancellationToken cancellationToken = default) =>
+    public Task<LivestockOperation?> FindByIdAsync(LivestockOperationId operationId, CancellationToken cancellationToken = default) =>
         Operations.AsNoTracking().SingleOrDefaultAsync(o => o.Id == operationId, cancellationToken);
 
     /// <inheritdoc />

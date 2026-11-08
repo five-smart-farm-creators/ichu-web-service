@@ -8,9 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Repository implementation for <see cref="MonitoringRuleSet"/> aggregates using Entity Framework Core.
+///     Stores the rule revision counters of ranches with Entity Framework Core.
 /// </summary>
-/// <param name="context">The shared database context.</param>
 public class MonitoringRuleSetRepository(AppDbContext context) : IMonitoringRuleSetRepository
 {
     /// <inheritdoc />
@@ -22,6 +21,10 @@ public class MonitoringRuleSetRepository(AppDbContext context) : IMonitoringRule
     /// <inheritdoc />
     public Task<MonitoringRuleSet?> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
         context.Set<MonitoringRuleSet>().SingleOrDefaultAsync(r => r.RanchId == ranchId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<MonitoringRuleSet?> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+        context.Set<MonitoringRuleSet>().AsNoTracking().SingleOrDefaultAsync(r => r.RanchId == ranchId, cancellationToken);
 
     /// <inheritdoc />
     public async Task<MonitoringRuleSnapshot> ReadSnapshotAsync(Guid ranchId, CancellationToken cancellationToken = default)

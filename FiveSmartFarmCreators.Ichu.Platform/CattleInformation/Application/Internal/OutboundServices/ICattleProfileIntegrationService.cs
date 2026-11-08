@@ -3,13 +3,12 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QuerySer
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.OutboundServices;
 
 /// <summary>
-/// Reads IoT assignment and monitoring reception data through their owning contexts without storing copies.
+///     Reads an animal's collar and reception data from the contexts that own them, without storing copies.
 /// </summary>
 public interface ICattleProfileIntegrationService
 {
     /// <summary>
-    /// Retrieves device information for an animal whose ranch access has already been checked.
+    ///     Retrieves the device details of an animal whose ranch access the caller has already been checked for.
     /// </summary>
-    /// <returns>Explicit availability; unavailable integration data must not be reported as an unassigned collar.</returns>
     Task<CattleDeviceDetails> GetAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken);
 }

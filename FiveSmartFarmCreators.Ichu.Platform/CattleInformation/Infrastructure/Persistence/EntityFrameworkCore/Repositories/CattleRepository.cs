@@ -3,45 +3,41 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entitie
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-/// Tracks animal state and history in the host context using ranch-scoped predicates.
+///     Tracks animals and their stage history in the shared context, filtering every query by ranch.
 /// </summary>
-public sealed class CattleRepository<TContext> : ICattleRepository where TContext : DbContext
+public sealed class CattleRepository(AppDbContext context) : ICattleRepository
 {
-    private readonly TContext _context;
-
-    public CattleRepository(TContext context)
-    {
-        _context = context;
-    }
-
     /// <inheritdoc />
-    public Task<Cattle?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
-    {
-        return _context.Set<Cattle>()
+    public Task<Cattle?> FindByIdAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken = default) =>
+        context.Set<Cattle>()
             .Include(cattle => cattle.StagePeriods)
-            .SingleOrDefaultAsync(cattle => cattle.RanchId == ranchId && cattle.Id == cattleId, cancellationToken);
+            .FirstOrDefaultAsync(cattle => cattle.RanchId == ranchId && cattle.Id == cattleId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Cattle?> FindByIdAsNoTrackingAsync(CattleId cattleId, CancellationToken cancellationToken = default) =>
+        context.Set<Cattle>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(cattle => cattle.Id == cattleId, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default)
+    {
+        var holder = await context.Set<Cattle>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(cattle => cattle.RanchId == ranchId && cattle.EarTag == earTag, cancellationToken);
+        return holder?.Id;
     }
 
     /// <inheritdoc />
-    public Task<Cattle?> FindByEarTagAsync(Guid ranchId, string earTag, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Cattle>> SearchAsync(SearchCattleQuery query, CancellationToken cancellationToken = default)
     {
-        var normalizedEarTag = new EarTag(earTag);
-        return _context.Set<Cattle>()
-            .Include(cattle => cattle.StagePeriods)
-            .SingleOrDefaultAsync(cattle => cattle.RanchId == ranchId && cattle.EarTag == normalizedEarTag,
-                cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Cattle>> SearchAsync(SearchCattleQuery query,
-        CancellationToken cancellationToken)
-    {
-        var cattleQuery = _context.Set<Cattle>()
+        var cattleQuery = context.Set<Cattle>()
             .Include(cattle => cattle.StagePeriods)
             .Where(cattle => cattle.RanchId == query.RanchId);
 
@@ -51,16 +47,15 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
             cattleQuery = cattleQuery.Where(cattle => cattle.EarTag == earTag);
         }
 
-        if (query.Status.HasValue)
+        if (query.Status is { } status)
         {
-            cattleQuery = cattleQuery.Where(cattle => cattle.Status == query.Status.Value);
+            cattleQuery = cattleQuery.Where(cattle => cattle.Status == status);
         }
 
-        if (query.LotId.HasValue)
+        if (query.LotId is { } lotId)
         {
-            cattleQuery = cattleQuery.Where(cattle => _context.Set<LotMembership>().Any(membership =>
-                membership.RanchId == query.RanchId && membership.LotId == query.LotId.Value &&
-                membership.CattleId == cattle.Id));
+            cattleQuery = cattleQuery.Where(cattle => context.Set<LotMembership>().Any(membership =>
+                membership.RanchId == query.RanchId && membership.LotId == lotId && membership.CattleId == cattle.Id));
         }
 
         return await cattleQuery
@@ -72,8 +67,8 @@ public sealed class CattleRepository<TContext> : ICattleRepository where TContex
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(Cattle cattle, CancellationToken cancellationToken)
+    public async Task AddAsync(Cattle cattle, CancellationToken cancellationToken = default)
     {
-        await _context.Set<Cattle>().AddAsync(cattle, cancellationToken);
+        await context.Set<Cattle>().AddAsync(cattle, cancellationToken);
     }
 }

@@ -4,9 +4,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositori
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 
 /// <summary>
-///     Domain service that implements <see cref="IMonitoringRuleRevisionService"/> over the rule set repository.
+///     Advances rule revisions through the rule set repository.
 /// </summary>
-/// <param name="ruleSets">The rule set repository.</param>
 public class MonitoringRuleRevisionService(IMonitoringRuleSetRepository ruleSets) : IMonitoringRuleRevisionService
 {
     /// <inheritdoc />

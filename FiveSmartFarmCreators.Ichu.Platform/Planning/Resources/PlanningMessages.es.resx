@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="Planning.InvalidIdentifier" xml:space="preserve">
+    <value>Un identificador requerido no puede estar vacío.</value>
+  </data>
+  <data name="Planning.CampaignNameRequired" xml:space="preserve">
+    <value>Se requiere un nombre para la campaña.</value>
+  </data>
+  <data name="Planning.CampaignKindInvalid" xml:space="preserve">
+    <value>El tipo de campaña debe ser Sanitary o Reproductive.</value>
+  </data>
+  <data name="Planning.CampaignDateRangeInvalid" xml:space="preserve">
+    <value>La fecha de fin de la campaña debe ser igual o posterior a la de inicio.</value>
+  </data>
+  <data name="Planning.ActivityTitleRequired" xml:space="preserve">
+    <value>Se requiere un título para la actividad.</value>
+  </data>
+  <data name="Planning.UtcTimestampRequired" xml:space="preserve">
+    <value>Las marcas de tiempo deben usar UTC.</value>
+  </data>
+  <data name="Planning.CalendarRangeInvalid" xml:space="preserve">
+    <value>El fin del calendario debe ser igual o posterior al inicio.</value>
+  </data>
+  <data name="Planning.WithdrawalDateRangeInvalid" xml:space="preserve">
+    <value>El fin del periodo de retiro debe ser igual o posterior al inicio.</value>
+  </data>
+  <data name="Planning.CampaignNotFound" xml:space="preserve">
+    <value>No se encontró la campaña.</value>
+  </data>
+  <data name="Planning.ActivityNotFound" xml:space="preserve">
+    <value>No se encontró la actividad planificada.</value>
+  </data>
+  <data name="Planning.CattleNotFound" xml:space="preserve">
+    <value>No se encontró el animal en este rancho.</value>
+  </data>
+  <data name="Planning.InterventionNotFound" xml:space="preserve">
+    <value>No se encontró la intervención clínica.</value>
+  </data>
+  <data name="Planning.CampaignRanchMismatch" xml:space="preserve">
+    <value>La campaña pertenece a otro rancho.</value>
+  </data>
+  <data name="Planning.ActivityCattleMismatch" xml:space="preserve">
+    <value>El animal no corresponde a la actividad planificada.</value>
+  </data>
+  <data name="Planning.InterventionCattleMismatch" xml:space="preserve">
+    <value>La intervención clínica no pertenece a este animal ni a este rancho.</value>
+  </data>
+  <data name="Planning.RanchAccessDenied" xml:space="preserve">
+    <value>La cuenta no está autorizada para este rancho.</value>
+  </data>
+</root>

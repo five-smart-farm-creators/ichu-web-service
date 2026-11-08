@@ -5,17 +5,22 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Acl;
 
+/// <summary>
+///     Serves device facts to other contexts behind the caller's ranch access, as snapshots that expose plain identifiers.
+/// </summary>
 public class IoTAssetsContextFacade(
     IDeviceCommandService deviceCommandService,
     IDeviceQueryService deviceQueryService,
     IWaterTroughQueryService waterTroughQueryService,
     IIoTDeviceRepository deviceRepository,
+    IEdgeGatewayRepository edgeGatewayRepository,
     IIoTAssetsAccessService accessService,
     TimeProvider timeProvider) : IIoTAssetsContextFacade
 {
@@ -46,7 +51,7 @@ public class IoTAssetsContextFacade(
             return Result<DeviceAssignmentSnapshot?>.Failure(IoTAssetsErrors.InvalidInput);
         }
 
-        var result = await deviceQueryService.HandleAsync(new GetDeviceByIdQuery(ranchId, deviceId), cancellationToken);
+        var result = await deviceQueryService.HandleAsync(new GetDeviceByIdQuery(ranchId, new DeviceId(deviceId)), cancellationToken);
         if (result.IsFailure)
         {
             return Result<DeviceAssignmentSnapshot?>.Failure(result.DomainError);
@@ -66,7 +71,7 @@ public class IoTAssetsContextFacade(
         }
 
         var assignments = result.Value!.SelectMany(d => d.Assignments).Where(a => a.IsOpen())
-            .OrderBy(a => a.StartedAt).ThenBy(a => a.Id).Select(ToSnapshot).ToArray();
+            .OrderBy(a => a.StartedAt).ThenBy(a => a.Id.Value).Select(ToSnapshot).ToArray();
         return Result<IReadOnlyList<DeviceAssignmentSnapshot>>.Success(assignments);
     }
 
@@ -74,14 +79,14 @@ public class IoTAssetsContextFacade(
         CancellationToken cancellationToken)
     {
         var result = await waterTroughQueryService.HandleAsync(
-            new GetWaterTroughByIdQuery(ranchId, waterTroughId), cancellationToken);
+            new GetWaterTroughByIdQuery(ranchId, new WaterTroughId(waterTroughId)), cancellationToken);
         if (result.IsFailure)
         {
             return Result<WaterTroughConfiguration>.Failure(result.DomainError);
         }
 
         var trough = result.Value!;
-        return Result<WaterTroughConfiguration>.Success(new WaterTroughConfiguration(trough.Id, trough.RanchId,
+        return Result<WaterTroughConfiguration>.Success(new WaterTroughConfiguration(trough.Id.Value, trough.RanchId,
             trough.Name, trough.LotId, trough.TemperatureRange?.MinimumCelsius, trough.TemperatureRange?.MaximumCelsius,
             trough.Version));
     }
@@ -90,7 +95,7 @@ public class IoTAssetsContextFacade(
         DateTimeOffset receivedAt, int? batteryPercentage, CancellationToken cancellationToken)
     {
         var result = await deviceCommandService.HandleAsync(new RegisterDeviceCommunicationCommand(
-            ranchId, deviceId, communicatedAt, receivedAt, batteryPercentage), cancellationToken);
+            ranchId, new DeviceId(deviceId), communicatedAt, receivedAt, batteryPercentage), cancellationToken);
         return result.IsSuccess ? Result.Success() : Result.Failure(result.DomainError);
     }
 
@@ -101,7 +106,36 @@ public class IoTAssetsContextFacade(
             cancellationToken);
     }
 
+    public async Task<EdgeGatewaySnapshot?> AuthenticateEdgeGatewayAsync(string presentedKey, CancellationToken cancellationToken)
+    {
+        // Base64url secrets never contain a dot, so the first dot separates the gateway identifier from the secret.
+        var separator = presentedKey.IndexOf('.');
+        if (separator <= 0 || !Guid.TryParseExact(presentedKey[..separator], "D", out var gatewayId))
+        {
+            return null;
+        }
+
+        var gateway = await edgeGatewayRepository.FindByIdAsNoTrackingAsync(new EdgeGatewayId(gatewayId), cancellationToken);
+        return gateway is not null && gateway.Authenticates(presentedKey[(separator + 1)..])
+            ? new EdgeGatewaySnapshot(gateway.Id.Value, gateway.RanchId)
+            : null;
+    }
+
+    public async Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant,
+        CancellationToken cancellationToken)
+    {
+        var device = await deviceRepository.FindByIdAsNoTrackingAsync(new DeviceId(deviceId), cancellationToken);
+        if (device is null)
+        {
+            return null;
+        }
+
+        var assignment = device.Assignments.SingleOrDefault(a => a.CoversInstant(instant));
+        var cattleId = assignment is { TargetType: AssignmentTargetType.Cattle } ? assignment.TargetId : (Guid?)null;
+        return new DeviceAttributionSnapshot(device.Id.Value, device.RanchId, cattleId);
+    }
+
     private static DeviceAssignmentSnapshot ToSnapshot(DeviceAssignment assignment) =>
-        new(assignment.Id, assignment.DeviceId, assignment.RanchId, assignment.TargetId,
+        new(assignment.Id.Value, assignment.DeviceId.Value, assignment.RanchId, assignment.TargetId,
             assignment.TargetType.ToString(), assignment.StartedAt, assignment.EndedAt);
 }

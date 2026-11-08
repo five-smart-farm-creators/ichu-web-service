@@ -1,34 +1,38 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
-using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Unit of work that commits the monitoring changes through the shared database context and can discard them.
+///     Saves the monitoring changes through the shared database context. A conflicting save is reported as a result, so the application decides per entry whether to continue.
 /// </summary>
-public class OperationsMonitoringUnitOfWork : UnitOfWork, IOperationsMonitoringUnitOfWork
+public class OperationsMonitoringUnitOfWork(AppDbContext context, ILogger<OperationsMonitoringUnitOfWork> logger)
+    : IOperationsMonitoringUnitOfWork
 {
     private const string ModelNamespace = "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model";
 
-    private readonly AppDbContext _context;
-
-    /// <summary>
-    ///     Initializes the unit of work with the shared database context.
-    /// </summary>
-    /// <param name="context">The shared database context.</param>
-    public OperationsMonitoringUnitOfWork(AppDbContext context) : base(context)
+    /// <inheritdoc />
+    public async Task<bool> TryCompleteAsync(CancellationToken cancellationToken = default)
     {
-        _context = context;
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException exception)
+        {
+            logger.LogWarning(exception, "The monitoring changes could not be saved.");
+            DiscardChanges();
+            return false;
+        }
     }
 
-    /// <inheritdoc />
-    public void DiscardChanges()
+    // Only monitoring entities are detached, so pending work of other modules in the shared context is untouched.
+    private void DiscardChanges()
     {
-        // Only monitoring entities are detached, so pending work of other modules in the shared context is untouched.
-        var entries = _context.ChangeTracker.Entries()
-            .Where(e => e.Entity.GetType().Namespace?.StartsWith(ModelNamespace, StringComparison.Ordinal) == true)
+        var entries = context.ChangeTracker.Entries()
+            .Where(entry => entry.Entity.GetType().Namespace?.StartsWith(ModelNamespace, StringComparison.Ordinal) == true)
             .ToList();
         foreach (var entry in entries)
         {

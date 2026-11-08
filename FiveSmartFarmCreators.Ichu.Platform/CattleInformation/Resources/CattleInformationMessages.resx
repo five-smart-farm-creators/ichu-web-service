@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="CattleInformation.RanchIdentifierRequired" xml:space="preserve">
+    <value>A ranch identifier is required.</value>
+  </data>
+  <data name="CattleInformation.CattleIdentifierRequired" xml:space="preserve">
+    <value>A cattle identifier is required.</value>
+  </data>
+  <data name="CattleInformation.LotIdentifierRequired" xml:space="preserve">
+    <value>A lot identifier is required.</value>
+  </data>
+  <data name="CattleInformation.InvalidEarTag" xml:space="preserve">
+    <value>The ear tag must contain between 1 and 30 characters.</value>
+  </data>
+  <data name="CattleInformation.InvalidBreed" xml:space="preserve">
+    <value>The breed is invalid.</value>
+  </data>
+  <data name="CattleInformation.InvalidSex" xml:space="preserve">
+    <value>The sex is invalid.</value>
+  </data>
+  <data name="CattleInformation.InvalidBirthDate" xml:space="preserve">
+    <value>A valid birth date that is not in the future is required.</value>
+  </data>
+  <data name="CattleInformation.BirthDateAfterLifeStage" xml:space="preserve">
+    <value>The birth date cannot follow a recorded life stage.</value>
+  </data>
+  <data name="CattleInformation.InvalidLifeStage" xml:space="preserve">
+    <value>The life stage is invalid.</value>
+  </data>
+  <data name="CattleInformation.InvalidLifeStageDate" xml:space="preserve">
+    <value>The life stage date cannot precede the current period or be in the future.</value>
+  </data>
+  <data name="CattleInformation.InvalidExitReason" xml:space="preserve">
+    <value>The exit reason is invalid.</value>
+  </data>
+  <data name="CattleInformation.InvalidExitDate" xml:space="preserve">
+    <value>The exit date cannot precede the current life stage or be in the future.</value>
+  </data>
+  <data name="CattleInformation.InvalidLotName" xml:space="preserve">
+    <value>The lot name must contain between 1 and 80 characters.</value>
+  </data>
+  <data name="CattleInformation.InvalidLotCriterion" xml:space="preserve">
+    <value>The lot criterion cannot exceed 120 characters.</value>
+  </data>
+  <data name="CattleInformation.CattleFromAnotherRanch" xml:space="preserve">
+    <value>Cattle must belong to the lot ranch.</value>
+  </data>
+  <data name="CattleInformation.AssignmentTimeRequired" xml:space="preserve">
+    <value>An assignment timestamp is required.</value>
+  </data>
+  <data name="CattleInformation.InvalidSearch" xml:space="preserve">
+    <value>The search filters or pagination are invalid.</value>
+  </data>
+  <data name="CattleInformation.CattleNotFound" xml:space="preserve">
+    <value>The animal was not found in this ranch.</value>
+  </data>
+  <data name="CattleInformation.LotNotFound" xml:space="preserve">
+    <value>The lot was not found in this ranch.</value>
+  </data>
+  <data name="CattleInformation.CattleVersionMismatch" xml:space="preserve">
+    <value>Cattle has changed. Reload it before retrying.</value>
+  </data>
+  <data name="CattleInformation.LotVersionMismatch" xml:space="preserve">
+    <value>The lot has changed. Reload it before retrying.</value>
+  </data>
+  <data name="CattleInformation.CattleInactive" xml:space="preserve">
+    <value>Inactive cattle cannot be changed.</value>
+  </data>
+  <data name="CattleInformation.InactiveCattleAssignment" xml:space="preserve">
+    <value>Inactive cattle cannot be assigned to a lot.</value>
+  </data>
+  <data name="CattleInformation.LifeStageAlreadyCurrent" xml:space="preserve">
+    <value>The life stage is already current.</value>
+  </data>
+  <data name="CattleInformation.DuplicateEarTag" xml:space="preserve">
+    <value>Another animal in this ranch already uses this ear tag.</value>
+  </data>
+  <data name="CattleInformation.Unauthenticated" xml:space="preserve">
+    <value>A verified account is required.</value>
+  </data>
+  <data name="CattleInformation.RanchAccessDenied" xml:space="preserve">
+    <value>The account is not authorized for this ranch.</value>
+  </data>
+</root>

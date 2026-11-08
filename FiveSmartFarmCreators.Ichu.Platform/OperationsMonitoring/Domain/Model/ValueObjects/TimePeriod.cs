@@ -1,30 +1,33 @@
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
 /// <summary>
-///     Value object representing a half-open period: the start is included and the end is excluded.
+///     A half-open period: the start is included and the end is excluded.
 /// </summary>
 public record TimePeriod
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="TimePeriod"/> value object.
+    ///     Builds a period from instants that the calling context already ordered, as the cross-context read contract does. Requests must use <see cref="Create"/>, which reports an inverted period as a business error.
     /// </summary>
-    /// <param name="from">The first instant of the period.</param>
-    /// <param name="to">The instant that ends the period, excluded from it.</param>
-    /// <exception cref="ArgumentException">Thrown when the start does not precede the end.</exception>
     public TimePeriod(DateTimeOffset from, DateTimeOffset to)
     {
         if (from >= to)
         {
-            throw new ArgumentException("The period start must precede its end.");
+            throw new ArgumentException("The period start must precede its end.", nameof(from));
         }
 
         From = MonitoringTime.Normalize(from);
         To = MonitoringTime.Normalize(to);
     }
 
-    /// <summary>Gets the first instant of the period, in UTC.</summary>
     public DateTimeOffset From { get; }
 
-    /// <summary>Gets the instant that ends the period, in UTC and excluded from it.</summary>
     public DateTimeOffset To { get; }
+
+    public static Result<TimePeriod> Create(DateTimeOffset from, DateTimeOffset to) =>
+        from < to
+            ? Result<TimePeriod>.Success(new TimePeriod(from, to))
+            : Result<TimePeriod>.Failure(OperationsMonitoringErrors.PeriodStartNotBeforeEnd);
 }

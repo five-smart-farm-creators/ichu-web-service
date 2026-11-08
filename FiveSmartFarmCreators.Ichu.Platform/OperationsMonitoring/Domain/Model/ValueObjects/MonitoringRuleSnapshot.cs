@@ -3,12 +3,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggr
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
 /// <summary>
-///     Value object representing a consistent view of a ranch's thresholds and geofences at one revision.
+///     A consistent view of a ranch's thresholds and geofences at one revision, read in one database snapshot.
 /// </summary>
-/// <param name="RanchId">The ranch that owns the rules.</param>
-/// <param name="Revision">The rule revision the view corresponds to.</param>
-/// <param name="Thresholds">The thresholds configured at that revision.</param>
-/// <param name="Geofences">The geofences defined at that revision.</param>
 public record MonitoringRuleSnapshot(
     Guid RanchId,
     long Revision,

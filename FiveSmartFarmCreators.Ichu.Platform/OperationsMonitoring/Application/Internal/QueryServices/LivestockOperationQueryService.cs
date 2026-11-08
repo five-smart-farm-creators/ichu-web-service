@@ -1,6 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
@@ -10,12 +9,8 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
 
 /// <summary>
-///     Application query service that implements <see cref="ILivestockOperationQueryService"/> to read the livestock
-///     operations of an animal.
+///     Reads the livestock operations of an animal for accounts that may read its monitoring.
 /// </summary>
-/// <param name="accessControl">The authorization port implemented with the IAM context.</param>
-/// <param name="cattleLookup">The anti-corruption port towards Cattle Information.</param>
-/// <param name="operations">The livestock operation repository.</param>
 public class LivestockOperationQueryService(
     IMonitoringAccessControl accessControl,
     ICattleLookup cattleLookup,
@@ -26,21 +21,21 @@ public class LivestockOperationQueryService(
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
         if (cattle is null)
         {
-            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.AnimalNotFound, OperationsMonitoringError.AnimalNotFound);
+            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
-        var history = await operations.FindByCattleAsync(query.AnimalId, query.Period, cancellationToken);
-        return Result<IReadOnlyList<LivestockOperation>>.Success(history);
+        return Result<IReadOnlyList<LivestockOperation>>.Success(
+            await operations.FindByCattleAsync(query.AnimalId, query.Period, cancellationToken));
     }
 }

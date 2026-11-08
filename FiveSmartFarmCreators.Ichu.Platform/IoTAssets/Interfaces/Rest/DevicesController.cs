@@ -1,10 +1,13 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Resources;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
@@ -18,7 +21,8 @@ public class DevicesController(
     IDeviceCommandService commandService,
     IDeviceQueryService queryService,
     TimeProvider timeProvider,
-    IOptions<DeviceHealthOptions> healthOptions) : ControllerBase
+    IOptions<DeviceHealthOptions> healthOptions,
+    IStringLocalizer<IoTAssetsMessages> localizer) : ControllerBase
 {
     private readonly int? _lowBatteryThreshold = healthOptions.Value.LowBatteryThreshold;
 
@@ -29,8 +33,8 @@ public class DevicesController(
     {
         var result = await commandService.HandleAsync(
             RegisterDeviceCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
-            device => CreatedAtAction(nameof(GetDeviceById), new { ranchId, deviceId = device.Id },
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
+            device => CreatedAtAction(nameof(GetDeviceById), new { ranchId, deviceId = device.Id.Value },
                 DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, timeProvider.GetUtcNow(), _lowBatteryThreshold)));
     }
 
@@ -39,8 +43,8 @@ public class DevicesController(
     [ProducesResponseType(typeof(DeviceResource), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDeviceById(Guid ranchId, Guid deviceId, CancellationToken cancellationToken)
     {
-        var result = await queryService.HandleAsync(new GetDeviceByIdQuery(ranchId, deviceId), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        var result = await queryService.HandleAsync(new GetDeviceByIdQuery(ranchId, new DeviceId(deviceId)), cancellationToken);
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             device => Ok(DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, timeProvider.GetUtcNow(), _lowBatteryThreshold)));
     }
 
@@ -51,7 +55,7 @@ public class DevicesController(
     {
         var result = await queryService.HandleAsync(new GetDeviceInventoryQuery(ranchId), cancellationToken);
         var now = timeProvider.GetUtcNow();
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             devices => Ok(devices.Select(device =>
                 DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, now, _lowBatteryThreshold)).ToArray()));
     }
@@ -64,7 +68,7 @@ public class DevicesController(
     {
         var result = await commandService.HandleAsync(
             SetDeviceMaintenanceCommandFromResourceAssembler.ToCommandFromResource(ranchId, deviceId, resource), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             device => Ok(DeviceResourceFromEntityAssembler.ToResourceFromEntity(device, timeProvider.GetUtcNow(), _lowBatteryThreshold)));
     }
 }

@@ -1,21 +1,45 @@
+using System.Globalization;
+using System.Resources;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Resources;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Errors;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Errors;
 
+/// <summary>
+///     Business errors of the IoT Assets context. Each code is also the resource key of its localized message, so the
+///     English text lives in one place.
+/// </summary>
 public static class IoTAssetsErrors
 {
-    public static readonly Error InvalidInput = Error.Validation("IoTAssets.InvalidInput", "The supplied device data is invalid.");
-    public static readonly Error DeviceNotFound = Error.NotFound("IoTAssets.DeviceNotFound", "The device was not found in the authorized ranch.");
-    public static readonly Error WaterTroughNotFound = Error.NotFound("IoTAssets.WaterTroughNotFound", "The water trough was not found in the authorized ranch.");
-    public static readonly Error TargetNotFound = Error.NotFound("IoTAssets.TargetNotFound", "The assignment target was not found in the authorized ranch.");
-    public static readonly Error InvalidState = Error.Conflict("IoTAssets.InvalidState", "The current state does not allow this operation.");
-    public static readonly Error DuplicateSerial = Error.Conflict("IoTAssets.DuplicateSerial", "The device serial is already registered.");
-    public static readonly Error TargetAlreadyAssigned = Error.Conflict("IoTAssets.TargetAlreadyAssigned", "The target already has an assigned device.");
-    public static readonly Error DeviceAlreadyAssigned = Error.Conflict("IoTAssets.DeviceAlreadyAssigned", "The device already has an open assignment.");
-    public static readonly Error DeviceLimitReached = Error.Conflict("IoTAssets.DeviceLimitReached", "The assigned collar limit of the current plan has been reached.");
-    public static readonly Error SubscriptionRequired = Error.Forbidden("IoTAssets.SubscriptionRequired", "An active subscription is required to assign a collar.");
-    public static readonly Error Conflict = Error.Conflict("IoTAssets.Conflict", "The data changed concurrently. Reload it before retrying.");
-    public static readonly Error Unauthenticated = Error.Unauthorized("IoTAssets.Unauthenticated", "An authenticated caller is required.");
-    public static readonly Error Forbidden = Error.Forbidden("IoTAssets.Forbidden", "The caller does not have the required ranch permission.");
-    public static readonly Error IntegrationUnavailable = Error.Failure("IoTAssets.IntegrationUnavailable", "A required integration is unavailable.");
+    // Declared first because the error fields below read their messages during static initialization.
+    private static readonly ResourceManager Messages = new(typeof(IoTAssetsMessages));
+
+    public static readonly Error InvalidInput = Define("InvalidInput", EErrorType.Validation);
+    public static readonly Error DeviceNotFound = Define("DeviceNotFound", EErrorType.NotFound);
+    public static readonly Error WaterTroughNotFound = Define("WaterTroughNotFound", EErrorType.NotFound);
+    public static readonly Error TargetNotFound = Define("TargetNotFound", EErrorType.NotFound);
+    public static readonly Error InvalidState = Define("InvalidState", EErrorType.Conflict);
+    public static readonly Error DuplicateSerial = Define("DuplicateSerial", EErrorType.Conflict);
+    public static readonly Error TargetAlreadyAssigned = Define("TargetAlreadyAssigned", EErrorType.Conflict);
+    public static readonly Error DeviceAlreadyAssigned = Define("DeviceAlreadyAssigned", EErrorType.Conflict);
+    public static readonly Error DeviceLimitReached = Define("DeviceLimitReached", EErrorType.Conflict);
+    public static readonly Error SubscriptionRequired = Define("SubscriptionRequired", EErrorType.Forbidden);
+    public static readonly Error InvalidEdgeGatewayName = Define("InvalidEdgeGatewayName", EErrorType.Validation);
+    public static readonly Error EdgeGatewayNotFound = Define("EdgeGatewayNotFound", EErrorType.NotFound);
+    public static readonly Error EdgeGatewayAlreadyRevoked = Define("EdgeGatewayAlreadyRevoked", EErrorType.Conflict);
+
+    /// <summary>The data changed after the caller read it, so the caller must reload it before retrying.</summary>
+    public static readonly Error Conflict = Define("Conflict", EErrorType.Conflict);
+
+    public static readonly Error Unauthenticated = Define("Unauthenticated", EErrorType.Unauthorized);
+    public static readonly Error Forbidden = Define("Forbidden", EErrorType.Forbidden);
+
+    /// <summary>A transaction could not run safely, so the caller may retry once the integration recovers.</summary>
+    public static readonly Error IntegrationUnavailable = Define("IntegrationUnavailable", EErrorType.Failure);
+
+    private static Error Define(string name, EErrorType type)
+    {
+        var code = $"IoTAssets.{name}";
+        return new Error(code, Messages.GetString(code, CultureInfo.InvariantCulture) ?? code, type);
+    }
 }

@@ -1,86 +1,65 @@
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Enums;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
 
 /// <summary>
-/// Groups planned activities for one ranch and a sanitary or reproductive purpose.
+/// Groups the planned activities of one ranch under a sanitary or reproductive purpose and an inclusive date range.
 /// </summary>
-public sealed class PlanningCampaign
+public sealed class PlanningCampaign : AggregateRoot
 {
-    private PlanningCampaign(Guid id, Guid ranchId, string name, CampaignKind kind, DateOnly startsOn, DateOnly endsOn)
+    // Entity Framework Core materializes campaigns without running the factory.
+    private PlanningCampaign()
     {
-        Id = id;
-        RanchId = ranchId;
-        Name = name;
-        Kind = kind;
-        StartsOn = startsOn;
-        EndsOn = endsOn;
     }
 
-    /// <summary>
-    /// Gets the campaign identifier.
-    /// </summary>
-    public Guid Id { get; }
+    public PlanningCampaignId Id { get; private set; }
+
+    public Guid RanchId { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public CampaignKind Kind { get; private set; }
+
+    public DateOnly StartsOn { get; private set; }
+
+    public DateOnly EndsOn { get; private set; }
 
     /// <summary>
-    /// Gets the ranch identifier supplied by the caller and checked through the access contract.
+    /// Both dates are inclusive, so a one-day campaign starts and ends on the same day.
     /// </summary>
-    public Guid RanchId { get; }
-
-    /// <summary>
-    /// Gets the campaign name.
-    /// </summary>
-    public string Name { get; }
-
-    /// <summary>
-    /// Gets the sanitary or reproductive purpose.
-    /// </summary>
-    public CampaignKind Kind { get; }
-
-    /// <summary>
-    /// Gets the first inclusive campaign date.
-    /// </summary>
-    public DateOnly StartsOn { get; }
-
-    /// <summary>
-    /// Gets the last inclusive campaign date.
-    /// </summary>
-    public DateOnly EndsOn { get; }
-
-    /// <summary>
-    /// Creates a campaign after validating its identifiers and date range.
-    /// </summary>
-    /// <param name="id">The campaign identifier.</param>
-    /// <param name="ranchId">The ranch identifier.</param>
-    /// <param name="name">The campaign name.</param>
-    /// <param name="kind">The campaign purpose.</param>
-    /// <param name="startsOn">The first inclusive campaign date.</param>
-    /// <param name="endsOn">The last inclusive campaign date.</param>
-    /// <returns>A valid planning campaign.</returns>
-    /// <exception cref="PlanningDomainException">An identifier, name, kind, or date range is invalid.</exception>
-    public static PlanningCampaign Create(Guid id, Guid ranchId, string name, CampaignKind kind, DateOnly startsOn, DateOnly endsOn)
+    public static Result<PlanningCampaign> Create(Guid ranchId, string name, CampaignKind kind, DateOnly startsOn, DateOnly endsOn)
     {
-        if (id == Guid.Empty || ranchId == Guid.Empty)
+        if (ranchId == Guid.Empty)
         {
-            throw new PlanningDomainException("planning.invalid_identifier", "Campaign and ranch identifiers must not be empty.");
+            return Result<PlanningCampaign>.Failure(PlanningErrors.InvalidIdentifier);
         }
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new PlanningDomainException("planning.campaign_name_required", "A campaign name is required.");
+            return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignNameRequired);
         }
 
         if (!Enum.IsDefined(kind))
         {
-            throw new PlanningDomainException("planning.campaign_kind_invalid", "The campaign kind is not supported.");
+            return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignKindInvalid);
         }
 
         if (endsOn < startsOn)
         {
-            throw new PlanningDomainException("planning.campaign_date_range_invalid", "The campaign end date must be on or after its start date.");
+            return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignDateRangeInvalid);
         }
 
-        return new PlanningCampaign(id, ranchId, name.Trim(), kind, startsOn, endsOn);
+        return Result<PlanningCampaign>.Success(new PlanningCampaign
+        {
+            Id = new PlanningCampaignId(Guid.NewGuid()),
+            RanchId = ranchId,
+            Name = name.Trim(),
+            Kind = kind,
+            StartsOn = startsOn,
+            EndsOn = endsOn
+        });
     }
 }

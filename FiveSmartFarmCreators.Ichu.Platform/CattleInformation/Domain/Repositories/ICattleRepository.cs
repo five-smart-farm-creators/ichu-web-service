@@ -1,33 +1,36 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 /// <summary>
-/// Provides tracked, ranch-scoped persistence operations; callers enforce access before querying.
+///     Provides ranch-scoped animal persistence. Callers check access before querying.
 /// </summary>
 public interface ICattleRepository
 {
     /// <summary>
-    /// Finds an animal and its stage history within the specified ranch, including inactive animals.
+    ///     Finds an animal with its stage history in the ranch, including inactive animals.
     /// </summary>
-    /// <returns>The tracked animal, or null when its identity does not belong to that ranch.</returns>
-    Task<Cattle?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken = default);
+    Task<Cattle?> FindByIdAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Finds the animal occupying an exact trimmed ear tag, including inactive animals that still reserve it.
+    ///     Finds an animal in any ranch without tracking it, for system lookups that authorize the result themselves.
     /// </summary>
-    /// <returns>The tracked animal in the specified ranch, or null when the ear tag is unused.</returns>
-    Task<Cattle?> FindByEarTagAsync(Guid ranchId, string earTag, CancellationToken cancellationToken = default);
+    Task<Cattle?> FindByIdAsNoTrackingAsync(CattleId cattleId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Applies validated filters within one ranch and orders the requested page by ear tag, then identifier.
+    ///     Finds the animal that holds an ear tag in the ranch, including inactive animals that still reserve it.
     /// </summary>
-    /// <returns>A page of tracked animals with stage history, or an empty page when no records match.</returns>
+    Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Returns one page of the ranch's animals ordered by ear tag, then identifier.
+    /// </summary>
     Task<IReadOnlyList<Cattle>> SearchAsync(SearchCattleQuery query, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Tracks a new animal for the unit of work; this operation does not commit it.
+    ///     Tracks a new animal; the unit of work commits it.
     /// </summary>
     Task AddAsync(Cattle cattle, CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="IoTAssets.InvalidInput" xml:space="preserve">
+    <value>Los datos del dispositivo no son válidos.</value>
+  </data>
+  <data name="IoTAssets.DeviceNotFound" xml:space="preserve">
+    <value>No se encontró el dispositivo en el rancho autorizado.</value>
+  </data>
+  <data name="IoTAssets.WaterTroughNotFound" xml:space="preserve">
+    <value>No se encontró el bebedero en el rancho autorizado.</value>
+  </data>
+  <data name="IoTAssets.TargetNotFound" xml:space="preserve">
+    <value>No se encontró el destino de la asignación en el rancho autorizado.</value>
+  </data>
+  <data name="IoTAssets.InvalidState" xml:space="preserve">
+    <value>El estado actual no permite esta operación.</value>
+  </data>
+  <data name="IoTAssets.DuplicateSerial" xml:space="preserve">
+    <value>El número de serie del dispositivo ya está registrado.</value>
+  </data>
+  <data name="IoTAssets.TargetAlreadyAssigned" xml:space="preserve">
+    <value>El destino ya tiene un dispositivo asignado.</value>
+  </data>
+  <data name="IoTAssets.DeviceAlreadyAssigned" xml:space="preserve">
+    <value>El dispositivo ya tiene una asignación abierta.</value>
+  </data>
+  <data name="IoTAssets.DeviceLimitReached" xml:space="preserve">
+    <value>Se alcanzó el límite de collares asignados del plan vigente.</value>
+  </data>
+  <data name="IoTAssets.SubscriptionRequired" xml:space="preserve">
+    <value>Se requiere una suscripción activa para asignar un collar.</value>
+  </data>
+  <data name="IoTAssets.Conflict" xml:space="preserve">
+    <value>Los datos cambiaron de forma concurrente. Vuelva a cargarlos antes de reintentar.</value>
+  </data>
+  <data name="IoTAssets.Unauthenticated" xml:space="preserve">
+    <value>Se requiere un usuario autenticado.</value>
+  </data>
+  <data name="IoTAssets.Forbidden" xml:space="preserve">
+    <value>La cuenta no tiene el permiso requerido para este rancho.</value>
+  </data>
+  <data name="IoTAssets.IntegrationUnavailable" xml:space="preserve">
+    <value>Una integración requerida no está disponible.</value>
+  </data>
+  <data name="IoTAssets.InvalidEdgeGatewayName" xml:space="preserve">
+    <value>El nombre de la puerta de enlace debe tener entre 1 y 80 caracteres.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayNotFound" xml:space="preserve">
+    <value>No se encontró la puerta de enlace en el rancho autorizado.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayAlreadyRevoked" xml:space="preserve">
+    <value>La puerta de enlace ya está revocada.</value>
+  </data>
+</root>

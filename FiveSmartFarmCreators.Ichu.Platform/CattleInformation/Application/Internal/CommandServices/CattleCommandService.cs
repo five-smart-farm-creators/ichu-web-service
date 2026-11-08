@@ -5,81 +5,158 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Command
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.CommandServices;
 
 /// <summary>
-/// Coordinates authorized animal changes and commits their pending lifecycle facts with their state.
+///     Checks access and the ear tag rule here and leaves the lifecycle rules to the aggregate. A rejected change saves nothing.
 /// </summary>
 public sealed class CattleCommandService(
-    ICattleRepository cattleRepository,
-    ICattleUnitOfWork unitOfWork,
+    ICattleRepository cattles,
+    IUnitOfWork unitOfWork,
     ICattleAccessService accessService,
     TimeProvider timeProvider) : ICattleCommandService
 {
     /// <inheritdoc />
-    public async Task<Cattle> HandleAsync(RegisterCattleCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Cattle>> HandleAsync(RegisterCattleCommand command, CancellationToken cancellationToken)
     {
-        await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
-        var cattle = new Cattle(command, Today());
-        await EnsureEarTagAvailableAsync(command.RanchId, cattle.EarTag.Value, null, cancellationToken);
-        await cattleRepository.AddAsync(cattle, cancellationToken);
-        await unitOfWork.CommitAsync(cattle, cancellationToken);
-        return cattle;
-    }
-
-    /// <inheritdoc />
-    public async Task<Cattle> HandleAsync(UpdateCattleCommand command, CancellationToken cancellationToken)
-    {
-        await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
-        var cattle = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
-        var earTag = new EarTag(command.EarTag);
-        await EnsureEarTagAvailableAsync(command.RanchId, earTag.Value, cattle.Id, cancellationToken);
-        cattle.Update(command, Today());
-        await unitOfWork.CommitAsync(cattle, cancellationToken);
-        return cattle;
-    }
-
-    /// <inheritdoc />
-    public async Task<Cattle> HandleAsync(ChangeLifeStageCommand command, CancellationToken cancellationToken)
-    {
-        await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
-        var cattle = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
-        cattle.ChangeStage(command, Today());
-        await unitOfWork.CommitAsync(cattle, cancellationToken);
-        return cattle;
-    }
-
-    /// <inheritdoc />
-    public async Task<Cattle> HandleAsync(DeactivateCattleCommand command, CancellationToken cancellationToken)
-    {
-        await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
-        var cattle = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
-        cattle.Deactivate(command, Today());
-        await unitOfWork.CommitAsync(cattle, cancellationToken);
-        return cattle;
-    }
-
-    private async Task<Cattle> FindAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
-    {
-        if (ranchId == Guid.Empty || cattleId == Guid.Empty)
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
+        if (access.IsFailure)
         {
-            throw new CattleInformationException("invalid_input", "Ranch and cattle identifiers are required.");
+            return Result<Cattle>.Failure(access.DomainError);
         }
 
-        return await cattleRepository.FindByIdAsync(ranchId, cattleId, cancellationToken)
-            ?? throw new CattleInformationException("not_found", "The animal was not found in this ranch.");
+        var registration = Cattle.Register(command, Today());
+        if (registration.IsFailure)
+        {
+            return registration;
+        }
+
+        var cattle = registration.Value!;
+        var duplicate = await FindDuplicateEarTagAsync(cattle.RanchId, cattle.EarTag, cattle.Id, cancellationToken);
+        if (duplicate is not null)
+        {
+            return Result<Cattle>.Failure(duplicate);
+        }
+
+        await cattles.AddAsync(cattle, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<Cattle>.Success(cattle);
     }
 
-    private async Task EnsureEarTagAvailableAsync(Guid ranchId, string earTag, Guid? cattleId,
+    /// <inheritdoc />
+    public async Task<Result<Cattle>> HandleAsync(UpdateCattleCommand command, CancellationToken cancellationToken)
+    {
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<Cattle>.Failure(access.DomainError);
+        }
+
+        var found = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
+        if (found.IsFailure)
+        {
+            return found;
+        }
+
+        var earTag = EarTag.Create(command.EarTag);
+        if (earTag.IsFailure)
+        {
+            return Result<Cattle>.Failure(earTag.DomainError);
+        }
+
+        var duplicate = await FindDuplicateEarTagAsync(command.RanchId, earTag.Value!, command.CattleId, cancellationToken);
+        if (duplicate is not null)
+        {
+            return Result<Cattle>.Failure(duplicate);
+        }
+
+        var update = found.Value!.Update(command, Today());
+        if (update.IsFailure)
+        {
+            return Result<Cattle>.Failure(update.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return found;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Cattle>> HandleAsync(ChangeLifeStageCommand command, CancellationToken cancellationToken)
+    {
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<Cattle>.Failure(access.DomainError);
+        }
+
+        var found = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
+        if (found.IsFailure)
+        {
+            return found;
+        }
+
+        var change = found.Value!.ChangeStage(command, Today());
+        if (change.IsFailure)
+        {
+            return Result<Cattle>.Failure(change.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return found;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Cattle>> HandleAsync(DeactivateCattleCommand command, CancellationToken cancellationToken)
+    {
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<Cattle>.Failure(access.DomainError);
+        }
+
+        var found = await FindAsync(command.RanchId, command.CattleId, cancellationToken);
+        if (found.IsFailure)
+        {
+            return found;
+        }
+
+        var deactivation = found.Value!.Deactivate(command, Today(), timeProvider.GetUtcNow());
+        if (deactivation.IsFailure)
+        {
+            return Result<Cattle>.Failure(deactivation.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return found;
+    }
+
+    private async Task<Result<Cattle>> FindAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken)
+    {
+        if (ranchId == Guid.Empty)
+        {
+            return Result<Cattle>.Failure(CattleInformationErrors.RanchIdentifierRequired);
+        }
+
+        if (cattleId.Value == Guid.Empty)
+        {
+            return Result<Cattle>.Failure(CattleInformationErrors.CattleIdentifierRequired);
+        }
+
+        var cattle = await cattles.FindByIdAsync(ranchId, cattleId, cancellationToken);
+        return cattle is null
+            ? Result<Cattle>.Failure(CattleInformationErrors.CattleNotFound)
+            : Result<Cattle>.Success(cattle);
+    }
+
+    private async Task<Error?> FindDuplicateEarTagAsync(Guid ranchId, EarTag earTag, CattleId cattleId,
         CancellationToken cancellationToken)
     {
-        var existing = await cattleRepository.FindByEarTagAsync(ranchId, earTag, cancellationToken);
-        if (existing is not null && existing.Id != cattleId)
-        {
-            throw new CattleInformationException("duplicate_ear_tag",
-                "Another animal in this ranch already uses this ear tag.", existing.Id);
-        }
+        var holder = await cattles.FindIdByEarTagAsync(ranchId, earTag, cancellationToken);
+        return holder is { } conflicting && conflicting != cattleId ? new DuplicateEarTagError(conflicting) : null;
     }
 
     private DateOnly Today() => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);

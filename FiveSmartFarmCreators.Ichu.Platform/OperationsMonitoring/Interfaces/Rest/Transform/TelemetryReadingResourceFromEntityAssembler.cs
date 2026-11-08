@@ -4,16 +4,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.R
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Assembles HTTP response resources from <see cref="TelemetryReading"/> aggregates.
-/// </summary>
 public static class TelemetryReadingResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Transforms a <see cref="TelemetryReading"/> into a <see cref="TelemetryReadingResource"/>.
-    /// </summary>
-    /// <param name="entity">The telemetry reading aggregate root.</param>
-    /// <returns>A resource representation suitable for HTTP responses.</returns>
     public static TelemetryReadingResource ToResourceFromEntity(TelemetryReading entity) =>
         new(
             entity.ReadingId,

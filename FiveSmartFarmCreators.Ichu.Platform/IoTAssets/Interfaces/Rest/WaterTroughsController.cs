@@ -1,10 +1,13 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Resources;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
 
@@ -13,7 +16,10 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
 [Route("api/v1/ranches/{ranchId:guid}/water-troughs")]
 [Produces("application/json")]
 [Tags("Water Troughs")]
-public class WaterTroughsController(IWaterTroughCommandService commandService, IWaterTroughQueryService queryService) : ControllerBase
+public class WaterTroughsController(
+    IWaterTroughCommandService commandService,
+    IWaterTroughQueryService queryService,
+    IStringLocalizer<IoTAssetsMessages> localizer) : ControllerBase
 {
     [HttpPost]
     [EndpointSummary("Register a water trough without consuming the collar quota")]
@@ -23,8 +29,8 @@ public class WaterTroughsController(IWaterTroughCommandService commandService, I
     {
         var result = await commandService.HandleAsync(
             RegisterWaterTroughCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
-            trough => CreatedAtAction(nameof(GetWaterTroughById), new { ranchId, waterTroughId = trough.Id },
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
+            trough => CreatedAtAction(nameof(GetWaterTroughById), new { ranchId, waterTroughId = trough.Id.Value },
                 WaterTroughResourceFromEntityAssembler.ToResourceFromEntity(trough)));
     }
 
@@ -33,8 +39,9 @@ public class WaterTroughsController(IWaterTroughCommandService commandService, I
     [ProducesResponseType(typeof(WaterTroughResource), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetWaterTroughById(Guid ranchId, Guid waterTroughId, CancellationToken cancellationToken)
     {
-        var result = await queryService.HandleAsync(new GetWaterTroughByIdQuery(ranchId, waterTroughId), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        var result = await queryService.HandleAsync(
+            new GetWaterTroughByIdQuery(ranchId, new WaterTroughId(waterTroughId)), cancellationToken);
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             trough => Ok(WaterTroughResourceFromEntityAssembler.ToResourceFromEntity(trough)));
     }
 
@@ -44,7 +51,7 @@ public class WaterTroughsController(IWaterTroughCommandService commandService, I
     public async Task<IActionResult> GetWaterTroughs(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(new GetWaterTroughsQuery(ranchId), cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             troughs => Ok(troughs.Select(WaterTroughResourceFromEntityAssembler.ToResourceFromEntity).ToArray()));
     }
 
@@ -57,7 +64,7 @@ public class WaterTroughsController(IWaterTroughCommandService commandService, I
         var result = await commandService.HandleAsync(
             ConfigureWaterTroughTemperatureCommandFromResourceAssembler.ToCommandFromResource(ranchId, waterTroughId, resource),
             cancellationToken);
-        return IoTAssetsActionResultAssembler.ToActionResult(this, result,
+        return IoTAssetsActionResultAssembler.ToActionResult(this, result, localizer,
             trough => Ok(WaterTroughResourceFromEntityAssembler.ToResourceFromEntity(trough)));
     }
 }

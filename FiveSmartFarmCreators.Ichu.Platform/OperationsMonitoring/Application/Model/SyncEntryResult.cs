@@ -1,11 +1,13 @@
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 
 /// <summary>
-///     Read model of the individual result of one synchronized entry.
+///     The reason is English text for the gateway and is only present when the outcome needs an explanation.
 /// </summary>
-/// <param name="Kind">The kind of entry.</param>
-/// <param name="Id">The identifier the client generated for the entry.</param>
-/// <param name="Status">The outcome of the entry.</param>
-/// <param name="Reason">The reason for the outcome, when it needs one.</param>
-/// <param name="RelatedAlertId">The stored alert the entry belongs to, when it joined or changed an alert.</param>
-public record SyncEntryResult(SyncEntryKind Kind, Guid Id, SyncEntryStatus Status, string? Reason, Guid? RelatedAlertId = null);
+public record SyncEntryResult(
+    SyncEntryKind Kind,
+    Guid Id,
+    SyncEntryStatus Status,
+    string? Reason,
+    MonitoringAlertId? RelatedAlertId = null);

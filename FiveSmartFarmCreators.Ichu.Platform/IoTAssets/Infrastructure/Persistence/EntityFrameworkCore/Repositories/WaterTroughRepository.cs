@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +13,13 @@ public class WaterTroughRepository(AppDbContext context) : IWaterTroughRepositor
         await context.Set<WaterTrough>().AddAsync(waterTrough, cancellationToken);
     }
 
-    public Task<WaterTrough?> FindByIdAsync(Guid ranchId, Guid waterTroughId, CancellationToken cancellationToken)
+    public Task<WaterTrough?> FindByIdAsync(Guid ranchId, WaterTroughId waterTroughId, CancellationToken cancellationToken)
     {
         return context.Set<WaterTrough>()
             .FirstOrDefaultAsync(t => t.RanchId == ranchId && t.Id == waterTroughId, cancellationToken);
     }
 
-    public Task<WaterTrough?> FindByIdAsNoTrackingAsync(Guid ranchId, Guid waterTroughId, CancellationToken cancellationToken)
+    public Task<WaterTrough?> FindByIdAsNoTrackingAsync(Guid ranchId, WaterTroughId waterTroughId, CancellationToken cancellationToken)
     {
         return context.Set<WaterTrough>().AsNoTracking()
             .FirstOrDefaultAsync(t => t.RanchId == ranchId && t.Id == waterTroughId, cancellationToken);

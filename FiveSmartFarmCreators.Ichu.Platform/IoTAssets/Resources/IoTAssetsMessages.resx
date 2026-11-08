@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="IoTAssets.InvalidInput" xml:space="preserve">
+    <value>The supplied device data is invalid.</value>
+  </data>
+  <data name="IoTAssets.DeviceNotFound" xml:space="preserve">
+    <value>The device was not found in the authorized ranch.</value>
+  </data>
+  <data name="IoTAssets.WaterTroughNotFound" xml:space="preserve">
+    <value>The water trough was not found in the authorized ranch.</value>
+  </data>
+  <data name="IoTAssets.TargetNotFound" xml:space="preserve">
+    <value>The assignment target was not found in the authorized ranch.</value>
+  </data>
+  <data name="IoTAssets.InvalidState" xml:space="preserve">
+    <value>The current state does not allow this operation.</value>
+  </data>
+  <data name="IoTAssets.DuplicateSerial" xml:space="preserve">
+    <value>The device serial is already registered.</value>
+  </data>
+  <data name="IoTAssets.TargetAlreadyAssigned" xml:space="preserve">
+    <value>The target already has an assigned device.</value>
+  </data>
+  <data name="IoTAssets.DeviceAlreadyAssigned" xml:space="preserve">
+    <value>The device already has an open assignment.</value>
+  </data>
+  <data name="IoTAssets.DeviceLimitReached" xml:space="preserve">
+    <value>The assigned collar limit of the current plan has been reached.</value>
+  </data>
+  <data name="IoTAssets.SubscriptionRequired" xml:space="preserve">
+    <value>An active subscription is required to assign a collar.</value>
+  </data>
+  <data name="IoTAssets.Conflict" xml:space="preserve">
+    <value>The data changed concurrently. Reload it before retrying.</value>
+  </data>
+  <data name="IoTAssets.Unauthenticated" xml:space="preserve">
+    <value>An authenticated caller is required.</value>
+  </data>
+  <data name="IoTAssets.Forbidden" xml:space="preserve">
+    <value>The caller does not have the required ranch permission.</value>
+  </data>
+  <data name="IoTAssets.IntegrationUnavailable" xml:space="preserve">
+    <value>A required integration is unavailable.</value>
+  </data>
+  <data name="IoTAssets.InvalidEdgeGatewayName" xml:space="preserve">
+    <value>The edge gateway name must contain between 1 and 80 characters.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayNotFound" xml:space="preserve">
+    <value>The edge gateway was not found in the authorized ranch.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayAlreadyRevoked" xml:space="preserve">
+    <value>The edge gateway is already revoked.</value>
+  </data>
+</root>

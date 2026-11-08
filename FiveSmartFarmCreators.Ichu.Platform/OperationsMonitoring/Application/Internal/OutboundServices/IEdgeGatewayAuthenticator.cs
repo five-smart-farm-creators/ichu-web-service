@@ -6,9 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 public interface IEdgeGatewayAuthenticator
 {
     /// <summary>
-    ///     Authenticates the gateway of the current request asynchronously.
+    ///     Returns the verified gateway, or null when the credentials are missing or invalid.
     /// </summary>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A task containing the verified gateway, or <see langword="null"/> when the credentials are missing or invalid.</returns>
     Task<EdgeGatewayPrincipal?> AuthenticateAsync(CancellationToken cancellationToken);
 }

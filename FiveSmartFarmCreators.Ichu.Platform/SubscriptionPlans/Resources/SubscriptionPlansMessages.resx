@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="SubscriptionPlans.PlanNotFound" xml:space="preserve">
+    <value>The subscription plan was not found.</value>
+  </data>
+  <data name="SubscriptionPlans.PlanUnavailable" xml:space="preserve">
+    <value>The subscription plan is not available for new subscriptions.</value>
+  </data>
+  <data name="SubscriptionPlans.HeadCountExceedsPlan" xml:space="preserve">
+    <value>The head count exceeds the device limit of the plan.</value>
+  </data>
+  <data name="SubscriptionPlans.InvalidHeadCount" xml:space="preserve">
+    <value>The head count must be between 1 and 10000.</value>
+  </data>
+  <data name="SubscriptionPlans.QuoteChanged" xml:space="preserve">
+    <value>The price changed since it was quoted. Review the quote and request it again.</value>
+  </data>
+  <data name="SubscriptionPlans.TermsVersionOutdated" xml:space="preserve">
+    <value>The terms version is outdated. Review the current terms and request again.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionAlreadyExists" xml:space="preserve">
+    <value>The ranch already has a pending or active subscription.</value>
+  </data>
+  <data name="SubscriptionPlans.OperationConflict" xml:space="preserve">
+    <value>The operation identifier was already used for a different request.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionNotFound" xml:space="preserve">
+    <value>The subscription was not found.</value>
+  </data>
+  <data name="SubscriptionPlans.InvalidStatusTransition" xml:space="preserve">
+    <value>The subscription is not in a status that allows this operation.</value>
+  </data>
+  <data name="SubscriptionPlans.CancellationReasonRequired" xml:space="preserve">
+    <value>A cancellation reason of 1 to 200 characters is required.</value>
+  </data>
+  <data name="SubscriptionPlans.RanchAccessDenied" xml:space="preserve">
+    <value>The account is not authorized for this ranch.</value>
+  </data>
+  <data name="SubscriptionPlans.Unauthenticated" xml:space="preserve">
+    <value>A verified account is required.</value>
+  </data>
+</root>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="SubscriptionPlans.PlanNotFound" xml:space="preserve">
+    <value>No se encontró el plan de suscripción.</value>
+  </data>
+  <data name="SubscriptionPlans.PlanUnavailable" xml:space="preserve">
+    <value>El plan de suscripción no está disponible para nuevas suscripciones.</value>
+  </data>
+  <data name="SubscriptionPlans.HeadCountExceedsPlan" xml:space="preserve">
+    <value>La cantidad de cabezas supera el límite de dispositivos del plan.</value>
+  </data>
+  <data name="SubscriptionPlans.InvalidHeadCount" xml:space="preserve">
+    <value>La cantidad de cabezas debe estar entre 1 y 10000.</value>
+  </data>
+  <data name="SubscriptionPlans.QuoteChanged" xml:space="preserve">
+    <value>El precio cambió desde que se cotizó. Revise la cotización y solicítela nuevamente.</value>
+  </data>
+  <data name="SubscriptionPlans.TermsVersionOutdated" xml:space="preserve">
+    <value>La versión de los términos está desactualizada. Revise los términos vigentes y vuelva a solicitar.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionAlreadyExists" xml:space="preserve">
+    <value>El rancho ya tiene una suscripción pendiente o activa.</value>
+  </data>
+  <data name="SubscriptionPlans.OperationConflict" xml:space="preserve">
+    <value>El identificador de operación ya se usó para una solicitud distinta.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionNotFound" xml:space="preserve">
+    <value>No se encontró la suscripción.</value>
+  </data>
+  <data name="SubscriptionPlans.InvalidStatusTransition" xml:space="preserve">
+    <value>La suscripción no está en un estado que permita esta operación.</value>
+  </data>
+  <data name="SubscriptionPlans.CancellationReasonRequired" xml:space="preserve">
+    <value>Se requiere un motivo de cancelación de 1 a 200 caracteres.</value>
+  </data>
+  <data name="SubscriptionPlans.RanchAccessDenied" xml:space="preserve">
+    <value>La cuenta no está autorizada para este rancho.</value>
+  </data>
+  <data name="SubscriptionPlans.Unauthenticated" xml:space="preserve">
+    <value>Se requiere una cuenta verificada.</value>
+  </data>
+</root>

@@ -1,21 +1,32 @@
+using Cortex.Mediator.Commands;
+using Cortex.Mediator.DependencyInjection;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.OpenApi;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 using Microsoft.EntityFrameworkCore;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.DependencyInjection;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 builder.Services.AddProblemDetails();
+builder.Services.AddLocalization();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi(options =>
 {
@@ -23,11 +34,6 @@ builder.Services.AddOpenApi(options =>
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
 });
 builder.Services.AddSwaggerGen();
-
-var planningConnectionString = builder.Configuration.GetConnectionString("Planning")
-    ?? throw new InvalidOperationException(
-        "Configure the Planning PostgreSQL connection string using ConnectionStrings:Planning.");
-builder.Services.AddPlanning(planningConnectionString);
 
 builder.Services.AddCors(options =>
 {
@@ -46,6 +52,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
     options.UseNpgsql(connectionString)
         .UseLoggerFactory(serviceProvider.GetRequiredService<ILoggerFactory>())
+        .AddInterceptors(serviceProvider.GetRequiredService<DispatchDomainEventsInterceptor>())
         .EnableDetailedErrors();
 
     if (builder.Environment.IsDevelopment())
@@ -57,16 +64,22 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 // Modules that depend on the base DbContext type receive the shared application context.
 builder.Services.AddScoped<DbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<DispatchDomainEventsInterceptor>();
+
+// Command pipeline behaviors and event handler discovery are shared by every bounded context.
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(ExceptionHandlingCommandBehavior<>));
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(TransactionCommandBehavior<>));
+builder.Services.AddCortexMediator([typeof(Program)]);
 
 // The Firebase project identifier and Web API key come from configuration, never from source control.
 builder.Services.AddIam(builder.Configuration);
+builder.Services.AddSubscriptionPlans(builder.Configuration);
+builder.Services.AddCattleInformation();
+builder.Services.AddIoTAssets(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
-if (builder.Environment.IsDevelopment())
-{
-    // Simulated cattle, collars and gateways until the IoT Assets and Cattle Information facades replace them.
-    builder.Services.AddOperationsMonitoringSimulation(builder.Configuration);
-}
+builder.Services.AddPlanning();
 
 var app = builder.Build();
 
@@ -76,7 +89,26 @@ using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    // The seeders run in dependency order, and each one skips the records that already exist.
+    using var seedScope = app.Services.CreateScope();
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentSubscriptionSeeder>()
+        .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentCattleSeeder>()
+        .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentIoTAssetsSeeder>()
+        .SeedAsync(CancellationToken.None);
+}
+
 app.UseExceptionHandler();
+
+// English is the default; Spanish is served when the request asks for it through Accept-Language.
+var supportedCultures = new[] { "en", "es" };
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures));
 
 if (app.Environment.IsDevelopment())
 {
@@ -87,8 +119,6 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "ICHU API v1");
     });
 }
-
-await app.Services.InitializePlanningDatabaseAsync();
 
 app.UseCors("AllowAllPolicy");
 app.UseHttpsRedirection();

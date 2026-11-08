@@ -1,158 +1,150 @@
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Commands;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Services;
+using System.Net.Mime;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Resources;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Resources;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 
 /// <summary>
-/// Exposes planned activity resources and their application and follow-up records.
+///     Exposes planned activities with their applications and follow-ups for the accounts that may access their ranch.
 /// </summary>
+[ApiController]
+[Authorize]
 [Route("api/v1/planned-activities")]
-public sealed class PlanningActivitiesController : PlanningControllerBase
+[Produces(MediaTypeNames.Application.Json)]
+public sealed class PlanningActivitiesController(
+    IPlannedActivityCommandService commandService,
+    IPlannedActivityQueryService queryService,
+    IStringLocalizer<PlanningMessages> localizer) : ControllerBase
 {
-    private readonly IPlanningApplicationService _planningService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlanningActivitiesController"/> class.
-    /// </summary>
-    /// <param name="planningService">Planning application use cases.</param>
-    public PlanningActivitiesController(IPlanningApplicationService planningService)
-    {
-        _planningService = planningService;
-    }
-
-    /// <summary>
-    /// Gets a planned activity by identifier.
-    /// </summary>
-    /// <param name="activityId">The activity identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized planned activity.</returns>
     [HttpGet("{activityId:guid}")]
-    [ProducesResponseType(typeof(PlanningActivityResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<PlanningActivityResource>> GetActivity(Guid activityId, CancellationToken cancellationToken)
+    [EndpointSummary("Get a planned activity")]
+    [EndpointDescription("Returns a planned activity when the account may read its ranch.")]
+    [ProducesResponseType<PlanningActivityResource>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetActivityAsync(Guid activityId, CancellationToken cancellationToken)
     {
-        return ExecuteAsync(async () =>
-            PlanningResourceMapper.ToResource(await _planningService.GetActivityAsync(activityId, cancellationToken)));
-    }
-
-    /// <summary>
-    /// Lists applications recorded for a planned activity.
-    /// </summary>
-    /// <param name="activityId">The planned activity identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized application records.</returns>
-    [HttpGet("{activityId:guid}/applications")]
-    [ProducesResponseType(typeof(IReadOnlyList<ApplicationRecordResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<IReadOnlyList<ApplicationRecordResource>>> GetApplications(
-        Guid activityId,
-        CancellationToken cancellationToken)
-    {
-        return ExecuteAsync<IReadOnlyList<ApplicationRecordResource>>(async () =>
+        var result = await queryService.HandleAsync(
+            new GetPlannedActivityByIdQuery(new PlannedActivityId(activityId)), cancellationToken);
+        if (result.IsFailure)
         {
-            var applications = await _planningService.GetApplicationsAsync(activityId, cancellationToken);
-            return applications.Select(PlanningResourceMapper.ToResource).ToArray();
-        });
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(PlannedActivityResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
     }
 
-    /// <summary>
-    /// Schedules a planned activity.
-    /// </summary>
-    /// <param name="resource">The activity data.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The scheduled activity.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(PlanningActivityResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<PlanningActivityResource>> ScheduleActivity(
+    [EndpointSummary("Schedule a planned activity")]
+    [EndpointDescription("Schedules an activity for a ranch, or for one of its animals, optionally inside a campaign of the same ranch.")]
+    [ProducesResponseType<PlanningActivityResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ScheduleActivityAsync(
         [FromBody] SchedulePlanningActivityResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new SchedulePlanningActivityCommand(
-            resource.RanchId,
-            resource.CampaignId,
-            resource.CattleId,
-            resource.Title,
-            resource.ScheduledAt);
+        var command = SchedulePlanningActivityCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
 
-        return ExecuteCreatedAsync(
-            async () => PlanningResourceMapper.ToResource(
-                await _planningService.ScheduleActivityAsync(command, cancellationToken)),
-            activity => $"/api/v1/planned-activities/{activity.Id}");
+        var activity = PlannedActivityResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
+        return Created($"/api/v1/planned-activities/{activity.Id}", activity);
     }
 
-    /// <summary>
-    /// Records an application associated with a planned activity.
-    /// </summary>
-    /// <param name="activityId">The planned activity identifier.</param>
-    /// <param name="resource">The application data.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The application record.</returns>
+    [HttpGet("{activityId:guid}/applications")]
+    [EndpointSummary("List the applications of a planned activity")]
+    [EndpointDescription("Returns the application records of the activity ordered by their application instant.")]
+    [ProducesResponseType<IReadOnlyList<ApplicationRecordResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetApplicationsAsync(Guid activityId, CancellationToken cancellationToken)
+    {
+        var result = await queryService.HandleAsync(
+            new GetApplicationRecordsByActivityQuery(new PlannedActivityId(activityId)), cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(result.Value!.Select(ApplicationRecordResourceFromEntityAssembler.ToResourceFromEntity).ToList());
+    }
+
     [HttpPost("{activityId:guid}/applications")]
-    [ProducesResponseType(typeof(ApplicationRecordResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<ApplicationRecordResource>> RecordApplication(
+    [EndpointSummary("Record an application of a planned activity")]
+    [EndpointDescription("Records that the activity was applied to one of its animals, optionally linked to a clinical intervention of the same animal.")]
+    [ProducesResponseType<ApplicationRecordResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RecordApplicationAsync(
         Guid activityId,
         [FromBody] RecordApplicationResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new RecordApplicationCommand(
-            activityId,
-            resource.CattleId,
-            resource.AppliedAt,
-            resource.InterventionId);
+        var command = RecordApplicationCommandFromResourceAssembler.ToCommandFromResource(activityId, resource);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
 
-        return ExecuteCreatedAsync(
-            async () => PlanningResourceMapper.ToResource(
-                await _planningService.RecordApplicationAsync(command, cancellationToken)),
-            application => $"/api/v1/planned-activities/{application.ActivityId}/applications");
+        var application = ApplicationRecordResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
+        return Created($"/api/v1/planned-activities/{application.ActivityId}/applications", application);
     }
 
-    /// <summary>
-    /// Schedules a follow-up for a planned activity.
-    /// </summary>
-    /// <param name="activityId">The planned activity identifier.</param>
-    /// <param name="resource">The follow-up data.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The scheduled follow-up.</returns>
+    [HttpGet("{activityId:guid}/follow-ups")]
+    [EndpointSummary("List the follow-ups of a planned activity")]
+    [EndpointDescription("Returns the follow-ups of the activity ordered by their due instant.")]
+    [ProducesResponseType<IReadOnlyList<FollowUpResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFollowUpsAsync(Guid activityId, CancellationToken cancellationToken)
+    {
+        var result = await queryService.HandleAsync(
+            new GetFollowUpsByActivityQuery(new PlannedActivityId(activityId)), cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(result.Value!.Select(FollowUpResourceFromEntityAssembler.ToResourceFromEntity).ToList());
+    }
+
     [HttpPost("{activityId:guid}/follow-ups")]
-    [ProducesResponseType(typeof(FollowUpResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<FollowUpResource>> ScheduleFollowUp(
+    [EndpointSummary("Schedule a follow-up of a planned activity")]
+    [EndpointDescription("Schedules a follow-up that falls due at a UTC instant after the activity.")]
+    [ProducesResponseType<FollowUpResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ScheduleFollowUpAsync(
         Guid activityId,
         [FromBody] ScheduleFollowUpResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new ScheduleFollowUpCommand(activityId, resource.DueAt);
-
-        return ExecuteCreatedAsync(
-            async () => PlanningResourceMapper.ToResource(
-                await _planningService.ScheduleFollowUpAsync(command, cancellationToken)),
-            followUp => $"/api/v1/planned-activities/{followUp.ActivityId}/follow-ups");
-    }
-
-    /// <summary>
-    /// Lists follow-ups scheduled for a planned activity.
-    /// </summary>
-    /// <param name="activityId">The planned activity identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized follow-ups.</returns>
-    [HttpGet("{activityId:guid}/follow-ups")]
-    [ProducesResponseType(typeof(IReadOnlyList<FollowUpResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<IReadOnlyList<FollowUpResource>>> GetFollowUps(
-        Guid activityId,
-        CancellationToken cancellationToken)
-    {
-        return ExecuteAsync<IReadOnlyList<FollowUpResource>>(async () =>
+        var command = ScheduleFollowUpCommandFromResourceAssembler.ToCommandFromResource(activityId, resource);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        if (result.IsFailure)
         {
-            var followUps = await _planningService.GetFollowUpsAsync(activityId, cancellationToken);
-            return followUps.Select(PlanningResourceMapper.ToResource).ToArray();
-        });
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        var followUp = FollowUpResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
+        return Created($"/api/v1/planned-activities/{activityId}/follow-ups", followUp);
     }
 }

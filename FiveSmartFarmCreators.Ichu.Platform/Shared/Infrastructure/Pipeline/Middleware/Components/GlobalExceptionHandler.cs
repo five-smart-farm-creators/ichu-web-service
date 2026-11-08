@@ -1,24 +1,22 @@
+using FiveSmartFarmCreators.Ichu.Platform.Resources.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Npgsql;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 
 /// <summary>
 ///     Turns unhandled exceptions into RFC 9457 problem details responses without exposing internal details.
 /// </summary>
-/// <param name="logger">Logger for diagnostics and error reporting.</param>
-/// <param name="problemDetailsService">The service that writes problem details responses.</param>
 public class GlobalExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,
+    IStringLocalizer<ErrorMessages> localizer,
     IProblemDetailsService problemDetailsService) : IExceptionHandler
 {
-    /// <summary>
-    ///     Logs the exception and writes the matching problem details response.
-    /// </summary>
-    /// <param name="httpContext">The context of the failed request.</param>
-    /// <param name="exception">The unhandled exception.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>True when the response was written.</returns>
+    private const string UniqueViolationSqlState = "23505";
+
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         int statusCode;
@@ -28,6 +26,13 @@ public class GlobalExceptionHandler(
             logger.LogWarning(exception, "The request was cancelled.");
             statusCode = StatusCodes.Status409Conflict;
             title = "The operation was cancelled.";
+        }
+        else if (IsConcurrentModification(exception))
+        {
+            // A concurrent request stored the same resource first, so a retry reads the stored state.
+            logger.LogWarning(exception, "A concurrent request changed the same resource first.");
+            statusCode = StatusCodes.Status409Conflict;
+            title = localizer["ConcurrentModification"].Value;
         }
         else
         {
@@ -49,4 +54,8 @@ public class GlobalExceptionHandler(
             }
         });
     }
+
+    private static bool IsConcurrentModification(Exception exception) =>
+        exception is DbUpdateConcurrencyException
+        || exception is DbUpdateException { InnerException: PostgresException { SqlState: UniqueViolationSqlState } };
 }

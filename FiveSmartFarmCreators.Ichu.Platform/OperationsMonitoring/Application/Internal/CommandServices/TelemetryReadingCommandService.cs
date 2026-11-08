@@ -3,83 +3,68 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Inter
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Errors;
 using Microsoft.Extensions.Options;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.CommandServices;
 
 /// <summary>
-///     Application command service that implements <see cref="ITelemetryReadingCommandService"/> to synchronize the
-///     readings relayed by Edge Gateways.
+///     Synchronizes the readings relayed by Edge Gateways. A reading is identified by its device and firmware identifier, so a retry with the same capture is a duplicate and a different capture under that identifier is a conflict.
 /// </summary>
-/// <param name="deviceAttributions">The anti-corruption port towards IoT Assets.</param>
-/// <param name="cattleLookup">The anti-corruption port towards Cattle Information.</param>
-/// <param name="readings">The telemetry reading repository.</param>
-/// <param name="unitOfWork">The unit of work used to commit changes.</param>
-/// <param name="options">The technical limits of the module.</param>
-/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class TelemetryReadingCommandService(
     IDeviceAttributionLookup deviceAttributions,
     ICattleLookup cattleLookup,
     ITelemetryReadingRepository readings,
     IOperationsMonitoringUnitOfWork unitOfWork,
-    IOptions<OperationsMonitoringOptions> options,
-    ILogger<TelemetryReadingCommandService> logger) : ITelemetryReadingCommandService
+    IOptions<OperationsMonitoringOptions> options) : ITelemetryReadingCommandService
 {
+    private const string AlreadySynchronizedNote = "The reading was already synchronized.";
+
+    private const string UnassignedNote =
+        "No device assignment was effective at the capture time; the reading is kept as device data and excluded from herd indicators.";
+
     /// <inheritdoc />
     public async Task<SyncEntryResult> Handle(SynchronizeReadingCommand command, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await SynchronizeAsync(command, cancellationToken);
-        }
-        catch (ArgumentException ex)
-        {
-            logger.LogWarning(ex, "Rejected a synchronization entry: {Reason}", ex.Message);
-            return EntryResult(command, SyncEntryStatus.Rejected, ex.Message);
-        }
-        catch (DbUpdateException ex)
-        {
-            logger.LogWarning(ex, "The changes could not be saved.");
-            unitOfWork.DiscardChanges();
-            return EntryResult(command, SyncEntryStatus.Conflict, "The reading changed concurrently or already exists; send it again if it was not stored.");
-        }
-    }
-
-    private async Task<SyncEntryResult> SynchronizeAsync(SynchronizeReadingCommand command, CancellationToken cancellationToken)
     {
         var entry = command.Entry;
         if (entry.RecordedAt is not { } capturedAt)
         {
-            return EntryResult(command, SyncEntryStatus.Rejected, "The capture time is required.");
+            return Rejected(command, OperationsMonitoringErrors.CaptureTimeRequired);
         }
 
         var recordedAt = MonitoringTime.Normalize(capturedAt);
         if (recordedAt > command.ReceivedAt + options.Value.ClockSkewTolerance)
         {
-            return EntryResult(command, SyncEntryStatus.Rejected, "The capture time is ahead of the server clock beyond the configured tolerance.");
+            return Rejected(command, OperationsMonitoringErrors.CaptureTimeAhead);
         }
 
         var existing = await readings.FindByDeviceAndReadingIdAsync(entry.DeviceId, entry.ReadingId, cancellationToken);
         if (existing is not null)
         {
-            var replay = CreateReading(entry, recordedAt, existing.GatewayId, existing.RanchId, existing.CattleId, existing.ReceivedAt);
-            return existing.HasSameCaptureAs(replay)
-                ? EntryResult(command, SyncEntryStatus.Duplicate, "The reading was already synchronized.")
-                : EntryResult(command, SyncEntryStatus.Conflict, "A different reading already uses this identifier.");
+            var replay = BuildReading(entry, recordedAt, existing.GatewayId, existing.RanchId, existing.CattleId, existing.ReceivedAt);
+            if (replay.IsFailure)
+            {
+                return Rejected(command, replay.DomainError);
+            }
+
+            return existing.HasSameCaptureAs(replay.Value!)
+                ? EntryResult(command, SyncEntryStatus.Duplicate, AlreadySynchronizedNote)
+                : Conflict(command, OperationsMonitoringErrors.ReadingIdentifierConflict);
         }
 
         var attribution = await deviceAttributions.FindAsync(entry.DeviceId, recordedAt, cancellationToken);
         if (attribution is null)
         {
-            return EntryResult(command, SyncEntryStatus.Rejected, "The device is not registered.");
+            return Rejected(command, OperationsMonitoringErrors.DeviceNotRegistered);
         }
 
         if (attribution.RanchId != command.RanchId)
         {
-            return EntryResult(command, SyncEntryStatus.Rejected, "The gateway has no access to the ranch of this device.");
+            return Rejected(command, OperationsMonitoringErrors.DeviceGatewayAccessDenied);
         }
 
         if (attribution.CattleId is { } cattleId)
@@ -87,46 +72,79 @@ public class TelemetryReadingCommandService(
             var cattle = await cattleLookup.FindAsync(cattleId, cancellationToken);
             if (cattle is null || cattle.RanchId != command.RanchId || !cattle.WasActiveAt(recordedAt))
             {
-                return EntryResult(command, SyncEntryStatus.Rejected, "The assigned animal was not active in the herd at the capture time.");
+                return Rejected(command, OperationsMonitoringErrors.ReadingAssignedAnimalNotActive);
             }
         }
 
-        var reading = CreateReading(entry, recordedAt, command.GatewayId, command.RanchId, attribution.CattleId, command.ReceivedAt);
-        await readings.AddAsync(reading, cancellationToken);
-        await unitOfWork.CompleteAsync(cancellationToken);
+        var reading = BuildReading(entry, recordedAt, command.GatewayId, command.RanchId, attribution.CattleId, command.ReceivedAt);
+        if (reading.IsFailure)
+        {
+            return Rejected(command, reading.DomainError);
+        }
 
-        var note = attribution.CattleId is null
-            ? "No device assignment was effective at the capture time; the reading is kept as device data and excluded from herd indicators."
-            : null;
+        await readings.AddAsync(reading.Value!, cancellationToken);
+        if (!await unitOfWork.TryCompleteAsync(cancellationToken))
+        {
+            return Conflict(command, OperationsMonitoringErrors.ReadingConcurrentlyStored);
+        }
+
+        var note = attribution.CattleId is null ? UnassignedNote : null;
         return EntryResult(command, SyncEntryStatus.Accepted, note);
     }
+
+    private static SyncEntryResult Rejected(SynchronizeReadingCommand command, Error error) =>
+        EntryResult(command, SyncEntryStatus.Rejected, error.Message);
+
+    private static SyncEntryResult Conflict(SynchronizeReadingCommand command, Error error) =>
+        EntryResult(command, SyncEntryStatus.Conflict, error.Message);
 
     private static SyncEntryResult EntryResult(SynchronizeReadingCommand command, SyncEntryStatus status, string? reason) =>
         new(SyncEntryKind.Reading, command.Entry.ReadingId, status, reason);
 
-    private static TelemetryReading CreateReading(
+    private static Result<TelemetryReading> BuildReading(
         EdgeReadingEntry entry,
         DateTimeOffset recordedAt,
         Guid gatewayId,
         Guid ranchId,
         Guid? cattleId,
-        DateTimeOffset receivedAt) =>
-        new(
-            entry.ReadingId,
-            entry.DeviceId,
-            recordedAt,
-            ToMeasurement(entry.BodyTemperature),
-            ToMeasurement(entry.ActivityIndex),
-            ToMeasurement(entry.RuminationMinutes),
-            ToMeasurement(entry.BatteryPercent),
-            entry.Position is { } position
-                ? PositionMeasurement.From(position.Latitude, position.Longitude, position.AccuracyMeters, position.InvalidReason)
-                : PositionMeasurement.Absent(),
-            gatewayId,
-            ranchId,
-            cattleId,
-            receivedAt);
+        DateTimeOffset receivedAt)
+    {
+        var bodyTemperature = ToMeasurement(entry.BodyTemperature);
+        if (bodyTemperature.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(bodyTemperature.DomainError);
+        }
 
-    private static Measurement ToMeasurement(CapturedMetric? metric) =>
-        metric is null ? Measurement.Absent() : Measurement.From(metric.Value, metric.InvalidReason);
+        var activityIndex = ToMeasurement(entry.ActivityIndex);
+        if (activityIndex.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(activityIndex.DomainError);
+        }
+
+        var ruminationMinutes = ToMeasurement(entry.RuminationMinutes);
+        if (ruminationMinutes.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(ruminationMinutes.DomainError);
+        }
+
+        var batteryPercent = ToMeasurement(entry.BatteryPercent);
+        if (batteryPercent.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(batteryPercent.DomainError);
+        }
+
+        var position = entry.Position is { } captured
+            ? PositionMeasurement.From(captured.Latitude, captured.Longitude, captured.AccuracyMeters, captured.InvalidReason)
+            : Result<PositionMeasurement>.Success(PositionMeasurement.Absent());
+        if (position.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(position.DomainError);
+        }
+
+        return TelemetryReading.Create(entry.ReadingId, entry.DeviceId, recordedAt, bodyTemperature.Value!, activityIndex.Value!,
+            ruminationMinutes.Value!, batteryPercent.Value!, position.Value!, gatewayId, ranchId, cattleId, receivedAt);
+    }
+
+    private static Result<Measurement> ToMeasurement(CapturedMetric? metric) =>
+        metric is null ? Result<Measurement>.Success(Measurement.Absent()) : Measurement.From(metric.Value, metric.InvalidReason);
 }

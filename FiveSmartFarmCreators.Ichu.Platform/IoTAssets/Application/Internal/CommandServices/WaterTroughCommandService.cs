@@ -31,7 +31,13 @@ public class WaterTroughCommandService(
 
         return await transaction.ExecuteAsync(async token =>
         {
-            var waterTrough = new WaterTrough(command, timeProvider.GetUtcNow());
+            var registration = WaterTrough.Register(command, timeProvider.GetUtcNow());
+            if (registration.IsFailure)
+            {
+                return registration;
+            }
+
+            var waterTrough = registration.Value!;
             if (command.LotId is Guid lotId)
             {
                 var lot = await cattleLookup.LotExistsInRanchAsync(command.RanchId, lotId, token);
@@ -54,7 +60,7 @@ public class WaterTroughCommandService(
     public async Task<Result<WaterTrough>> HandleAsync(ConfigureWaterTroughTemperatureCommand command,
         CancellationToken cancellationToken)
     {
-        if (command.RanchId == Guid.Empty || command.WaterTroughId == Guid.Empty || command.ExpectedVersion == Guid.Empty)
+        if (command.RanchId == Guid.Empty || command.WaterTroughId.Value == Guid.Empty || command.ExpectedVersion == Guid.Empty)
         {
             return Result<WaterTrough>.Failure(IoTAssetsErrors.InvalidInput);
         }
@@ -73,9 +79,17 @@ public class WaterTroughCommandService(
                 return Result<WaterTrough>.Failure(IoTAssetsErrors.WaterTroughNotFound);
             }
 
-            waterTrough.ConfigureTemperatureRange(new TemperatureRange(command.MinimumCelsius, command.MaximumCelsius),
-                command.ExpectedVersion, timeProvider.GetUtcNow());
-            return Result<WaterTrough>.Success(waterTrough);
+            var range = TemperatureRange.Create(command.MinimumCelsius, command.MaximumCelsius);
+            if (range.IsFailure)
+            {
+                return Result<WaterTrough>.Failure(range.DomainError);
+            }
+
+            var configuration = waterTrough.ConfigureTemperatureRange(range.Value!, command.ExpectedVersion,
+                timeProvider.GetUtcNow());
+            return configuration.IsFailure
+                ? Result<WaterTrough>.Failure(configuration.DomainError)
+                : Result<WaterTrough>.Success(waterTrough);
         }, cancellationToken);
     }
 }

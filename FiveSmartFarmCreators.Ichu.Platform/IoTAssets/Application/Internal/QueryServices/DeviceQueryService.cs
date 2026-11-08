@@ -14,7 +14,7 @@ public class DeviceQueryService(IIoTDeviceRepository deviceRepository, IIoTAsset
 {
     public async Task<Result<IoTDevice>> HandleAsync(GetDeviceByIdQuery query, CancellationToken cancellationToken)
     {
-        if (query.RanchId == Guid.Empty || query.DeviceId == Guid.Empty)
+        if (query.RanchId == Guid.Empty || query.DeviceId.Value == Guid.Empty)
         {
             return Result<IoTDevice>.Failure(IoTAssetsErrors.InvalidInput);
         }
@@ -54,6 +54,9 @@ public class DeviceQueryService(IIoTDeviceRepository deviceRepository, IIoTAsset
         var device = await HandleAsync(new GetDeviceByIdQuery(query.RanchId, query.DeviceId), cancellationToken);
         return device.IsFailure
             ? Result<IReadOnlyList<DeviceAssignment>>.Failure(device.DomainError)
-            : Result<IReadOnlyList<DeviceAssignment>>.Success(device.Value!.Assignments.OrderBy(a => a.StartedAt).ThenBy(a => a.Id).ToArray());
+            : Result<IReadOnlyList<DeviceAssignment>>.Success(device.Value!.Assignments
+                .OrderBy(assignment => assignment.StartedAt)
+                .ThenBy(assignment => assignment.Id.Value)
+                .ToArray());
     }
 }

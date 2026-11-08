@@ -10,6 +10,10 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.CommandServices;
 
+/// <summary>
+///     Coordinates device changes. Each state change runs in one transaction with its version check, and the domain
+///     aggregates decide whether the change is allowed.
+/// </summary>
 public class DeviceCommandService(
     IIoTDeviceRepository deviceRepository,
     IWaterTroughRepository waterTroughRepository,
@@ -35,7 +39,13 @@ public class DeviceCommandService(
 
         return await transaction.ExecuteAsync(async token =>
         {
-            var device = new IoTDevice(command, timeProvider.GetUtcNow());
+            var registration = IoTDevice.Register(command, timeProvider.GetUtcNow());
+            if (registration.IsFailure)
+            {
+                return registration;
+            }
+
+            var device = registration.Value!;
             if (await deviceRepository.ExistsBySerialAsync(device.Serial, token))
             {
                 return Result<IoTDevice>.Failure(IoTAssetsErrors.DuplicateSerial);
@@ -96,14 +106,16 @@ public class DeviceCommandService(
                 entitlement = subscription.Value!;
                 assignedCollars = await deviceRepository.CountAssignedCollarsAsync(command.RanchId, token);
             }
-            else if (await waterTroughRepository.FindByIdAsync(command.RanchId, command.TargetId, token) is null)
+            else if (await waterTroughRepository.FindByIdAsync(command.RanchId, new WaterTroughId(command.TargetId), token) is null)
             {
                 return Result<IoTDevice>.Failure(IoTAssetsErrors.TargetNotFound);
             }
 
-            assignmentService.Assign(device, command.TargetId, assignedCollars,
+            var assignment = assignmentService.Assign(device, command.TargetId, assignedCollars,
                 entitlement.MaximumCollars, entitlement.IsActive, timeProvider.GetUtcNow());
-            return Result<IoTDevice>.Success(device);
+            return assignment.IsFailure
+                ? Result<IoTDevice>.Failure(assignment.DomainError)
+                : Result<IoTDevice>.Success(device);
         }, cancellationToken);
     }
 
@@ -111,8 +123,10 @@ public class DeviceCommandService(
     {
         return ExecuteForManagedDeviceAsync(command.RanchId, command.DeviceId, command.ExpectedVersion, (device, _) =>
         {
-            device.Release(command.Reason, timeProvider.GetUtcNow());
-            return Task.FromResult(Result<IoTDevice>.Success(device));
+            var release = device.Release(command.Reason, timeProvider.GetUtcNow());
+            return Task.FromResult(release.IsFailure
+                ? Result<IoTDevice>.Failure(release.DomainError)
+                : Result<IoTDevice>.Success(device));
         }, cancellationToken);
     }
 
@@ -120,19 +134,21 @@ public class DeviceCommandService(
     {
         return ExecuteForManagedDeviceAsync(command.RanchId, command.DeviceId, command.ExpectedVersion, (device, _) =>
         {
-            device.SetMaintenance(command.InMaintenance, timeProvider.GetUtcNow());
-            return Task.FromResult(Result<IoTDevice>.Success(device));
+            var change = device.SetMaintenance(command.InMaintenance, timeProvider.GetUtcNow());
+            return Task.FromResult(change.IsFailure
+                ? Result<IoTDevice>.Failure(change.DomainError)
+                : Result<IoTDevice>.Success(device));
         }, cancellationToken);
     }
 
     public async Task<Result<IoTDevice>> HandleAsync(RegisterDeviceCommunicationCommand command, CancellationToken cancellationToken)
     {
-        if (command.RanchId == Guid.Empty || command.DeviceId == Guid.Empty)
+        if (command.RanchId == Guid.Empty || command.DeviceId.Value == Guid.Empty)
         {
             return Result<IoTDevice>.Failure(IoTAssetsErrors.InvalidInput);
         }
 
-        var access = await accessService.EnsureCommunicationAccessAsync(command.RanchId, command.DeviceId, cancellationToken);
+        var access = await accessService.EnsureCommunicationAccessAsync(command.RanchId, command.DeviceId.Value, cancellationToken);
         if (access.IsFailure)
         {
             return Result<IoTDevice>.Failure(access.DomainError);
@@ -146,24 +162,32 @@ public class DeviceCommandService(
                 return Result<IoTDevice>.Failure(IoTAssetsErrors.DeviceNotFound);
             }
 
-            var battery = command.BatteryPercentage is int percentage ? new BatteryLevel(percentage) : null;
-            device.RegisterCommunication(command.CommunicatedAt, command.ReceivedAt, battery, timeProvider.GetUtcNow());
-            return Result<IoTDevice>.Success(device);
+            BatteryLevel? battery = null;
+            if (command.BatteryPercentage is { } percentage)
+            {
+                var level = BatteryLevel.Create(percentage);
+                if (level.IsFailure)
+                {
+                    return Result<IoTDevice>.Failure(level.DomainError);
+                }
+
+                battery = level.Value;
+            }
+
+            var registration = device.RegisterCommunication(command.CommunicatedAt, command.ReceivedAt, battery, timeProvider.GetUtcNow());
+            return registration.IsFailure
+                ? Result<IoTDevice>.Failure(registration.DomainError)
+                : Result<IoTDevice>.Success(device);
         }, cancellationToken);
     }
 
+    // The cattle lookup confirms the animal is inactive in this ranch, which is the authorization for releasing its collar.
     public async Task<Result<int>> HandleAsync(ReleaseCollarForInactiveCattleCommand command, CancellationToken cancellationToken)
     {
         if (command.RanchId == Guid.Empty || command.CattleId == Guid.Empty
             || command.DeactivatedAt == default || command.DeactivatedAt > timeProvider.GetUtcNow())
         {
             return Result<int>.Failure(IoTAssetsErrors.InvalidInput);
-        }
-
-        var access = await accessService.EnsureCattleLifecycleAccessAsync(command.RanchId, cancellationToken);
-        if (access.IsFailure)
-        {
-            return Result<int>.Failure(access.DomainError);
         }
 
         return await transaction.ExecuteAsync(async token =>
@@ -190,17 +214,19 @@ public class DeviceCommandService(
                 return Result<int>.Success(0);
             }
 
-            var assignment = device.Assignments.Single(a => a.IsOpen());
+            var assignment = device.Assignments.Single(item => item.IsOpen());
             var releasedAt = command.DeactivatedAt < assignment.StartedAt ? assignment.StartedAt : command.DeactivatedAt;
-            device.Release("Cattle deactivated", releasedAt);
-            return Result<int>.Success(1);
+            var release = device.Release("Cattle deactivated", releasedAt);
+            return release.IsFailure
+                ? Result<int>.Failure(release.DomainError)
+                : Result<int>.Success(1);
         }, cancellationToken);
     }
 
-    private async Task<Result<IoTDevice>> ExecuteForManagedDeviceAsync(Guid ranchId, Guid deviceId, Guid expectedVersion,
+    private async Task<Result<IoTDevice>> ExecuteForManagedDeviceAsync(Guid ranchId, DeviceId deviceId, Guid expectedVersion,
         Func<IoTDevice, CancellationToken, Task<Result<IoTDevice>>> operation, CancellationToken cancellationToken)
     {
-        if (ranchId == Guid.Empty || deviceId == Guid.Empty || expectedVersion == Guid.Empty)
+        if (ranchId == Guid.Empty || deviceId.Value == Guid.Empty || expectedVersion == Guid.Empty)
         {
             return Result<IoTDevice>.Failure(IoTAssetsErrors.InvalidInput);
         }
@@ -219,8 +245,10 @@ public class DeviceCommandService(
                 return Result<IoTDevice>.Failure(IoTAssetsErrors.DeviceNotFound);
             }
 
-            device.EnsureVersion(expectedVersion);
-            return await operation(device, token);
+            var version = device.EnsureVersion(expectedVersion);
+            return version.IsFailure
+                ? Result<IoTDevice>.Failure(version.DomainError)
+                : await operation(device, token);
         }, cancellationToken);
     }
 }
