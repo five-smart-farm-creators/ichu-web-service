@@ -1,37 +1,38 @@
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 
 /// <summary>
-///     Value object representing the configured normal range of a metric. Values outside it exceed the threshold.
+///     The normal range of a metric. Values outside it exceed the threshold.
 /// </summary>
 public record ThresholdRange
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ThresholdRange"/> value object.
+    ///     Rebuilds a range that was validated when it was configured. Requests must use <see cref="Create"/>.
     /// </summary>
-    /// <param name="minValue">The lowest value considered normal.</param>
-    /// <param name="maxValue">The highest value considered normal.</param>
-    /// <exception cref="ArgumentException">Thrown when a bound is not finite or the minimum is not below the maximum.</exception>
     public ThresholdRange(double minValue, double maxValue)
     {
-        if (!double.IsFinite(minValue) || !double.IsFinite(maxValue) || minValue >= maxValue)
+        if (!IsValid(minValue, maxValue))
         {
-            throw new ArgumentException("A threshold requires finite values with the minimum below the maximum.");
+            throw new ArgumentException("A threshold requires finite values with the minimum below the maximum.", nameof(minValue));
         }
 
         MinValue = minValue;
         MaxValue = maxValue;
     }
 
-    /// <summary>Gets the lowest value considered normal.</summary>
     public double MinValue { get; }
 
-    /// <summary>Gets the highest value considered normal.</summary>
     public double MaxValue { get; }
 
-    /// <summary>
-    ///     Determines whether a value falls outside the range.
-    /// </summary>
-    /// <param name="value">The captured value.</param>
-    /// <returns><see langword="true"/> when the value is below the minimum or above the maximum.</returns>
+    public static Result<ThresholdRange> Create(double minValue, double maxValue) =>
+        IsValid(minValue, maxValue)
+            ? Result<ThresholdRange>.Success(new ThresholdRange(minValue, maxValue))
+            : Result<ThresholdRange>.Failure(OperationsMonitoringErrors.ThresholdRangeInvalid);
+
     public bool IsExceededBy(double value) => value < MinValue || value > MaxValue;
+
+    private static bool IsValid(double minValue, double maxValue) =>
+        double.IsFinite(minValue) && double.IsFinite(maxValue) && minValue < maxValue;
 }
