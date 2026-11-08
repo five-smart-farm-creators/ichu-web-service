@@ -15,6 +15,11 @@ public interface ICattleRepository
     Task<Cattle?> FindByIdAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    ///     Finds an animal in any ranch without tracking it, for system lookups that authorize the result themselves.
+    /// </summary>
+    Task<Cattle?> FindByIdAsNoTrackingAsync(CattleId cattleId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     ///     Finds the animal that holds an ear tag in the ranch, including inactive animals that still reserve it.
     /// </summary>
     Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default);

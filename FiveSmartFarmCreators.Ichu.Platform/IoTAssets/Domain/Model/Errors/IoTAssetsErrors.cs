@@ -24,6 +24,9 @@ public static class IoTAssetsErrors
     public static readonly Error DeviceAlreadyAssigned = Define("DeviceAlreadyAssigned", EErrorType.Conflict);
     public static readonly Error DeviceLimitReached = Define("DeviceLimitReached", EErrorType.Conflict);
     public static readonly Error SubscriptionRequired = Define("SubscriptionRequired", EErrorType.Forbidden);
+    public static readonly Error InvalidEdgeGatewayName = Define("InvalidEdgeGatewayName", EErrorType.Validation);
+    public static readonly Error EdgeGatewayNotFound = Define("EdgeGatewayNotFound", EErrorType.NotFound);
+    public static readonly Error EdgeGatewayAlreadyRevoked = Define("EdgeGatewayAlreadyRevoked", EErrorType.Conflict);
 
     /// <summary>The data changed after the caller read it, so the caller must reload it before retrying.</summary>
     public static readonly Error Conflict = Define("Conflict", EErrorType.Conflict);

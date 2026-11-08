@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Subscription Plans: added the plan catalog with annual price quotes by head count, subscription requests with idempotent retries, activation and cancellation rules, and an entitlements facade for other contexts.
-- Subscription Plans: added the plans and subscriptions persistence mapping with the seeded catalog, a configurable terms version, and a Development-only Standard subscription for the simulated ranch.
+- Subscription Plans: added the plans and subscriptions persistence mapping with the seeded catalog, a configurable terms version, and a Development-only Standard subscription for the Development ranch.
 - Subscription Plans: added English and Spanish messages, with request-based culture selection and English as the default.
 - Subscription Plans: the database allows only one pending or active subscription per ranch.
 - Cattle Information: added the cattle schema migration for animals, stage periods, lots and lot memberships.
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared: domain events are published after their changes are saved, and each handler runs in its own scope.
 - Shared: the mediator pipeline behaviors and event handlers are registered for every bounded context.
 - Cattle Information and IoT Assets: English and Spanish messages for business failures.
+- IoT Assets: added the edge gateway registry with one-time keys, listing, lookup and revocation endpoints, and the iot.edge_gateways schema migration.
+- Development: seeds the Development ranch's lot, animals, collars and Edge Gateway into the database when they are missing.
 
 ### Changed
 
@@ -30,10 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operations and Monitoring: business failures are returned as results with stable error codes instead of exceptions, and problem responses carry the localized message and the error code.
 - Operations and Monitoring: aggregates share the common aggregate root, the context identifiers are strongly typed, and read-only queries no longer track entities, without any schema change.
 - Operations and Monitoring: messages are available in English and Spanish, and the code documents only the rules and reasons behind it.
+- Operations and Monitoring: Edge Gateway keys have the form `{gatewayId}.{secret}` and are verified by IoT Assets, and animal, lot and collar lookups go through the Cattle Information and IoT Assets facades.
 
 ### Removed
 
 - Cattle Information: removed the lifecycle outbox table and its mapping, since lifecycle events are now handled in-process after they are saved.
+- Operations and Monitoring: removed the configuration-based simulation of animals, collars and Edge Gateways.
 
 ## [0.1.0] - 2026-11-07
 

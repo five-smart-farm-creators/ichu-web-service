@@ -23,6 +23,11 @@ public class IoTDeviceRepository(AppDbContext context) : IIoTDeviceRepository
         return Devices().AsNoTracking().FirstOrDefaultAsync(d => d.RanchId == ranchId && d.Id == deviceId, cancellationToken);
     }
 
+    public Task<IoTDevice?> FindByIdAsNoTrackingAsync(DeviceId deviceId, CancellationToken cancellationToken)
+    {
+        return Devices().AsNoTracking().FirstOrDefaultAsync(d => d.Id == deviceId, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<IoTDevice>> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken)
     {
         return await Devices().AsNoTracking().Where(d => d.RanchId == ranchId)

@@ -48,4 +48,13 @@
   <data name="IoTAssets.IntegrationUnavailable" xml:space="preserve">
     <value>A required integration is unavailable.</value>
   </data>
+  <data name="IoTAssets.InvalidEdgeGatewayName" xml:space="preserve">
+    <value>The edge gateway name must contain between 1 and 80 characters.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayNotFound" xml:space="preserve">
+    <value>The edge gateway was not found in the authorized ranch.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayAlreadyRevoked" xml:space="preserve">
+    <value>The edge gateway is already revoked.</value>
+  </data>
 </root>

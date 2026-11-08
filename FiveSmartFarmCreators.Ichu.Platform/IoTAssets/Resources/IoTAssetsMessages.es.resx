@@ -48,4 +48,13 @@
   <data name="IoTAssets.IntegrationUnavailable" xml:space="preserve">
     <value>Una integración requerida no está disponible.</value>
   </data>
+  <data name="IoTAssets.InvalidEdgeGatewayName" xml:space="preserve">
+    <value>El nombre de la puerta de enlace debe tener entre 1 y 80 caracteres.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayNotFound" xml:space="preserve">
+    <value>No se encontró la puerta de enlace en el rancho autorizado.</value>
+  </data>
+  <data name="IoTAssets.EdgeGatewayAlreadyRevoked" xml:space="preserve">
+    <value>La puerta de enlace ya está revocada.</value>
+  </data>
 </root>

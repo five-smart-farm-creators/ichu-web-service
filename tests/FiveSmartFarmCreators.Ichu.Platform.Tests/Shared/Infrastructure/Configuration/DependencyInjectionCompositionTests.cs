@@ -5,6 +5,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
@@ -15,6 +16,7 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
@@ -31,6 +33,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.Enti
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +75,21 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IDeviceQueryService>());
         Assert.NotNull(services.GetRequiredService<IWaterTroughQueryService>());
         Assert.NotNull(services.GetRequiredService<IIoTAssetsContextFacade>());
+        Assert.NotNull(services.GetRequiredService<IEdgeGatewayRepository>());
+        Assert.NotNull(services.GetRequiredService<IEdgeGatewayCommandService>());
+        Assert.NotNull(services.GetRequiredService<IEdgeGatewayQueryService>());
+    }
+
+    [Fact]
+    public void EveryDevelopmentSeederResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<DevelopmentSubscriptionSeeder>());
+        Assert.NotNull(services.GetRequiredService<DevelopmentCattleSeeder>());
+        Assert.NotNull(services.GetRequiredService<DevelopmentIoTAssetsSeeder>());
     }
 
     [Fact]
@@ -120,6 +138,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<DevicesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<DeviceAssignmentsController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<WaterTroughsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<RanchEdgeGatewaysController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<CattleDeactivatedEventHandler>(services));
     }
 
@@ -166,7 +185,6 @@ public class DependencyInjectionCompositionTests
         services.AddIam(configuration);
         services.AddSubscriptionPlans(configuration);
         services.AddOperationsMonitoring(configuration);
-        services.AddOperationsMonitoringSimulation(configuration);
         services.AddCattleInformation();
         services.AddIoTAssets(configuration);
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });

@@ -371,6 +371,58 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.ToTable("RanchMemberships", "iam");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.EdgeGateway", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<byte[]>("KeyHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("key_hash");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateTimeOffset>("RegisteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("registered_at");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanchId");
+
+                    b.ToTable("edge_gateways", "iot", t =>
+                        {
+                            t.HasCheckConstraint("ck_iot_edge_gateways_key_hash", "octet_length(key_hash) = 32");
+
+                            t.HasCheckConstraint("ck_iot_edge_gateways_status", "status IN ('Active', 'Revoked')");
+                        });
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", b =>
                 {
                     b.Property<Guid>("Id")

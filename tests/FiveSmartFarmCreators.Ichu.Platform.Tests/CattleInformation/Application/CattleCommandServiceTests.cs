@@ -109,6 +109,9 @@ public class CattleCommandServiceTests
         public Task<Cattle?> FindByIdAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Items.SingleOrDefault(cattle => cattle.RanchId == ranchId && cattle.Id == cattleId));
 
+        public Task<Cattle?> FindByIdAsNoTrackingAsync(CattleId cattleId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Items.SingleOrDefault(cattle => cattle.Id == cattleId));
+
         public Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default) =>
             Task.FromResult(Items.Where(cattle => cattle.RanchId == ranchId && cattle.EarTag == earTag)
                 .Select(cattle => (CattleId?)cattle.Id)

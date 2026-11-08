@@ -1,4 +1,4 @@
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Services;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Integration;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
@@ -7,7 +7,7 @@ using Microsoft.OpenApi;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
 
 /// <summary>
-///     Documents the required X-Gateway-Key header on the Edge Gateway operations so that API clients such as Swagger UI can send the key of a simulated gateway.
+///     Documents the required X-Gateway-Key header on the Edge Gateway operations so that API clients such as Swagger UI can send the gateway key.
 /// </summary>
 public class EdgeGatewayKeyHeaderTransformer : IOpenApiOperationTransformer
 {
@@ -24,10 +24,10 @@ public class EdgeGatewayKeyHeaderTransformer : IOpenApiOperationTransformer
         operation.Parameters ??= [];
         operation.Parameters.Add(new OpenApiParameter
         {
-            Name = SimulatedEdgeGatewayAuthenticator.KeyHeader,
+            Name = IoTAssetsEdgeGatewayAuthenticator.KeyHeader,
             In = ParameterLocation.Header,
             Required = true,
-            Description = "Edge Gateway key. In Development, use the Key of a gateway in OperationsMonitoring:Simulation:Gateways of appsettings.Development.json.",
+            Description = "Edge Gateway key in the form {gatewayId}.{secret}, returned once when the gateway is registered in IoT Assets.",
             Schema = new OpenApiSchema { Type = JsonSchemaType.String }
         });
         return Task.CompletedTask;
