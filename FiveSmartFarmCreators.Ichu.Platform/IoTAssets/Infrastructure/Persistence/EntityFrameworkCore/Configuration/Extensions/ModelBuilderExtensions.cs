@@ -14,13 +14,14 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persisten
 public static class ModelBuilderExtensions
 {
     /// <summary>
-    ///     Applies the mappings of devices, assignments and water troughs under the iot schema. The shared database context calls it from OnModelCreating.
+    ///     Applies the mappings of devices, assignments, water troughs and edge gateways under the iot schema. The shared database context calls it from OnModelCreating.
     /// </summary>
     public static void ApplyIoTAssetsConfiguration(this ModelBuilder builder)
     {
         ConfigureDevice(builder.Entity<IoTDevice>());
         ConfigureDeviceAssignment(builder.Entity<DeviceAssignment>());
         ConfigureWaterTrough(builder.Entity<WaterTrough>());
+        ConfigureEdgeGateway(builder.Entity<EdgeGateway>());
     }
 
     private static void ConfigureDevice(EntityTypeBuilder<IoTDevice> devices)
@@ -116,6 +117,28 @@ public static class ModelBuilderExtensions
         troughs.HasIndex(t => t.RanchId);
     }
 
+    private static void ConfigureEdgeGateway(EntityTypeBuilder<EdgeGateway> gateways)
+    {
+        gateways.ToTable("edge_gateways", "iot", table =>
+        {
+            table.HasCheckConstraint("ck_iot_edge_gateways_status", "status IN ('Active', 'Revoked')");
+            table.HasCheckConstraint("ck_iot_edge_gateways_key_hash", "octet_length(key_hash) = 32");
+        });
+        gateways.HasKey(g => g.Id);
+        gateways.Property(g => g.Id).HasConversion(EdgeGatewayIdConverter()).HasColumnName("id").ValueGeneratedNever();
+        gateways.Property(g => g.RanchId).HasColumnName("ranch_id").IsRequired();
+        gateways.Property(g => g.Name).HasColumnName("name").HasMaxLength(80).IsRequired();
+        gateways.Property(g => g.KeyHash)
+            .HasConversion(hash => hash.ToBytes(), bytes => new GatewayKeyHash(bytes))
+            .HasColumnName("key_hash").HasColumnType("bytea").IsRequired();
+        gateways.Property(g => g.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20).IsRequired();
+        gateways.Property(g => g.RegisteredAt).HasColumnName("registered_at").IsRequired();
+        gateways.Property(g => g.RevokedAt).HasColumnName("revoked_at");
+        gateways.Property(g => g.Version).HasColumnName("version").IsConcurrencyToken();
+        gateways.Ignore(g => g.DomainEvents);
+        gateways.HasIndex(g => g.RanchId);
+    }
+
     private static StronglyTypedIdConverter<DeviceId, Guid> DeviceIdConverter() =>
         new(id => id.Value, value => new DeviceId(value));
 
@@ -124,4 +147,7 @@ public static class ModelBuilderExtensions
 
     private static StronglyTypedIdConverter<WaterTroughId, Guid> WaterTroughIdConverter() =>
         new(id => id.Value, value => new WaterTroughId(value));
+
+    private static StronglyTypedIdConverter<EdgeGatewayId, Guid> EdgeGatewayIdConverter() =>
+        new(id => id.Value, value => new EdgeGatewayId(value));
 }

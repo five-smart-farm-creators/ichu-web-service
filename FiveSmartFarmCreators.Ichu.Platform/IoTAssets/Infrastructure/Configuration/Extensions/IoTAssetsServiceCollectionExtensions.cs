@@ -26,6 +26,7 @@ public static class IoTAssetsServiceCollectionExtensions
 
         services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
         services.AddScoped<IWaterTroughRepository, WaterTroughRepository>();
+        services.AddScoped<IEdgeGatewayRepository, EdgeGatewayRepository>();
         services.AddScoped<IIoTAssetsTransaction, IoTAssetsTransaction>();
         services.AddScoped<DeviceAssignmentDomainService>();
         services.AddScoped<IIoTAssetsAccessService, IamIoTAssetsAccessService>();
@@ -35,6 +36,8 @@ public static class IoTAssetsServiceCollectionExtensions
         services.AddScoped<IWaterTroughCommandService, WaterTroughCommandService>();
         services.AddScoped<IDeviceQueryService, DeviceQueryService>();
         services.AddScoped<IWaterTroughQueryService, WaterTroughQueryService>();
+        services.AddScoped<IEdgeGatewayCommandService, EdgeGatewayCommandService>();
+        services.AddScoped<IEdgeGatewayQueryService, EdgeGatewayQueryService>();
         services.AddScoped<IIoTAssetsContextFacade, IoTAssetsContextFacade>();
         return services;
     }
