@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-08
+
 ### Added
 
 - Dashboard Analytics: indicators, lot trends, animal comparisons, epidemiological curves, portfolio priorities and executive reports are computed from the herd, readings, alerts and operations of the platform, with IAM ranch access and Subscription Plans export entitlements.
