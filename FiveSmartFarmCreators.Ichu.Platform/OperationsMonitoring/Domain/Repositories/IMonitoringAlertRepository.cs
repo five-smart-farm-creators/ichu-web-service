@@ -35,4 +35,9 @@ public interface IMonitoringAlertRepository
     ///     Finds the alerts raised before the period end that were not yet acknowledged when the period started, ordered by event time.
     /// </summary>
     Task<IReadOnlyList<MonitoringAlert>> FindActiveDuringAsync(Guid ranchId, TimePeriod period, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Counts the alerts of a ranch that are not cleared, grouped by severity. Severities without open alerts are absent.
+    /// </summary>
+    Task<IReadOnlyDictionary<AlertSeverity, int>> CountOpenByRanchAndSeverityAsync(Guid ranchId, CancellationToken cancellationToken = default);
 }

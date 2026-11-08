@@ -16,4 +16,9 @@ public interface ILivestockOperationRepository
     ///     Finds the operations applied to an animal within a period, ordered by occurrence time.
     /// </summary>
     Task<IReadOnlyList<LivestockOperation>> FindByCattleAsync(Guid cattleId, TimePeriod period, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Finds the operations of every animal of a ranch within a period, ordered by occurrence time, without tracking them.
+    /// </summary>
+    Task<IReadOnlyList<LivestockOperation>> FindByRanchAndPeriodAsNoTrackingAsync(Guid ranchId, TimePeriod period, CancellationToken cancellationToken = default);
 }

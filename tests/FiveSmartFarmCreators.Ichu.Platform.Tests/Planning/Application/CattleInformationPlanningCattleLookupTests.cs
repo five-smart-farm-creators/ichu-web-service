@@ -51,5 +51,8 @@ public class CattleInformationPlanningCattleLookupTests
 
         public Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Planning only looks up animals.");
+
+        public Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Planning only looks up animals.");
     }
 }

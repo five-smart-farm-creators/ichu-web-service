@@ -66,6 +66,18 @@ public class MonitoringAlertRepository(AppDbContext context) : IMonitoringAlertR
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<AlertSeverity, int>> CountOpenByRanchAndSeverityAsync(Guid ranchId, CancellationToken cancellationToken = default)
+    {
+        var counts = await Alerts
+            .AsNoTracking()
+            .Where(a => a.RanchId == ranchId && a.Status == AlertStatus.Pending && a.ClearedAt == null)
+            .GroupBy(a => a.Severity)
+            .Select(group => new { Severity = group.Key, Count = group.Count() })
+            .ToListAsync(cancellationToken);
+        return counts.ToDictionary(count => count.Severity, count => count.Count);
+    }
+
     private IQueryable<MonitoringAlert> Filter(Guid ranchId, AlertStatus? status, Guid? cattleId)
     {
         var alerts = Alerts.Where(a => a.RanchId == ranchId);

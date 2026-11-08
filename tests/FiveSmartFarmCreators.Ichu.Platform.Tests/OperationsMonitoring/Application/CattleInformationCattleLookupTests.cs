@@ -75,5 +75,8 @@ public class CattleInformationCattleLookupTests
 
         public Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken) =>
             Task.FromResult(Lifecycle);
+
+        public Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The lookup resolves single animals and lots only.");
     }
 }
