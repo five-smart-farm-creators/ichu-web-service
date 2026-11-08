@@ -2,19 +2,22 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggr
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
-using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Repository implementation for <see cref="MonitoringThreshold"/> aggregates using Entity Framework Core.
+///     Stores the thresholds of ranches with Entity Framework Core.
 /// </summary>
-/// <param name="context">The shared database context.</param>
-public class MonitoringThresholdRepository(AppDbContext context)
-    : BaseRepository<MonitoringThreshold>(context), IMonitoringThresholdRepository
+public class MonitoringThresholdRepository(AppDbContext context) : IMonitoringThresholdRepository
 {
-    private DbSet<MonitoringThreshold> Thresholds => Context.Set<MonitoringThreshold>();
+    private DbSet<MonitoringThreshold> Thresholds => context.Set<MonitoringThreshold>();
+
+    /// <inheritdoc />
+    public async Task AddAsync(MonitoringThreshold threshold, CancellationToken cancellationToken = default)
+    {
+        await Thresholds.AddAsync(threshold, cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<MonitoringThreshold?> FindByRanchLifeStageAndMetricAsync(Guid ranchId, string lifeStage, MonitoredMetric metric, CancellationToken cancellationToken = default) =>

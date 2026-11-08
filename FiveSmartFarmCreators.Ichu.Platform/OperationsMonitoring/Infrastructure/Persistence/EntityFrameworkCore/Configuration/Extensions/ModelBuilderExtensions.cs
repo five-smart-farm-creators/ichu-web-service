@@ -1,13 +1,15 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 /// <summary>
-///     Entity Framework Core mappings of the Operations and Monitoring bounded context.
+///     Entity Framework Core mappings of the Operations and Monitoring context. Typed identifiers map to the same uuid columns as before, so the typed model does not change the schema.
 /// </summary>
 public static class ModelBuilderExtensions
 {
@@ -15,10 +17,8 @@ public static class ModelBuilderExtensions
     private const int EnumLength = 32;
 
     /// <summary>
-    ///     Applies the mappings of the monitoring aggregates. The shared database context calls it from
-    ///     OnModelCreating.
+    ///     Applies the mappings of the monitoring aggregates. The shared database context calls it from OnModelCreating.
     /// </summary>
-    /// <param name="builder">The model builder of the shared database context.</param>
     public static void ApplyOperationsMonitoringConfiguration(this ModelBuilder builder)
     {
         ConfigureTelemetryReading(builder.Entity<TelemetryReading>());
@@ -33,7 +33,7 @@ public static class ModelBuilderExtensions
     {
         reading.ToTable("TelemetryReadings", Schema);
         reading.HasKey(r => r.Id);
-        reading.Property(r => r.Id).ValueGeneratedNever();
+        reading.Property(r => r.Id).HasConversion(TelemetryReadingIdConverter()).ValueGeneratedNever();
         reading.HasIndex(r => new { r.DeviceId, r.ReadingId }).IsUnique();
         reading.HasIndex(r => new { r.CattleId, r.RecordedAt });
         reading.HasIndex(r => new { r.RanchId, r.RecordedAt });
@@ -60,7 +60,8 @@ public static class ModelBuilderExtensions
     {
         alert.ToTable("MonitoringAlerts", Schema);
         alert.HasKey(a => a.Id);
-        alert.Property(a => a.Id).ValueGeneratedNever();
+        alert.Property(a => a.Id).HasConversion(MonitoringAlertIdConverter()).ValueGeneratedNever();
+        alert.Property(a => a.GeofenceId).HasConversion(NullableGeofenceIdConverter());
         alert.Property(a => a.Type).HasConversion<string>().HasMaxLength(EnumLength);
         alert.Property(a => a.Severity).HasConversion<string>().HasMaxLength(EnumLength);
         alert.Property(a => a.Status).HasConversion<string>().HasMaxLength(EnumLength);
@@ -76,6 +77,7 @@ public static class ModelBuilderExtensions
         alert.OwnsMany(a => a.Evidence, evidence =>
         {
             evidence.ToTable("AlertEvidence", Schema);
+            evidence.Property<MonitoringAlertId>("AlertId").HasConversion(MonitoringAlertIdConverter());
             evidence.WithOwner().HasForeignKey("AlertId");
             evidence.HasKey("AlertId", "DeviceId", "ReadingId");
         });
@@ -84,6 +86,7 @@ public static class ModelBuilderExtensions
         alert.OwnsMany(a => a.Changes, change =>
         {
             change.ToTable("AlertChanges", Schema);
+            change.Property<MonitoringAlertId>("AlertId").HasConversion(MonitoringAlertIdConverter());
             change.WithOwner().HasForeignKey("AlertId");
             change.HasKey(c => c.OperationId);
             change.Property(c => c.OperationId).ValueGeneratedNever();
@@ -97,7 +100,7 @@ public static class ModelBuilderExtensions
     {
         geofence.ToTable("Geofences", Schema);
         geofence.HasKey(g => g.Id);
-        geofence.Property(g => g.Id).ValueGeneratedNever();
+        geofence.Property(g => g.Id).HasConversion(GeofenceIdConverter()).ValueGeneratedNever();
         geofence.Property(g => g.Name).HasMaxLength(Geofence.MaximumNameLength).IsRequired();
         geofence.Property(g => g.Severity).HasConversion<string>().HasMaxLength(EnumLength);
         geofence.HasIndex(g => new { g.RanchId, g.LotId }).IsUnique();
@@ -106,6 +109,7 @@ public static class ModelBuilderExtensions
         geofence.OwnsMany(g => g.Vertices, vertex =>
         {
             vertex.ToTable("GeofenceVertices", Schema);
+            vertex.Property<GeofenceId>("GeofenceId").HasConversion(GeofenceIdConverter());
             vertex.WithOwner().HasForeignKey("GeofenceId");
             vertex.Property<long>("Id").ValueGeneratedOnAdd();
             vertex.HasKey("Id");
@@ -118,7 +122,7 @@ public static class ModelBuilderExtensions
     {
         threshold.ToTable("MonitoringThresholds", Schema);
         threshold.HasKey(t => t.Id);
-        threshold.Property(t => t.Id).ValueGeneratedNever();
+        threshold.Property(t => t.Id).HasConversion(MonitoringThresholdIdConverter()).ValueGeneratedNever();
         threshold.Property(t => t.LifeStage).HasMaxLength(MonitoringThreshold.MaximumLifeStageLength).IsRequired();
         threshold.Property(t => t.Metric).HasConversion<string>().HasMaxLength(EnumLength);
         threshold.Property(t => t.Severity).HasConversion<string>().HasMaxLength(EnumLength);
@@ -142,11 +146,29 @@ public static class ModelBuilderExtensions
     {
         operation.ToTable("LivestockOperations", Schema);
         operation.HasKey(o => o.Id);
-        operation.Property(o => o.Id).ValueGeneratedNever();
+        operation.Property(o => o.Id).HasConversion(LivestockOperationIdConverter()).ValueGeneratedNever();
         operation.Property(o => o.Type).HasConversion<string>().HasMaxLength(EnumLength);
         operation.Property(o => o.Observation).HasMaxLength(LivestockOperation.MaximumObservationLength);
         operation.Property(o => o.Product).HasMaxLength(LivestockOperation.MaximumProductLength);
         operation.Property(o => o.Dose).HasMaxLength(LivestockOperation.MaximumDoseLength);
         operation.HasIndex(o => new { o.CattleId, o.OccurredAt });
     }
+
+    private static StronglyTypedIdConverter<TelemetryReadingId, Guid> TelemetryReadingIdConverter() =>
+        new(id => id.Value, value => new TelemetryReadingId(value));
+
+    private static StronglyTypedIdConverter<MonitoringAlertId, Guid> MonitoringAlertIdConverter() =>
+        new(id => id.Value, value => new MonitoringAlertId(value));
+
+    private static StronglyTypedIdConverter<GeofenceId, Guid> GeofenceIdConverter() =>
+        new(id => id.Value, value => new GeofenceId(value));
+
+    private static StronglyTypedIdConverter<MonitoringThresholdId, Guid> MonitoringThresholdIdConverter() =>
+        new(id => id.Value, value => new MonitoringThresholdId(value));
+
+    private static StronglyTypedIdConverter<LivestockOperationId, Guid> LivestockOperationIdConverter() =>
+        new(id => id.Value, value => new LivestockOperationId(value));
+
+    private static ValueConverter<GeofenceId?, Guid?> NullableGeofenceIdConverter() =>
+        new(id => id.HasValue ? id.Value.Value : (Guid?)null, value => value.HasValue ? new GeofenceId(value.Value) : (GeofenceId?)null);
 }

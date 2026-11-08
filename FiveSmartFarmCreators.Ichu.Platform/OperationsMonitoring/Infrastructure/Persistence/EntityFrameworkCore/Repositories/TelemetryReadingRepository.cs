@@ -2,19 +2,22 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggr
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
-using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Repository implementation for <see cref="TelemetryReading"/> aggregates using Entity Framework Core.
+///     Stores telemetry readings with Entity Framework Core. Every query is read-only and therefore untracked.
 /// </summary>
-/// <param name="context">The shared database context.</param>
-public class TelemetryReadingRepository(AppDbContext context)
-    : BaseRepository<TelemetryReading>(context), ITelemetryReadingRepository
+public class TelemetryReadingRepository(AppDbContext context) : ITelemetryReadingRepository
 {
-    private IQueryable<TelemetryReading> Readings => Context.Set<TelemetryReading>().AsNoTracking();
+    private IQueryable<TelemetryReading> Readings => context.Set<TelemetryReading>().AsNoTracking();
+
+    /// <inheritdoc />
+    public async Task AddAsync(TelemetryReading reading, CancellationToken cancellationToken = default)
+    {
+        await context.Set<TelemetryReading>().AddAsync(reading, cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<TelemetryReading?> FindByDeviceAndReadingIdAsync(Guid deviceId, Guid readingId, CancellationToken cancellationToken = default) =>

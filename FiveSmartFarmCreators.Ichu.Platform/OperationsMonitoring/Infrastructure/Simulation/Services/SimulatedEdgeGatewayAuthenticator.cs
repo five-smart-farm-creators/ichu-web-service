@@ -7,11 +7,8 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Services;
 
 /// <summary>
-///     Development-only implementation of <see cref="IEdgeGatewayAuthenticator"/> that accepts the key of a gateway
-///     of the "OperationsMonitoring:Simulation" configuration section in the X-Gateway-Key header.
+///     Development-only implementation of <see cref="IEdgeGatewayAuthenticator"/> that accepts the key of a gateway of the "OperationsMonitoring:Simulation" configuration section in the X-Gateway-Key header.
 /// </summary>
-/// <param name="httpContextAccessor">The accessor of the current request.</param>
-/// <param name="options">The simulated data.</param>
 public class SimulatedEdgeGatewayAuthenticator(
     IHttpContextAccessor httpContextAccessor,
     IOptions<MonitoringSimulationOptions> options) : IEdgeGatewayAuthenticator

@@ -5,11 +5,8 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Services;
 
 /// <summary>
-///     Development-only implementation of <see cref="IDeviceAttributionLookup"/> that reads the collars of the
-///     "OperationsMonitoring:Simulation" configuration section. A reading captured before the assignment instant is
-///     attributed to the ranch only.
+///     Development-only implementation of <see cref="IDeviceAttributionLookup"/> that reads the collars of the "OperationsMonitoring:Simulation" configuration section. A reading captured before the assignment instant is attributed to the ranch only.
 /// </summary>
-/// <param name="options">The simulated data.</param>
 public class SimulatedDeviceAttributionLookup(IOptions<MonitoringSimulationOptions> options) : IDeviceAttributionLookup
 {
     /// <inheritdoc />
