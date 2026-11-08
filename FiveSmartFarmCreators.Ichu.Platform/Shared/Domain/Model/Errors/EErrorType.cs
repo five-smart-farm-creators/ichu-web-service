@@ -24,5 +24,11 @@ public enum EErrorType
     Forbidden = 5,
 
     /// <summary>An unexpected technical failure occurred.</summary>
-    Unexpected = 6
+    Unexpected = 6,
+
+    /// <summary>The input is well formed, but no data exists to process it.</summary>
+    Unprocessable = 7,
+
+    /// <summary>A required source cannot answer with a consistent result right now.</summary>
+    Unavailable = 8
 }

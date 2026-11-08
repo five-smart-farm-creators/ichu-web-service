@@ -1,8 +1,5 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Model.ValueObjects;
 
-/// <summary>
-///     Carries a ranch observation window and source completeness information for analytics.
-/// </summary>
 public sealed record AnalyticsSnapshot(
     Guid RanchId, DateRange Period, DateTimeOffset UpdatedAt, string Source, bool PopulationComplete,
     bool AlertsComplete, bool GeofencesComplete, bool CasesComplete,
@@ -11,12 +8,12 @@ public sealed record AnalyticsSnapshot(
     IReadOnlyList<HealthCaseSnapshot> Cases)
 {
     /// <summary>
-    ///     Gets the recorded birth count, or null when observations are unavailable.
+    ///     Null marks births that were not observed, so an unavailable source never reads as zero.
     /// </summary>
     public int? BirthCount { get; init; }
 
     /// <summary>
-    ///     Gets the confirmed pregnancy count, or null when observations are unavailable.
+    ///     Null marks confirmations that were not observed, because no context records them yet.
     /// </summary>
     public int? ConfirmedPregnancies { get; init; }
 }

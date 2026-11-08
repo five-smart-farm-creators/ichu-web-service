@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Dashboard Analytics: indicators, lot trends, animal comparisons, epidemiological curves, portfolio priorities and executive reports are computed from the herd, readings, alerts and operations of the platform, with IAM ranch access and Subscription Plans export entitlements.
+- Dashboard Analytics: registered the module in the application host, with English and Spanish messages for business failures.
+- Dashboard Analytics: added the `DashboardAnalytics:ConditionIncubationDays` setting, whose values are placeholders until the team validates them.
+- Cattle Information: added a herd read that lists every animal of a ranch, active and exited, with its current lot, for analytics.
+- Operations and Monitoring: added read contracts that list the livestock operations of a ranch in a period and count its open alerts by severity, for analytics and portfolio priorities.
+
+### Changed
+
+- Dashboard Analytics: business failures are returned as results with stable error codes, and problem responses carry the localized message; exports without data answer 422 and inconsistent sources answer 503.
+- Dashboard Analytics: a period may end after the current instant, so the current month can be analyzed.
+- Shared: error types gained the unprocessable and unavailable kinds, so that a context can answer 422 and 503 through its results.
+
+### Removed
+
+- Dashboard Analytics: removed the analytics exception, its exception filter and the abstract controller base, since failures are no longer thrown.
+
 ## [0.2.0] - 2026-11-08
 
 ### Added

@@ -8,6 +8,11 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Confi
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Rest;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Services;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.EventHandlers;
@@ -198,6 +203,35 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<WithdrawalPeriodsController>(services));
     }
 
+    [Fact]
+    public void EveryDashboardAnalyticsServiceResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IAnalyticsAccessControl>());
+        Assert.NotNull(services.GetRequiredService<IAnalyticsEntitlements>());
+        Assert.NotNull(services.GetRequiredService<IAnalyticsSource>());
+        Assert.NotNull(services.GetRequiredService<AnalyticsDomainService>());
+        Assert.NotNull(services.GetRequiredService<IAnalyticsQueryService>());
+        Assert.NotNull(services.GetRequiredService<IExecutiveReportQueryService>());
+    }
+
+    [Fact]
+    public void EveryDashboardAnalyticsControllerReceivesItsDependencies()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(ActivatorUtilities.CreateInstance<DashboardController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<EpidemiologicalCurveController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PortfolioController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<ReportsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<TrendsController>(services));
+    }
+
     private static ServiceProvider BuildHost()
     {
         var configuration = new ConfigurationBuilder()
@@ -229,6 +263,7 @@ public class DependencyInjectionCompositionTests
         services.AddCattleInformation();
         services.AddIoTAssets(configuration);
         services.AddPlanning();
+        services.AddDashboardAnalytics(configuration);
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 }

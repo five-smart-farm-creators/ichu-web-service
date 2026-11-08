@@ -1,14 +1,13 @@
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Services;
 
-/// <summary>
-///     Calculates indicators, trends, comparisons, and case progression from supplied observations.
-/// </summary>
 public sealed class AnalyticsDomainService
 {
     /// <summary>
-    ///     Calculates period indicators while retaining incomplete-source and reading-coverage reasons.
+    ///     Incomplete sources yield null values with a reason instead of zero, so missing data never looks like a healthy herd.
     /// </summary>
     public HerdIndicatorSet BuildIndicators(AnalyticsSnapshot snapshot)
     {
@@ -40,22 +39,32 @@ public sealed class AnalyticsDomainService
     }
 
     /// <summary>
-    ///     Builds an equally weighted lot trend using finite metric readings and an absolute outlier threshold.
+    ///     Weights each animal equally, so an animal that reports more often does not dominate the lot average.
     /// </summary>
-    public TrendSeries BuildTrend(AnalyticsSnapshot snapshot, Guid lotId, string metric, double outlierDeviation)
+    public Result<TrendSeries> BuildTrend(AnalyticsSnapshot snapshot, Guid lotId, string metric, double outlierDeviation)
     {
-        if (lotId == Guid.Empty || !double.IsFinite(outlierDeviation) || outlierDeviation <= 0)
+        if (lotId == Guid.Empty)
         {
-            throw new ArgumentException("A lot and a positive finite outlier deviation are required.");
+            return Result<TrendSeries>.Failure(DashboardAnalyticsErrors.LotRequired);
         }
 
-        var unit = metric switch
+        if (!double.IsFinite(outlierDeviation) || outlierDeviation <= 0)
+        {
+            return Result<TrendSeries>.Failure(DashboardAnalyticsErrors.InvalidOutlierDeviation);
+        }
+
+        string? unit = metric switch
         {
             "body-temperature" => "celsius",
             "activity-index" => "index",
             "rumination-minutes" => "minutes",
-            _ => throw new ArgumentException("Metric must be body-temperature, activity-index or rumination-minutes.")
+            _ => null
         };
+        if (unit is null)
+        {
+            return Result<TrendSeries>.Failure(DashboardAnalyticsErrors.UnsupportedMetric);
+        }
+
         var animals = snapshot.Animals.Where(a => a.LotId == lotId).ToList();
         var ids = animals.Select(a => a.AnimalId).ToHashSet();
         var points = snapshot.Readings.Where(r => ids.Contains(r.AnimalId) && snapshot.Period.Contains(r.RecordedAt))
@@ -66,19 +75,18 @@ public sealed class AnalyticsDomainService
                 _ => r.RuminationMinutes
             })).Where(p => IsValid(p.Value)).Select(p => new TrendPoint(p.Reading.AnimalId, p.Reading.RecordedAt, p.Value!.Value))
             .OrderBy(p => p.RecordedAt).ToList();
-        // Weight each animal equally regardless of how frequently its device reports.
         var averages = points.GroupBy(p => p.AnimalId).Select(g => (Id: g.Key, Average: g.Average(p => p.Value))).ToList();
         double? mean = averages.Count == 0 ? null : averages.Average(a => a.Average);
         var outliers = mean is { } average ? averages.Where(a => Math.Abs(a.Average - average) > outlierDeviation).Select(a => a.Id).ToList() : [];
-        return new TrendSeries(snapshot.RanchId, lotId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source, metric, unit,
-            mean, outlierDeviation, points, outliers,
+        return Result<TrendSeries>.Success(new TrendSeries(snapshot.RanchId, lotId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
+            metric, unit, mean, outlierDeviation, points, outliers,
             animals.All(a => a.ExpectedReadings.HasValue) ? Math.Max(0, animals.Sum(a => a.ExpectedReadings!.Value) - points.Count) : null,
             animals.Any(a => a.ExpectedReadings is null) ? "Expected readings are unavailable for part of the lot." : null,
-            points.Count == 0 ? "There are no valid readings for this lot and metric." : null);
+            points.Count == 0 ? "There are no valid readings for this lot and metric." : null));
     }
 
     /// <summary>
-    ///     Compares an animal with its lot only when at least five animals have valid readings.
+    ///     A comparison needs at least five animals, so one or two animals cannot stand in for the whole lot.
     /// </summary>
     public AnimalComparison CompareAgainstLot(TrendSeries trend, Guid animalId)
     {
@@ -95,37 +103,37 @@ public sealed class AnalyticsDomainService
     }
 
     /// <summary>
-    ///     Groups case onset by UTC day and assesses the available incubation observation window.
+    ///     Daily counts are only meaningful when the observation window covers the incubation period.
     /// </summary>
-    public EpidemiologicalCurve BuildCurve(AnalyticsSnapshot snapshot, string condition)
+    public Result<EpidemiologicalCurve> BuildCurve(AnalyticsSnapshot snapshot, string condition)
     {
         if (string.IsNullOrWhiteSpace(condition))
         {
-            throw new ArgumentException("A condition is required.");
+            return Result<EpidemiologicalCurve>.Failure(DashboardAnalyticsErrors.ConditionRequired);
         }
 
         var incubationDays = snapshot.ConditionIncubationDays.FirstOrDefault(c => c.Key.Equals(condition, StringComparison.OrdinalIgnoreCase)).Value;
         if (!snapshot.CasesComplete || incubationDays <= 0)
         {
-            return new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
+            return Result<EpidemiologicalCurve>.Success(new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
                 condition, new Dictionary<DateOnly, int>(), null, null,
-                !snapshot.CasesComplete ? "Case observations are incomplete." : "The condition has no configured incubation period.");
+                !snapshot.CasesComplete ? "Case observations are incomplete." : "The condition has no configured incubation period."));
         }
 
         var cases = snapshot.Cases.Where(c => c.Condition.Equals(condition, StringComparison.OrdinalIgnoreCase) && snapshot.Period.Contains(c.Onset))
             .DistinctBy(c => c.CaseId).ToList();
         if (cases.Count < 2)
         {
-            return new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
-                condition, new Dictionary<DateOnly, int>(), null, null, "At least two recorded cases are required to build a progression.");
+            return Result<EpidemiologicalCurve>.Success(new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
+                condition, new Dictionary<DateOnly, int>(), null, null, "At least two recorded cases are required to build a progression."));
         }
 
         var grouped = cases.GroupBy(c => DateOnly.FromDateTime(c.Onset.UtcDateTime)).ToDictionary(g => g.Key, g => g.Count());
         var days = Math.Max(0, (int)(snapshot.Period.To - cases.Max(c => c.Onset)).TotalDays);
         var observationDays = (snapshot.Period.To - snapshot.Period.From).TotalDays;
-        return new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
+        return Result<EpidemiologicalCurve>.Success(new EpidemiologicalCurve(snapshot.RanchId, snapshot.Period, snapshot.UpdatedAt, snapshot.Source,
             condition, grouped, days, observationDays >= incubationDays ? days >= incubationDays : null,
-            observationDays >= incubationDays ? null : "The observation period is shorter than the incubation period.");
+            observationDays >= incubationDays ? null : "The observation period is shorter than the incubation period."));
     }
 
     private static bool IsValid(double? value) => value is { } number && double.IsFinite(number);
