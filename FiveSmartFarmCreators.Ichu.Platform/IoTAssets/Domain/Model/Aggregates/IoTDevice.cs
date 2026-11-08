@@ -3,51 +3,80 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Events;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates;
 
+/// <summary>
+///     A collar or water controller of a ranch. It is assigned to one target at a time, and every assignment is kept as history.
+/// </summary>
 public partial class IoTDevice : AggregateRoot
 {
     private readonly List<DeviceAssignment> _assignments = [];
 
+    // Entity Framework Core materializes devices without running the factory.
     private IoTDevice()
     {
     }
 
-    public IoTDevice(RegisterDeviceCommand command, DateTimeOffset registeredAt)
+    public DeviceId Id { get; private set; }
+
+    public Guid RanchId { get; private set; }
+
+    public DeviceSerial Serial { get; private set; } = null!;
+
+    public DeviceType Type { get; private set; }
+
+    public DeviceStatus Status { get; private set; }
+
+    public string? FirmwareVersion { get; private set; }
+
+    public DateTimeOffset? LastCommunicationAt { get; private set; }
+
+    public DateTimeOffset? LastCommunicationReceivedAt { get; private set; }
+
+    public BatteryLevel? Battery { get; private set; }
+
+    public DateTimeOffset? BatteryRecordedAt { get; private set; }
+
+    /// <summary>
+    ///     Advanced by every change, so that a stale caller is refused instead of overwriting newer state.
+    /// </summary>
+    public Guid Version { get; private set; }
+
+    public IReadOnlyCollection<DeviceAssignment> Assignments => _assignments.AsReadOnly();
+
+    public static Result<IoTDevice> Register(RegisterDeviceCommand command, DateTimeOffset registeredAt)
     {
         if (command.RanchId == Guid.Empty || !Enum.IsDefined(command.Type) || registeredAt == default
             || command.FirmwareVersion?.Trim().Length > 20)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidInput);
+            return Result<IoTDevice>.Failure(IoTAssetsErrors.InvalidInput);
         }
 
-        Id = Guid.NewGuid();
-        RanchId = command.RanchId;
-        Serial = new DeviceSerial(command.Serial);
-        Type = command.Type;
-        FirmwareVersion = string.IsNullOrWhiteSpace(command.FirmwareVersion) ? null : command.FirmwareVersion.Trim();
-        Status = DeviceStatus.Available;
-        Version = Guid.NewGuid();
-        CreatedAt = registeredAt.ToUniversalTime();
-        UpdatedAt = CreatedAt;
+        var serial = DeviceSerial.Create(command.Serial);
+        if (serial.IsFailure)
+        {
+            return Result<IoTDevice>.Failure(serial.DomainError);
+        }
+
+        var device = new IoTDevice
+        {
+            Id = new DeviceId(Guid.NewGuid()),
+            RanchId = command.RanchId,
+            Serial = serial.Value!,
+            Type = command.Type,
+            FirmwareVersion = string.IsNullOrWhiteSpace(command.FirmwareVersion) ? null : command.FirmwareVersion.Trim(),
+            Status = DeviceStatus.Available,
+            Version = Guid.NewGuid(),
+            CreatedAt = registeredAt.ToUniversalTime()
+        };
+        device.UpdatedAt = device.CreatedAt;
+        return Result<IoTDevice>.Success(device);
     }
 
-    public Guid Id { get; private set; }
-    public Guid RanchId { get; private set; }
-    public DeviceSerial Serial { get; private set; } = null!;
-    public DeviceType Type { get; private set; }
-    public DeviceStatus Status { get; private set; }
-    public string? FirmwareVersion { get; private set; }
-    public DateTimeOffset? LastCommunicationAt { get; private set; }
-    public DateTimeOffset? LastCommunicationReceivedAt { get; private set; }
-    public BatteryLevel? Battery { get; private set; }
-    public DateTimeOffset? BatteryRecordedAt { get; private set; }
-    public Guid Version { get; private set; }
-    public IReadOnlyCollection<DeviceAssignment> Assignments => _assignments.AsReadOnly();
-
-    public bool IsAvailable() => Status == DeviceStatus.Available && _assignments.All(a => !a.IsOpen());
+    public bool IsAvailable() => Status == DeviceStatus.Available && _assignments.All(assignment => !assignment.IsOpen());
 
     public CommunicationStatus GetCommunicationStatus(DateTimeOffset now)
     {
@@ -62,11 +91,16 @@ public partial class IoTDevice : AggregateRoot
             : CommunicationStatus.Communicating;
     }
 
-    public DeviceAssignment AssignTo(Guid targetId, DateTimeOffset at)
+    public Result<DeviceAssignment> AssignTo(Guid targetId, DateTimeOffset at)
     {
-        if (!IsAvailable() || _assignments.Any(a => a.EndedAt > at))
+        if (!IsAvailable() || _assignments.Any(assignment => assignment.EndedAt > at))
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidState);
+            return Result<DeviceAssignment>.Failure(IoTAssetsErrors.InvalidState);
+        }
+
+        if (targetId == Guid.Empty || at == default)
+        {
+            return Result<DeviceAssignment>.Failure(IoTAssetsErrors.InvalidInput);
         }
 
         var targetType = Type == DeviceType.SmartCollar ? AssignmentTargetType.Cattle : AssignmentTargetType.WaterTrough;
@@ -74,32 +108,36 @@ public partial class IoTDevice : AggregateRoot
         _assignments.Add(assignment);
         Status = DeviceStatus.InService;
         Touch(at);
-        AddDomainEvent(new DeviceAssignedEvent(Guid.NewGuid(), at.ToUniversalTime(), RanchId, Id,
-            assignment.Id, targetId, targetType));
-        return assignment;
+        AddDomainEvent(new DeviceAssignedEvent(RanchId, Id, assignment.Id, targetId, targetType));
+        return Result<DeviceAssignment>.Success(assignment);
     }
 
-    public DeviceAssignment Release(string reason, DateTimeOffset at)
+    public Result<DeviceAssignment> Release(string reason, DateTimeOffset at)
     {
-        var assignment = _assignments.SingleOrDefault(a => a.IsOpen());
+        var assignment = _assignments.SingleOrDefault(item => item.IsOpen());
         if (assignment is null)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidState);
+            return Result<DeviceAssignment>.Failure(IoTAssetsErrors.InvalidState);
         }
 
-        assignment.Close(reason, at);
+        var closure = assignment.Close(reason, at);
+        if (closure.IsFailure)
+        {
+            return Result<DeviceAssignment>.Failure(closure.DomainError);
+        }
+
         Status = DeviceStatus.Available;
         Touch(at);
-        AddDomainEvent(new DeviceReleasedEvent(Guid.NewGuid(), at.ToUniversalTime(), RanchId, Id,
-            assignment.Id, assignment.TargetId, assignment.TargetType, assignment.ReleaseReason!));
-        return assignment;
+        AddDomainEvent(new DeviceReleasedEvent(RanchId, Id, assignment.Id, assignment.TargetId, assignment.TargetType,
+            assignment.ReleaseReason!));
+        return Result<DeviceAssignment>.Success(assignment);
     }
 
-    public void SetMaintenance(bool inMaintenance, DateTimeOffset at)
+    public Result SetMaintenance(bool inMaintenance, DateTimeOffset at)
     {
-        if (_assignments.Any(a => a.IsOpen()) || at == default)
+        if (_assignments.Any(assignment => assignment.IsOpen()) || at == default)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidState);
+            return Result.Failure(IoTAssetsErrors.InvalidState);
         }
 
         var status = inMaintenance ? DeviceStatus.Maintenance : DeviceStatus.Available;
@@ -108,19 +146,21 @@ public partial class IoTDevice : AggregateRoot
             Status = status;
             Touch(at);
         }
+
+        return Result.Success();
     }
 
-    public void RegisterCommunication(DateTimeOffset communicatedAt, DateTimeOffset receivedAt,
+    public Result RegisterCommunication(DateTimeOffset communicatedAt, DateTimeOffset receivedAt,
         BatteryLevel? battery, DateTimeOffset now)
     {
         if (communicatedAt == default || receivedAt == default || communicatedAt > receivedAt || receivedAt > now)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidInput);
+            return Result.Failure(IoTAssetsErrors.InvalidInput);
         }
 
         if (battery is not null && BatteryRecordedAt == communicatedAt && Battery != battery)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.Conflict);
+            return Result.Failure(IoTAssetsErrors.Conflict);
         }
 
         var changed = false;
@@ -147,19 +187,20 @@ public partial class IoTDevice : AggregateRoot
         {
             Touch(now);
         }
+
+        return Result.Success();
     }
 
-    public void EnsureVersion(Guid expectedVersion)
+    public Result EnsureVersion(Guid expectedVersion)
     {
         if (expectedVersion == Guid.Empty)
         {
-            throw new IoTAssetsException(IoTAssetsErrors.InvalidInput);
+            return Result.Failure(IoTAssetsErrors.InvalidInput);
         }
 
-        if (Version != expectedVersion)
-        {
-            throw new IoTAssetsException(IoTAssetsErrors.Conflict);
-        }
+        return Version == expectedVersion
+            ? Result.Success()
+            : Result.Failure(IoTAssetsErrors.Conflict);
     }
 
     private void Touch(DateTimeOffset at)
