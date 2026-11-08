@@ -18,4 +18,9 @@ public interface IOperationsMonitoringContextFacade
     Task<DeviceCommunicationRecord?> GetLastDeviceCommunicationAsync(Guid deviceId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<LivestockOperationRecord>> GetLivestockOperationsAsync(Guid cattleId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Returns null for field events as well as unknown operations, so a caller cannot link a field event as a clinical intervention.
+    /// </summary>
+    Task<ClinicalInterventionRecord?> FindClinicalInterventionAsync(Guid operationId, CancellationToken cancellationToken);
 }

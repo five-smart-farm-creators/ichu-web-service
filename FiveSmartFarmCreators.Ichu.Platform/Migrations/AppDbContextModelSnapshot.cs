@@ -930,6 +930,179 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.ToTable("TelemetryReadings", "monitoring");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CampaignId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("campaign_id");
+
+                    b.Property<Guid?>("CattleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cattle_id");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateTimeOffset>("ScheduledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId")
+                        .HasDatabaseName("ix_planned_activities_campaign_id");
+
+                    b.HasIndex("RanchId", "ScheduledAt")
+                        .HasDatabaseName("ix_planned_activities_ranch_id_scheduled_at");
+
+                    b.ToTable("planned_activities", "planning");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlanningCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly>("EndsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("ends_on");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("starts_on");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanchId", "StartsOn")
+                        .HasDatabaseName("ix_campaigns_ranch_id_starts_on");
+
+                    b.ToTable("campaigns", "planning", t =>
+                        {
+                            t.HasCheckConstraint("ck_campaigns_date_range", "ends_on >= starts_on");
+                        });
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.WithdrawalPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CattleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cattle_id");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<Guid?>("InterventionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("intervention_id");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterventionId")
+                        .HasDatabaseName("ix_withdrawal_periods_intervention_id");
+
+                    b.HasIndex("RanchId", "CattleId", "StartsAt")
+                        .HasDatabaseName("ix_withdrawal_periods_ranch_cattle_starts_at");
+
+                    b.ToTable("withdrawal_periods", "planning", t =>
+                        {
+                            t.HasCheckConstraint("ck_withdrawal_periods_interval", "ends_at >= starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Entities.ApplicationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActivityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("activity_id");
+
+                    b.Property<DateTimeOffset>("AppliedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("applied_at");
+
+                    b.Property<Guid>("CattleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cattle_id");
+
+                    b.Property<Guid?>("InterventionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("intervention_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterventionId")
+                        .HasDatabaseName("ix_application_records_intervention_id");
+
+                    b.HasIndex("ActivityId", "AppliedAt")
+                        .HasDatabaseName("ix_application_records_activity_id_applied_at");
+
+                    b.ToTable("application_records", "planning");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Entities.FollowUp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActivityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("activity_id");
+
+                    b.Property<DateTimeOffset>("DueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivityId", "DueAt")
+                        .HasDatabaseName("ix_follow_ups_activity_id_due_at");
+
+                    b.ToTable("follow_ups", "planning");
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Plan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1338,6 +1511,32 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.Navigation("Evidence");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlanningCampaign", null)
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Entities.ApplicationRecord", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", null)
+                        .WithMany("Applications")
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Entities.FollowUp", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", null)
+                        .WithMany("FollowUps")
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Aggregates.Plan", b =>
                 {
                     b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueObjects.Money", "AnnualFee", b1 =>
@@ -1615,6 +1814,13 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", b =>
                 {
                     b.Navigation("Assignments");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", b =>
+                {
+                    b.Navigation("Applications");
+
+                    b.Navigation("FollowUps");
                 });
 #pragma warning restore 612, 618
         }

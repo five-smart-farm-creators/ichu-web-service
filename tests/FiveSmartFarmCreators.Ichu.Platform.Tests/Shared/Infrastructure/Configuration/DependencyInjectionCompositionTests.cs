@@ -27,6 +27,12 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -157,6 +163,41 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<TelemetryController>(services));
     }
 
+    [Fact]
+    public void EveryPlanningServiceResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IPlanningCampaignRepository>());
+        Assert.NotNull(services.GetRequiredService<IPlannedActivityRepository>());
+        Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodRepository>());
+        Assert.NotNull(services.GetRequiredService<IPlanningAccessControl>());
+        Assert.NotNull(services.GetRequiredService<IPlanningCattleLookup>());
+        Assert.NotNull(services.GetRequiredService<IClinicalInterventionLookup>());
+        Assert.NotNull(services.GetRequiredService<PlanningGuard>());
+        Assert.NotNull(services.GetRequiredService<IPlanningCampaignCommandService>());
+        Assert.NotNull(services.GetRequiredService<IPlannedActivityCommandService>());
+        Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodCommandService>());
+        Assert.NotNull(services.GetRequiredService<IPlanningCampaignQueryService>());
+        Assert.NotNull(services.GetRequiredService<IPlannedActivityQueryService>());
+        Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodQueryService>());
+    }
+
+    [Fact]
+    public void EveryPlanningControllerReceivesItsDependencies()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PlanningCampaignsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PlanningActivitiesController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PlanningCalendarController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<WithdrawalPeriodsController>(services));
+    }
+
     private static ServiceProvider BuildHost()
     {
         var configuration = new ConfigurationBuilder()
@@ -187,6 +228,7 @@ public class DependencyInjectionCompositionTests
         services.AddOperationsMonitoring(configuration);
         services.AddCattleInformation();
         services.AddIoTAssets(configuration);
+        services.AddPlanning();
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 }

@@ -14,8 +14,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.Enti
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 using Microsoft.EntityFrameworkCore;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.DependencyInjection;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
@@ -35,11 +34,6 @@ builder.Services.AddOpenApi(options =>
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
 });
 builder.Services.AddSwaggerGen();
-
-var planningConnectionString = builder.Configuration.GetConnectionString("Planning")
-    ?? throw new InvalidOperationException(
-        "Configure the Planning PostgreSQL connection string using ConnectionStrings:Planning.");
-builder.Services.AddPlanning(planningConnectionString);
 
 builder.Services.AddCors(options =>
 {
@@ -85,6 +79,7 @@ builder.Services.AddCattleInformation();
 builder.Services.AddIoTAssets(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
+builder.Services.AddPlanning();
 
 var app = builder.Build();
 
@@ -124,8 +119,6 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "ICHU API v1");
     });
 }
-
-await app.Services.InitializePlanningDatabaseAsync();
 
 app.UseCors("AllowAllPolicy");
 app.UseHttpsRedirection();

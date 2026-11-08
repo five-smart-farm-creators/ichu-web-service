@@ -1,85 +1,81 @@
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Commands;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Services;
+using System.Net.Mime;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Resources;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Resources;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 
 /// <summary>
-/// Exposes planning campaign resources.
+///     Exposes the planning campaigns of the ranches the caller may access.
 /// </summary>
+[ApiController]
+[Authorize]
 [Route("api/v1/planning-campaigns")]
-public sealed class PlanningCampaignsController : PlanningControllerBase
+[Produces(MediaTypeNames.Application.Json)]
+public sealed class PlanningCampaignsController(
+    IPlanningCampaignCommandService commandService,
+    IPlanningCampaignQueryService queryService,
+    IStringLocalizer<PlanningMessages> localizer) : ControllerBase
 {
-    private readonly IPlanningApplicationService _planningService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlanningCampaignsController"/> class.
-    /// </summary>
-    /// <param name="planningService">Planning application use cases.</param>
-    public PlanningCampaignsController(IPlanningApplicationService planningService)
-    {
-        _planningService = planningService;
-    }
-
-    /// <summary>
-    /// Lists campaigns in a ranch.
-    /// </summary>
-    /// <param name="ranchId">The ranch identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized campaigns.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<PlanningCampaignResource>), StatusCodes.Status200OK)]
-    public Task<ActionResult<IReadOnlyList<PlanningCampaignResource>>> GetCampaigns(
-        [FromQuery] Guid ranchId,
-        CancellationToken cancellationToken)
+    [EndpointSummary("List planning campaigns in an authorized ranch")]
+    [EndpointDescription("Returns the campaigns of the ranch ordered by their start date.")]
+    [ProducesResponseType<IReadOnlyList<PlanningCampaignResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetCampaignsAsync([FromQuery] Guid ranchId, CancellationToken cancellationToken)
     {
-        return ExecuteAsync<IReadOnlyList<PlanningCampaignResource>>(async () =>
+        var result = await queryService.HandleAsync(new GetPlanningCampaignsByRanchQuery(ranchId), cancellationToken);
+        if (result.IsFailure)
         {
-            var campaigns = await _planningService.GetCampaignsAsync(ranchId, cancellationToken);
-            return campaigns.Select(PlanningResourceMapper.ToResource).ToArray();
-        });
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(result.Value!.Select(PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 
-    /// <summary>
-    /// Gets a campaign by identifier.
-    /// </summary>
-    /// <param name="campaignId">The campaign identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized campaign.</returns>
     [HttpGet("{campaignId:guid}")]
-    [ProducesResponseType(typeof(PlanningCampaignResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<PlanningCampaignResource>> GetCampaign(Guid campaignId, CancellationToken cancellationToken)
+    [EndpointSummary("Get a planning campaign")]
+    [EndpointDescription("Returns a campaign when the account may read its ranch.")]
+    [ProducesResponseType<PlanningCampaignResource>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCampaignAsync(Guid campaignId, CancellationToken cancellationToken)
     {
-        return ExecuteAsync(async () =>
-            PlanningResourceMapper.ToResource(await _planningService.GetCampaignAsync(campaignId, cancellationToken)));
+        var result = await queryService.HandleAsync(
+            new GetPlanningCampaignByIdQuery(new PlanningCampaignId(campaignId)), cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
     }
 
-    /// <summary>
-    /// Creates a campaign.
-    /// </summary>
-    /// <param name="resource">The campaign data.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The created campaign.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(PlanningCampaignResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<PlanningCampaignResource>> CreateCampaign(
+    [EndpointSummary("Create a planning campaign")]
+    [EndpointDescription("Creates a sanitary or reproductive campaign in a ranch the account may manage.")]
+    [ProducesResponseType<PlanningCampaignResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CreateCampaignAsync(
         [FromBody] CreatePlanningCampaignResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new CreatePlanningCampaignCommand(
-            resource.RanchId,
-            resource.Name,
-            resource.Kind,
-            resource.StartsOn,
-            resource.EndsOn);
+        var command = CreatePlanningCampaignCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
 
-        return ExecuteCreatedAsync(
-            async () => PlanningResourceMapper.ToResource(
-                await _planningService.CreateCampaignAsync(command, cancellationToken)),
-            campaign => $"/api/v1/planning-campaigns/{campaign.Id}");
+        var campaign = PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
+        return Created($"/api/v1/planning-campaigns/{campaign.Id}", campaign);
     }
 }

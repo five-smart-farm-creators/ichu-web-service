@@ -1,73 +1,69 @@
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Commands;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Services;
+using System.Net.Mime;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Resources;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Resources;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 
 /// <summary>
-/// Exposes explicitly supplied withdrawal period bounds.
+///     Exposes withdrawal periods whose bounds an authorized caller supplies explicitly.
 /// </summary>
+[ApiController]
+[Authorize]
 [Route("api/v1/withdrawal-periods")]
-public sealed class WithdrawalPeriodsController : PlanningControllerBase
+[Produces(MediaTypeNames.Application.Json)]
+public sealed class WithdrawalPeriodsController(
+    IWithdrawalPeriodCommandService commandService,
+    IWithdrawalPeriodQueryService queryService,
+    IStringLocalizer<PlanningMessages> localizer) : ControllerBase
 {
-    private readonly IPlanningApplicationService _planningService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="WithdrawalPeriodsController"/> class.
-    /// </summary>
-    /// <param name="planningService">Planning application use cases.</param>
-    public WithdrawalPeriodsController(IPlanningApplicationService planningService)
-    {
-        _planningService = planningService;
-    }
-
-    /// <summary>
-    /// Lists withdrawal periods for a ranch, optionally filtered by animal.
-    /// </summary>
-    /// <param name="ranchId">The ranch identifier.</param>
-    /// <param name="cattleId">An optional animal identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized withdrawal periods.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<WithdrawalPeriodResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<IReadOnlyList<WithdrawalPeriodResource>>> GetWithdrawalPeriods(
+    [EndpointSummary("List withdrawal periods in an authorized ranch")]
+    [EndpointDescription("Returns the withdrawal periods of the ranch, optionally narrowed to one animal of the same ranch.")]
+    [ProducesResponseType<IReadOnlyList<WithdrawalPeriodResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetWithdrawalPeriodsAsync(
         [FromQuery] Guid ranchId,
         [FromQuery] Guid? cattleId,
         CancellationToken cancellationToken)
     {
-        return ExecuteAsync<IReadOnlyList<WithdrawalPeriodResource>>(async () =>
+        var result = await queryService.HandleAsync(new GetWithdrawalPeriodsQuery(ranchId, cattleId), cancellationToken);
+        if (result.IsFailure)
         {
-            var periods = await _planningService.GetWithdrawalPeriodsAsync(ranchId, cattleId, cancellationToken);
-            return periods.Select(PlanningResourceMapper.ToResource).ToArray();
-        });
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(result.Value!.Select(WithdrawalPeriodResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 
-    /// <summary>
-    /// Records a withdrawal period using explicit bounds supplied by an authorized caller.
-    /// </summary>
-    /// <param name="resource">The withdrawal period data.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The recorded withdrawal period.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(WithdrawalPeriodResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<WithdrawalPeriodResource>> RecordWithdrawalPeriod(
+    [EndpointSummary("Record a withdrawal period")]
+    [EndpointDescription("Records a withdrawal interval with explicit UTC bounds supplied by an authorized caller. Planning does not calculate it.")]
+    [ProducesResponseType<WithdrawalPeriodResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RecordWithdrawalPeriodAsync(
         [FromBody] RecordWithdrawalPeriodResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new RecordWithdrawalPeriodCommand(
-            resource.RanchId,
-            resource.CattleId,
-            resource.InterventionId,
-            resource.StartsAt,
-            resource.EndsAt);
+        var command = RecordWithdrawalPeriodCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
 
-        return ExecuteCreatedAsync(
-            async () => PlanningResourceMapper.ToResource(
-                await _planningService.RecordWithdrawalPeriodAsync(command, cancellationToken)),
-            period => $"/api/v1/withdrawal-periods?ranchId={period.RanchId}&cattleId={period.CattleId}");
+        var period = WithdrawalPeriodResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
+        return Created($"/api/v1/withdrawal-periods?ranchId={period.RanchId}&cattleId={period.CattleId}", period);
     }
 }

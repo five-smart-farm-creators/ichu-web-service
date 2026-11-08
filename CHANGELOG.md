@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cattle Information and IoT Assets: English and Spanish messages for business failures.
 - IoT Assets: added the edge gateway registry with one-time keys, listing, lookup and revocation endpoints, and the iot.edge_gateways schema migration.
 - Development: seeds the Development ranch's lot, animals, collars and Edge Gateway into the database when they are missing.
+- Planning: added the planning schema migration in the shared database, with campaigns, planned activities, application records, follow-ups and withdrawal periods.
+- Planning: registered the module in the application host, wired to IAM access scopes, Cattle Information animals and clinical interventions from Operations and Monitoring.
+- Planning: added English and Spanish messages for business failures.
+- Operations and Monitoring: the read contract resolves a clinical intervention by its operation identifier and returns nothing for field events.
 
 ### Changed
 
@@ -33,11 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operations and Monitoring: aggregates share the common aggregate root, the context identifiers are strongly typed, and read-only queries no longer track entities, without any schema change.
 - Operations and Monitoring: messages are available in English and Spanish, and the code documents only the rules and reasons behind it.
 - Operations and Monitoring: Edge Gateway keys have the form `{gatewayId}.{secret}` and are verified by IoT Assets, and animal, lot and collar lookups go through the Cattle Information and IoT Assets facades.
+- Planning: business failures are returned as results with stable error codes, and problem responses carry the localized message.
+- Planning: permissions follow the IAM access scopes. Reads need read access, campaigns and follow-ups need manage access, and applications and withdrawal periods need clinical-write access.
+- Planning: an animal that belongs to another ranch answers 404 instead of 403, and a clinical intervention is linked only when it belongs to the same animal and ranch.
 
 ### Removed
 
 - Cattle Information: removed the lifecycle outbox table and its mapping, since lifecycle events are now handled in-process after they are saved.
 - Operations and Monitoring: removed the configuration-based simulation of animals, collars and Edge Gateways.
+- Planning: removed the separate Planning database context, its schema initializer and the `ConnectionStrings:Planning` requirement, so the API starts again with the shared database.
 
 ## [0.1.0] - 2026-11-07
 
