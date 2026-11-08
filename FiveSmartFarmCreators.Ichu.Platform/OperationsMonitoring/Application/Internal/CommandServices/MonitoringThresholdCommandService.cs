@@ -1,52 +1,53 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
-using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.CommandServices;
 
 /// <summary>
-///     Application command service that implements <see cref="IMonitoringThresholdCommandService"/> to configure the
-///     thresholds of a ranch.
+///     Configures the thresholds of a ranch. A threshold keeps one identity per life stage and metric, and each change advances the rule revision.
 /// </summary>
-/// <param name="accessControl">The authorization port implemented with the IAM context.</param>
-/// <param name="thresholds">The monitoring threshold repository.</param>
-/// <param name="ruleRevisionService">The domain service that advances the rule revision.</param>
-/// <param name="unitOfWork">The unit of work used to commit changes.</param>
-/// <param name="logger">Logger for diagnostics and error reporting.</param>
 public class MonitoringThresholdCommandService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds,
     IMonitoringRuleRevisionService ruleRevisionService,
-    IOperationsMonitoringUnitOfWork unitOfWork,
-    ILogger<MonitoringThresholdCommandService> logger) : IMonitoringThresholdCommandService
+    IOperationsMonitoringUnitOfWork unitOfWork) : IMonitoringThresholdCommandService
 {
     /// <inheritdoc />
     public async Task<Result<MonitoringThreshold>> Handle(ConfigureThresholdCommand command, CancellationToken cancellationToken)
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, command.RanchId, MonitoringPermission.ManageRules, cancellationToken))
         {
-            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
         var lifeStage = MonitoringThreshold.NormalizeLifeStage(command.LifeStage);
-        var revision = await ruleRevisionService.AdvanceAsync(command.RanchId, cancellationToken);
+        if (lifeStage.IsFailure)
+        {
+            return Result<MonitoringThreshold>.Failure(lifeStage.DomainError);
+        }
 
-        var threshold = await thresholds.FindByRanchLifeStageAndMetricAsync(command.RanchId, lifeStage, command.Metric, cancellationToken);
+        var revision = await ruleRevisionService.AdvanceAsync(command.RanchId, cancellationToken);
+        var threshold = await thresholds.FindByRanchLifeStageAndMetricAsync(command.RanchId, lifeStage.Value!, command.Metric, cancellationToken);
         if (threshold is null)
         {
-            threshold = new MonitoringThreshold(command.RanchId, lifeStage, command.Metric, command.Range, command.Severity, revision);
+            var creation = MonitoringThreshold.Create(command.RanchId, lifeStage.Value!, command.Metric, command.Range, command.Severity, revision);
+            if (creation.IsFailure)
+            {
+                return creation;
+            }
+
+            threshold = creation.Value!;
             await thresholds.AddAsync(threshold, cancellationToken);
         }
         else
@@ -54,15 +55,8 @@ public class MonitoringThresholdCommandService(
             threshold.Reconfigure(command.Range, command.Severity, revision);
         }
 
-        try
-        {
-            await unitOfWork.CompleteAsync(cancellationToken);
-            return Result<MonitoringThreshold>.Success(threshold);
-        }
-        catch (DbUpdateException ex)
-        {
-            logger.LogWarning(ex, "The changes could not be saved.");
-            return Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.ConcurrentModification, OperationsMonitoringError.ConcurrentModification);
-        }
+        return await unitOfWork.TryCompleteAsync(cancellationToken)
+            ? Result<MonitoringThreshold>.Success(threshold)
+            : Result<MonitoringThreshold>.Failure(OperationsMonitoringErrors.ConcurrentModification);
     }
 }

@@ -21,13 +21,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 public static class OperationsMonitoringServiceCollectionExtensions
 {
     /// <summary>
-    ///     Registers the module services. The host must also register the shared application context, the IAM module
-    ///     and real implementations of IEdgeGatewayAuthenticator, ICattleLookup and IDeviceAttributionLookup; no
-    ///     permissive or empty implementation is registered here.
+    ///     Registers the module services. The host must also register the shared application context, the IAM module and real implementations of IEdgeGatewayAuthenticator, ICattleLookup and IDeviceAttributionLookup; no permissive or empty implementation is registered here.
     /// </summary>
-    /// <param name="services">The service collection of the host.</param>
-    /// <param name="configuration">The configuration that holds the OperationsMonitoring section.</param>
-    /// <returns>The same service collection, to chain calls.</returns>
     public static IServiceCollection AddOperationsMonitoring(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<OperationsMonitoringOptions>(configuration.GetSection(OperationsMonitoringOptions.SectionName));
@@ -63,12 +58,8 @@ public static class OperationsMonitoringServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Registers the development-only simulation of Cattle Information and IoT Assets, read from the
-    ///     "OperationsMonitoring:Simulation" section. The host calls it only in Development.
+    ///     Registers the development-only simulation of Cattle Information and IoT Assets, read from the "OperationsMonitoring:Simulation" section. The host calls it only in Development.
     /// </summary>
-    /// <param name="services">The service collection of the host.</param>
-    /// <param name="configuration">The configuration that holds the simulated data.</param>
-    /// <returns>The same service collection, to chain calls.</returns>
     public static IServiceCollection AddOperationsMonitoringSimulation(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MonitoringSimulationOptions>(configuration.GetSection(MonitoringSimulationOptions.SectionName));

@@ -6,11 +6,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Acl;
 
 /// <summary>
-///     Implements <see cref="IOperationsMonitoringContextFacade"/> over the monitoring repositories.
+///     Implements the read contract of the context over the monitoring repositories. Other contexts authorize the ranch or animal before they call it.
 /// </summary>
-/// <param name="readings">The telemetry reading repository.</param>
-/// <param name="alerts">The monitoring alert repository.</param>
-/// <param name="operations">The livestock operation repository.</param>
 public class OperationsMonitoringContextFacade(
     ITelemetryReadingRepository readings,
     IMonitoringAlertRepository alerts,
@@ -36,7 +33,7 @@ public class OperationsMonitoringContextFacade(
     {
         var active = await alerts.FindActiveDuringAsync(ranchId, new TimePeriod(from, to), cancellationToken);
         return active
-            .Select(a => new MonitoringAlertRecord(a.Id, a.CattleId, a.Type, a.Severity, a.RaisedAt, a.AcknowledgedAt, a.ClearedAt))
+            .Select(a => new MonitoringAlertRecord(a.Id.Value, a.CattleId, a.Type, a.Severity, a.RaisedAt, a.AcknowledgedAt, a.ClearedAt))
             .ToList();
     }
 
@@ -58,7 +55,7 @@ public class OperationsMonitoringContextFacade(
     {
         var history = await operations.FindByCattleAsync(cattleId, new TimePeriod(from, to), cancellationToken);
         return history
-            .Select(o => new LivestockOperationRecord(o.Id, o.RanchId, o.CattleId, o.Type, LivestockOperation.IsClinical(o.Type),
+            .Select(o => new LivestockOperationRecord(o.Id.Value, o.RanchId, o.CattleId, o.Type, LivestockOperation.IsClinical(o.Type),
                 o.OccurredAt, o.AuthorId, o.Product, o.Dose, o.Observation))
             .ToList();
     }

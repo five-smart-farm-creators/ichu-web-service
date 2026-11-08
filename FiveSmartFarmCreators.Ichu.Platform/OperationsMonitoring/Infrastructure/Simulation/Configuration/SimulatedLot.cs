@@ -5,9 +5,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructur
 /// </summary>
 public class SimulatedLot
 {
-    /// <summary>Gets or sets the lot identifier.</summary>
     public Guid LotId { get; set; }
 
-    /// <summary>Gets or sets the ranch that owns the lot.</summary>
     public Guid RanchId { get; set; }
 }

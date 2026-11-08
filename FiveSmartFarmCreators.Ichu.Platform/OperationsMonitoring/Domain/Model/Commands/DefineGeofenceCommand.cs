@@ -3,14 +3,8 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Valu
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 
 /// <summary>
-///     Command to define the permitted grazing area of a lot.
+///     Defines the permitted grazing area of a lot. A lot has at most one geofence.
 /// </summary>
-/// <param name="RanchId">The ranch that owns the lot.</param>
-/// <param name="LotId">The lot the geofence applies to.</param>
-/// <param name="Name">The geofence name.</param>
-/// <param name="ToleranceMeters">The maximum declared GPS accuracy, in meters, for a position to be conclusive.</param>
-/// <param name="Severity">The severity of the alerts raised when an animal leaves the area.</param>
-/// <param name="Boundary">The boundary vertices.</param>
 public record DefineGeofenceCommand(
     Guid RanchId,
     Guid LotId,

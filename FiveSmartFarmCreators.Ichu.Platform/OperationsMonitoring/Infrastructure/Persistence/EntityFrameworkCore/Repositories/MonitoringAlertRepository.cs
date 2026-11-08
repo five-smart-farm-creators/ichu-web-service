@@ -7,9 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Repository implementation for <see cref="MonitoringAlert"/> aggregates using Entity Framework Core.
+///     Stores monitoring alerts with Entity Framework Core.
 /// </summary>
-/// <param name="context">The shared database context.</param>
 public class MonitoringAlertRepository(AppDbContext context) : IMonitoringAlertRepository
 {
     private DbSet<MonitoringAlert> Alerts => context.Set<MonitoringAlert>();
@@ -21,8 +20,12 @@ public class MonitoringAlertRepository(AppDbContext context) : IMonitoringAlertR
     }
 
     /// <inheritdoc />
-    public Task<MonitoringAlert?> FindByIdAsync(Guid alertId, CancellationToken cancellationToken = default) =>
+    public Task<MonitoringAlert?> FindByIdAsync(MonitoringAlertId alertId, CancellationToken cancellationToken = default) =>
         Alerts.SingleOrDefaultAsync(a => a.Id == alertId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<MonitoringAlert?> FindByIdAsNoTrackingAsync(MonitoringAlertId alertId, CancellationToken cancellationToken = default) =>
+        Alerts.AsNoTracking().SingleOrDefaultAsync(a => a.Id == alertId, cancellationToken);
 
     /// <inheritdoc />
     public Task<MonitoringAlert?> FindByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default) =>

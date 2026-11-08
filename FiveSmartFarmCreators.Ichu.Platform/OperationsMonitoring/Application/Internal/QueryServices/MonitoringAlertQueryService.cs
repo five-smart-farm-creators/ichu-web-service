@@ -1,7 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
@@ -12,11 +11,8 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
 
 /// <summary>
-///     Application query service that implements <see cref="IMonitoringAlertQueryService"/> to read the alerts of a ranch.
+///     Reads the alerts of a ranch for accounts that may read its monitoring.
 /// </summary>
-/// <param name="accessControl">The authorization port implemented with the IAM context.</param>
-/// <param name="alerts">The monitoring alert repository.</param>
-/// <param name="options">The technical limits of the module.</param>
 public class MonitoringAlertQueryService(
     IMonitoringAccessControl accessControl,
     IMonitoringAlertRepository alerts,
@@ -27,17 +23,17 @@ public class MonitoringAlertQueryService(
     {
         if (query.Page < 1 || query.PageSize < 1 || query.PageSize > options.Value.MaximumPageSize)
         {
-            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.InvalidPage, OperationsMonitoringError.InvalidPage);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.InvalidPage);
         }
 
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<PagedResult<MonitoringAlert>>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
         var skip = (query.Page - 1) * query.PageSize;
@@ -51,17 +47,17 @@ public class MonitoringAlertQueryService(
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var alert = await alerts.FindByIdAsync(query.AlertId, cancellationToken);
+        var alert = await alerts.FindByIdAsNoTrackingAsync(query.AlertId, cancellationToken);
         if (alert is null)
         {
-            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound, OperationsMonitoringError.AlertNotFound);
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound);
         }
 
         return await accessControl.CanAccessRanchAsync(accountId, alert.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken)
             ? Result<MonitoringAlert>.Success(alert)
-            : Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            : Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden);
     }
 }

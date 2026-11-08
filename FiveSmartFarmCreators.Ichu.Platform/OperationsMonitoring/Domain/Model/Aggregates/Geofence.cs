@@ -1,41 +1,46 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Entities;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 
 /// <summary>
-///     Aggregate root representing the permitted grazing area of one lot. Its boundary is a closed, simple polygon;
-///     positions whose declared accuracy exceeds the tolerance are not conclusive for the geofence.
+///     The permitted grazing area of one lot. Its boundary is a closed, simple polygon, and positions whose declared accuracy exceeds the tolerance are not conclusive for the geofence.
 /// </summary>
-public class Geofence
+public sealed class Geofence : AggregateRoot
 {
-    /// <summary>Maximum number of characters of a geofence name.</summary>
     public const int MaximumNameLength = 80;
 
-    /// <summary>Maximum number of vertices of a boundary.</summary>
     public const int MaximumVertices = 500;
 
-    /// <summary>Maximum tolerance in meters.</summary>
     public const int MaximumToleranceMeters = short.MaxValue;
 
     private readonly List<GeofenceVertex> _vertices = [];
 
+    // Entity Framework Core materializes geofences without running the factory.
     private Geofence()
     {
     }
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="Geofence"/> class.
-    /// </summary>
-    /// <param name="ranchId">The ranch that owns the lot.</param>
-    /// <param name="lotId">The lot the geofence applies to.</param>
-    /// <param name="name">The geofence name.</param>
-    /// <param name="toleranceMeters">The maximum declared GPS accuracy, in meters, for a position to be conclusive.</param>
-    /// <param name="severity">The severity of the alerts raised when an animal leaves the area.</param>
-    /// <param name="boundary">The boundary vertices, optionally repeating the first vertex at the end.</param>
-    /// <param name="revision">The rule revision that published the geofence.</param>
-    /// <exception cref="ArgumentException">Thrown when an identifier is empty or the definition is invalid.</exception>
-    public Geofence(
+    public GeofenceId Id { get; private set; }
+
+    public Guid RanchId { get; private set; }
+
+    public Guid LotId { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public int ToleranceMeters { get; private set; }
+
+    public AlertSeverity Severity { get; private set; }
+
+    public long Revision { get; private set; }
+
+    public IReadOnlyCollection<GeofenceVertex> Vertices => _vertices;
+
+    public static Result<Geofence> Create(
         Guid ranchId,
         Guid lotId,
         string name,
@@ -46,80 +51,54 @@ public class Geofence
     {
         if (ranchId == Guid.Empty || lotId == Guid.Empty)
         {
-            throw new ArgumentException("Ranch and lot identifiers are required.");
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.GeofenceIdentifiersRequired);
         }
 
-        Id = Guid.NewGuid();
-        RanchId = ranchId;
-        LotId = lotId;
-        Redefine(name, toleranceMeters, severity, boundary, revision);
+        var geofence = new Geofence { Id = new GeofenceId(Guid.NewGuid()), RanchId = ranchId, LotId = lotId };
+        var definition = geofence.Redefine(name, toleranceMeters, severity, boundary, revision);
+        return definition.IsFailure
+            ? Result<Geofence>.Failure(definition.DomainError)
+            : Result<Geofence>.Success(geofence);
     }
 
-    /// <summary>Gets the identifier of the geofence.</summary>
-    public Guid Id { get; private set; }
-
-    /// <summary>Gets the ranch that owns the lot.</summary>
-    public Guid RanchId { get; private set; }
-
-    /// <summary>Gets the lot the geofence applies to.</summary>
-    public Guid LotId { get; private set; }
-
-    /// <summary>Gets the geofence name.</summary>
-    public string Name { get; private set; } = string.Empty;
-
-    /// <summary>Gets the maximum declared GPS accuracy, in meters, for a position to be conclusive.</summary>
-    public int ToleranceMeters { get; private set; }
-
-    /// <summary>Gets the severity of the alerts raised when an animal leaves the area.</summary>
-    public AlertSeverity Severity { get; private set; }
-
-    /// <summary>Gets the rule revision that last changed the geofence.</summary>
-    public long Revision { get; private set; }
-
-    /// <summary>Gets the stored boundary vertices.</summary>
-    public IReadOnlyCollection<GeofenceVertex> Vertices => _vertices;
-
-    /// <summary>
-    ///     Replaces the name, tolerance, severity and boundary of the geofence.
-    /// </summary>
-    /// <param name="name">The geofence name.</param>
-    /// <param name="toleranceMeters">The maximum declared GPS accuracy, in meters, for a position to be conclusive.</param>
-    /// <param name="severity">The severity of the alerts raised when an animal leaves the area.</param>
-    /// <param name="boundary">The boundary vertices, optionally repeating the first vertex at the end.</param>
-    /// <param name="revision">The rule revision that publishes the change.</param>
-    /// <exception cref="ArgumentException">Thrown when the name, tolerance or boundary is invalid.</exception>
-    public void Redefine(string name, int toleranceMeters, AlertSeverity severity, IReadOnlyList<GeoCoordinate> boundary, long revision)
+    public Result Redefine(string name, int toleranceMeters, AlertSeverity severity, IReadOnlyList<GeoCoordinate> boundary, long revision)
     {
         var normalizedName = name.Trim();
-        if (normalizedName.Length == 0 || normalizedName.Length > MaximumNameLength)
+        if (normalizedName.Length is 0 or > MaximumNameLength)
         {
-            throw new ArgumentException($"A geofence name must contain 1 to {MaximumNameLength} characters.");
+            return Result.Failure(OperationsMonitoringErrors.GeofenceNameLength);
         }
 
         if (toleranceMeters is < 1 or > MaximumToleranceMeters)
         {
-            throw new ArgumentException($"The tolerance must be between 1 and {MaximumToleranceMeters} meters.");
+            return Result.Failure(OperationsMonitoringErrors.GeofenceToleranceRange);
         }
 
-        var vertices = OpenRing(boundary);
-        EnsureSimplePolygon(vertices);
+        var ring = OpenRing(boundary);
+        if (ring.IsFailure)
+        {
+            return Result.Failure(ring.DomainError);
+        }
+
+        var simplicity = EnsureSimplePolygon(ring.Value!);
+        if (simplicity.IsFailure)
+        {
+            return simplicity;
+        }
 
         Name = normalizedName;
         ToleranceMeters = toleranceMeters;
         Severity = severity;
         Revision = revision;
         _vertices.Clear();
-        _vertices.AddRange(vertices.Select((v, index) => new GeofenceVertex(index, v.Latitude, v.Longitude)));
+        _vertices.AddRange(ring.Value!.Select((vertex, index) => new GeofenceVertex(index, vertex.Latitude, vertex.Longitude)));
+        return Result.Success();
     }
 
-    /// <summary>
-    ///     Gets the boundary vertices ordered along the ring.
-    /// </summary>
-    /// <returns>The ordered vertices, without repeating the first one.</returns>
     public IReadOnlyList<GeofenceVertex> Boundary() => _vertices.OrderBy(v => v.Sequence).ToList();
 
     // A boundary may repeat its first vertex at the end; the stored ring keeps each vertex once.
-    private static List<GeoCoordinate> OpenRing(IReadOnlyList<GeoCoordinate> boundary)
+    private static Result<IReadOnlyList<GeoCoordinate>> OpenRing(IReadOnlyList<GeoCoordinate> boundary)
     {
         var vertices = boundary.ToList();
         if (vertices.Count > 1 && vertices[0] == vertices[^1])
@@ -129,24 +108,24 @@ public class Geofence
 
         if (vertices.Count is < 3 or > MaximumVertices)
         {
-            throw new ArgumentException($"A geofence requires between 3 and {MaximumVertices} distinct vertices.");
+            return Result<IReadOnlyList<GeoCoordinate>>.Failure(OperationsMonitoringErrors.GeofenceVertexCount);
         }
 
         if (vertices.Distinct().Count() != vertices.Count)
         {
-            throw new ArgumentException("A geofence boundary cannot repeat vertices.");
+            return Result<IReadOnlyList<GeoCoordinate>>.Failure(OperationsMonitoringErrors.GeofenceRepeatedVertices);
         }
 
-        return vertices;
+        return Result<IReadOnlyList<GeoCoordinate>>.Success(vertices);
     }
 
     // A planar test on longitude and latitude is enough for grazing areas to reject crossing, overlapping or zero-area boundaries.
-    private static void EnsureSimplePolygon(IReadOnlyList<GeoCoordinate> vertices)
+    private static Result EnsureSimplePolygon(IReadOnlyList<GeoCoordinate> vertices)
     {
         var count = vertices.Count;
         if (Math.Abs(SignedArea(vertices)) < double.Epsilon)
         {
-            throw new ArgumentException("A geofence boundary must enclose an area.");
+            return Result.Failure(OperationsMonitoringErrors.GeofenceNotEnclosing);
         }
 
         for (var i = 0; i < count; i++)
@@ -161,10 +140,12 @@ public class Geofence
                 var invalid = adjacent ? AdjacentEdgesOverlap(a1, a2, b1, b2) : SegmentsIntersect(a1, a2, b1, b2);
                 if (invalid)
                 {
-                    throw new ArgumentException("A geofence boundary cannot have crossing or overlapping sides.");
+                    return Result.Failure(OperationsMonitoringErrors.GeofenceBoundaryCrossing);
                 }
             }
         }
+
+        return Result.Success();
     }
 
     private static bool AdjacentEdgesOverlap(GeoCoordinate a1, GeoCoordinate a2, GeoCoordinate b1, GeoCoordinate b2)

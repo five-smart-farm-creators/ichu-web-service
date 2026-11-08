@@ -5,10 +5,8 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Simulation.Services;
 
 /// <summary>
-///     Development-only implementation of <see cref="ICattleLookup"/> that reads the animals and lots of the
-///     "OperationsMonitoring:Simulation" configuration section.
+///     Development-only implementation of <see cref="ICattleLookup"/> that reads the animals and lots of the "OperationsMonitoring:Simulation" configuration section.
 /// </summary>
-/// <param name="options">The simulated data.</param>
 public class SimulatedCattleLookup(IOptions<MonitoringSimulationOptions> options) : ICattleLookup
 {
     /// <inheritdoc />

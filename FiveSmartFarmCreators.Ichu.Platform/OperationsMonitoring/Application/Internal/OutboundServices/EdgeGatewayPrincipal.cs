@@ -3,6 +3,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 /// <summary>
 ///     A verified Edge Gateway and the ranch it serves.
 /// </summary>
-/// <param name="GatewayId">The gateway identifier.</param>
-/// <param name="RanchId">The ranch the gateway serves.</param>
 public record EdgeGatewayPrincipal(Guid GatewayId, Guid RanchId);

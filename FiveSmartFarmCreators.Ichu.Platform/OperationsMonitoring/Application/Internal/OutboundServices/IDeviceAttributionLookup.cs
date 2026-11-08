@@ -6,12 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.I
 public interface IDeviceAttributionLookup
 {
     /// <summary>
-    ///     Finds the device owner and the assignment that was effective at the capture instant asynchronously. Later
-    ///     releases or reassignments must not change the historical result.
+    ///     Finds the device owner and the assignment that was effective at the capture instant. Later releases or reassignments must not change that result.
     /// </summary>
-    /// <param name="deviceId">The device identifier.</param>
-    /// <param name="capturedAt">The instant the reading was captured.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A task containing the attribution, or <see langword="null"/> when the device is not registered.</returns>
     Task<DeviceAttribution?> FindAsync(Guid deviceId, DateTimeOffset capturedAt, CancellationToken cancellationToken);
 }
