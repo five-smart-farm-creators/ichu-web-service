@@ -4,19 +4,11 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.R
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Assembles HTTP response resources from <see cref="MonitoringAlert"/> aggregates.
-/// </summary>
 public static class AlertResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Transforms a <see cref="MonitoringAlert"/> into an <see cref="AlertResource"/>.
-    /// </summary>
-    /// <param name="entity">The alert aggregate root.</param>
-    /// <returns>A resource representation suitable for HTTP responses.</returns>
     public static AlertResource ToResourceFromEntity(MonitoringAlert entity) =>
         new(
-            entity.Id,
+            entity.Id.Value,
             entity.RanchId,
             entity.CattleId,
             entity.DeviceId,
@@ -32,7 +24,7 @@ public static class AlertResourceFromEntityAssembler
             entity.ThresholdMinValue,
             entity.ThresholdMaxValue,
             entity.ConfigurationRevision,
-            entity.GeofenceId,
+            entity.GeofenceId?.Value,
             entity.Latitude,
             entity.Longitude,
             entity.DistanceToBoundaryMeters,

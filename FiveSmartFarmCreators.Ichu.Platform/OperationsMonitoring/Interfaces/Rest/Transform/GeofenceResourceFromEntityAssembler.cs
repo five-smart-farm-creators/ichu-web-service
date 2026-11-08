@@ -3,19 +3,11 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.R
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Transform;
 
-/// <summary>
-///     Assembles HTTP response resources from <see cref="Geofence"/> aggregates.
-/// </summary>
 public static class GeofenceResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Transforms a <see cref="Geofence"/> into a <see cref="GeofenceResource"/>.
-    /// </summary>
-    /// <param name="entity">The geofence aggregate root.</param>
-    /// <returns>A resource representation suitable for HTTP responses.</returns>
     public static GeofenceResource ToResourceFromEntity(Geofence entity) =>
         new(
-            entity.Id,
+            entity.Id.Value,
             entity.RanchId,
             entity.LotId,
             entity.Name,

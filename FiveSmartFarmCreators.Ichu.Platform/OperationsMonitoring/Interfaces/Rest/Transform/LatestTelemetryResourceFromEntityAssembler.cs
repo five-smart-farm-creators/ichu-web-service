@@ -6,16 +6,10 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.R
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Transform;
 
 /// <summary>
-///     Assembles HTTP response resources from <see cref="LatestTelemetry"/> value objects.
+///     An indicator without a reading is reported as unavailable, never as zero.
 /// </summary>
 public static class LatestTelemetryResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Transforms a <see cref="LatestTelemetry"/> into a <see cref="LatestTelemetryResource"/>. An indicator
-    ///     without a reading is reported as unavailable, never as zero.
-    /// </summary>
-    /// <param name="latest">The latest valid indicators of an animal.</param>
-    /// <returns>A resource representation suitable for HTTP responses.</returns>
     public static LatestTelemetryResource ToResourceFromEntity(LatestTelemetry latest)
     {
         var now = latest.EvaluatedAt;
