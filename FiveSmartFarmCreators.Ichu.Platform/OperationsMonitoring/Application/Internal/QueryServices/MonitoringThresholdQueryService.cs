@@ -1,6 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
-using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Queries;
@@ -10,10 +9,8 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.QueryServices;
 
 /// <summary>
-///     Application query service that implements <see cref="IMonitoringThresholdQueryService"/> to read the thresholds of a ranch.
+///     Reads the thresholds of a ranch for accounts that may read its monitoring.
 /// </summary>
-/// <param name="accessControl">The authorization port implemented with the IAM context.</param>
-/// <param name="thresholds">The monitoring threshold repository.</param>
 public class MonitoringThresholdQueryService(
     IMonitoringAccessControl accessControl,
     IMonitoringThresholdRepository thresholds) : IMonitoringThresholdQueryService
@@ -23,15 +20,14 @@ public class MonitoringThresholdQueryService(
     {
         if (await accessControl.GetCurrentAccountIdAsync(cancellationToken) is not { } accountId)
         {
-            return Result<IReadOnlyList<MonitoringThreshold>>.Failure(OperationsMonitoringErrors.Unauthenticated, OperationsMonitoringError.Unauthenticated);
+            return Result<IReadOnlyList<MonitoringThreshold>>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
         if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
-            return Result<IReadOnlyList<MonitoringThreshold>>.Failure(OperationsMonitoringErrors.Forbidden, OperationsMonitoringError.Forbidden);
+            return Result<IReadOnlyList<MonitoringThreshold>>.Failure(OperationsMonitoringErrors.Forbidden);
         }
 
-        var found = await thresholds.FindByRanchAsync(query.RanchId, cancellationToken);
-        return Result<IReadOnlyList<MonitoringThreshold>>.Success(found);
+        return Result<IReadOnlyList<MonitoringThreshold>>.Success(await thresholds.FindByRanchAsync(query.RanchId, cancellationToken));
     }
 }

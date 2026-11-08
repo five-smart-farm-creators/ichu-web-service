@@ -4,26 +4,12 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
 
-/// <summary>
-///     Application command service interface for handling geofence write operations.
-/// </summary>
 public interface IGeofenceCommandService
 {
     /// <summary>
-    ///     Handles the definition of the permitted grazing area of a lot asynchronously. A lot has at most one geofence.
+    ///     Defines the permitted grazing area of a lot. A lot has at most one geofence.
     /// </summary>
-    /// <param name="command">The command containing the geofence definition.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing the stored geofence on success, or the domain error on failure.</returns>
-    /// <exception cref="ArgumentException">Thrown when the geofence definition violates a domain rule.</exception>
     Task<Result<Geofence>> Handle(DefineGeofenceCommand command, CancellationToken cancellationToken);
 
-    /// <summary>
-    ///     Handles the redefinition of an existing geofence asynchronously.
-    /// </summary>
-    /// <param name="command">The command containing the new geofence definition.</param>
-    /// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
-    /// <returns>A result containing the stored geofence on success, or the domain error on failure.</returns>
-    /// <exception cref="ArgumentException">Thrown when the geofence definition violates a domain rule.</exception>
     Task<Result<Geofence>> Handle(RedefineGeofenceCommand command, CancellationToken cancellationToken);
 }
