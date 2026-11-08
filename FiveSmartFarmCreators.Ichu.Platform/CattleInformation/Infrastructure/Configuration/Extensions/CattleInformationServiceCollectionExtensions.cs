@@ -6,6 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -30,6 +31,7 @@ public static class CattleInformationServiceCollectionExtensions
         services.AddScoped<ICattleQueryService, CattleQueryService>();
         services.AddScoped<ILotQueryService, LotQueryService>();
         services.AddScoped<ICattleInformationContextFacade, CattleInformationContextFacade>();
+        services.AddScoped<DevelopmentCattleSeeder>();
         return services;
     }
 }

@@ -7,7 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
-using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Simulation;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

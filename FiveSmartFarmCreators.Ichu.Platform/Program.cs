@@ -17,7 +17,9 @@ using Microsoft.EntityFrameworkCore;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.DependencyInjection;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
-using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Simulation;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,11 +85,6 @@ builder.Services.AddCattleInformation();
 builder.Services.AddIoTAssets(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
-if (builder.Environment.IsDevelopment())
-{
-    // Simulated cattle, collars and gateways until the IoT Assets and Cattle Information facades replace them.
-    builder.Services.AddOperationsMonitoringSimulation(builder.Configuration);
-}
 
 var app = builder.Build();
 
@@ -99,8 +96,13 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
+    // The seeders run in dependency order, and each one skips the records that already exist.
     using var seedScope = app.Services.CreateScope();
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentSubscriptionSeeder>()
+        .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentCattleSeeder>()
+        .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentIoTAssetsSeeder>()
         .SeedAsync(CancellationToken.None);
 }
 

@@ -7,6 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Acl;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -39,6 +40,7 @@ public static class IoTAssetsServiceCollectionExtensions
         services.AddScoped<IEdgeGatewayCommandService, EdgeGatewayCommandService>();
         services.AddScoped<IEdgeGatewayQueryService, EdgeGatewayQueryService>();
         services.AddScoped<IIoTAssetsContextFacade, IoTAssetsContextFacade>();
+        services.AddScoped<DevelopmentIoTAssetsSeeder>();
         return services;
     }
 }

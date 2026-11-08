@@ -25,4 +25,12 @@ public interface IIoTAssetsContextFacade
     /// <summary>Releases the inactive animal's current collar; a repeated notification returns zero without changing history.</summary>
     Task<Result<int>> ReleaseCollarForInactiveCattleAsync(Guid ranchId, Guid cattleId, DateTimeOffset deactivatedAt,
         CancellationToken cancellationToken);
+
+    /// <summary>Resolves the edge gateway of a presented key, for trusted in-process callers that authorize the result themselves.</summary>
+    /// <returns>The gateway, or null when the key is malformed, unknown, wrong or revoked.</returns>
+    Task<EdgeGatewaySnapshot?> AuthenticateEdgeGatewayAsync(string presentedKey, CancellationToken cancellationToken);
+
+    /// <summary>Finds the animal that a device served at an instant, for trusted in-process callers that authorize the result themselves.</summary>
+    /// <returns>The device attribution, or null when the device does not exist.</returns>
+    Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant, CancellationToken cancellationToken);
 }

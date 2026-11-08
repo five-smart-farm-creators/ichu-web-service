@@ -22,4 +22,9 @@ public interface ICattleInformationContextFacade
     /// </summary>
     /// <returns>Active animal snapshots, or an empty list when the lot is unknown or not visible to the caller.</returns>
     Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Returns the birth and exit dates of an animal in any ranch, for trusted in-process callers that authorize the result themselves.
+    /// </summary>
+    Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken);
 }

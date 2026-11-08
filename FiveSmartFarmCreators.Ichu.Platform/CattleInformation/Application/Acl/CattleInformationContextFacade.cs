@@ -39,6 +39,20 @@ public sealed class CattleInformationContextFacade(
     }
 
     /// <inheritdoc />
+    public async Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken)
+    {
+        if (cattleId == Guid.Empty)
+        {
+            return null;
+        }
+
+        var cattle = await cattles.FindByIdAsNoTrackingAsync(new CattleId(cattleId), cancellationToken);
+        return cattle is null
+            ? null
+            : new CattleLifecycleSnapshot(cattle.Id.Value, cattle.RanchId, cattle.BirthDate, cattle.ExitDate);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId,
         CancellationToken cancellationToken)
     {

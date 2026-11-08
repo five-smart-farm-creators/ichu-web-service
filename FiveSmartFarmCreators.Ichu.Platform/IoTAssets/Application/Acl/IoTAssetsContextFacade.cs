@@ -20,6 +20,7 @@ public class IoTAssetsContextFacade(
     IDeviceQueryService deviceQueryService,
     IWaterTroughQueryService waterTroughQueryService,
     IIoTDeviceRepository deviceRepository,
+    IEdgeGatewayRepository edgeGatewayRepository,
     IIoTAssetsAccessService accessService,
     TimeProvider timeProvider) : IIoTAssetsContextFacade
 {
@@ -103,6 +104,35 @@ public class IoTAssetsContextFacade(
     {
         return deviceCommandService.HandleAsync(new ReleaseCollarForInactiveCattleCommand(ranchId, cattleId, deactivatedAt),
             cancellationToken);
+    }
+
+    public async Task<EdgeGatewaySnapshot?> AuthenticateEdgeGatewayAsync(string presentedKey, CancellationToken cancellationToken)
+    {
+        // Base64url secrets never contain a dot, so the first dot separates the gateway identifier from the secret.
+        var separator = presentedKey.IndexOf('.');
+        if (separator <= 0 || !Guid.TryParseExact(presentedKey[..separator], "D", out var gatewayId))
+        {
+            return null;
+        }
+
+        var gateway = await edgeGatewayRepository.FindByIdAsNoTrackingAsync(new EdgeGatewayId(gatewayId), cancellationToken);
+        return gateway is not null && gateway.Authenticates(presentedKey[(separator + 1)..])
+            ? new EdgeGatewaySnapshot(gateway.Id.Value, gateway.RanchId)
+            : null;
+    }
+
+    public async Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant,
+        CancellationToken cancellationToken)
+    {
+        var device = await deviceRepository.FindByIdAsNoTrackingAsync(new DeviceId(deviceId), cancellationToken);
+        if (device is null)
+        {
+            return null;
+        }
+
+        var assignment = device.Assignments.SingleOrDefault(a => a.CoversInstant(instant));
+        var cattleId = assignment is { TargetType: AssignmentTargetType.Cattle } ? assignment.TargetId : (Guid?)null;
+        return new DeviceAttributionSnapshot(device.Id.Value, device.RanchId, cattleId);
     }
 
     private static DeviceAssignmentSnapshot ToSnapshot(DeviceAssignment assignment) =>
