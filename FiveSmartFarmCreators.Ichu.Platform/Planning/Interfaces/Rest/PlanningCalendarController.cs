@@ -1,51 +1,44 @@
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Queries;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Services;
+using System.Net.Mime;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Resources;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Resources;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 
 /// <summary>
-/// Exposes the authorized calendar view of planned activities.
+///     Exposes the planned activities of an authorized ranch inside an inclusive UTC interval.
 /// </summary>
+[ApiController]
+[Authorize]
 [Route("api/v1/calendar")]
-public sealed class PlanningCalendarController : PlanningControllerBase
+[Produces(MediaTypeNames.Application.Json)]
+public sealed class PlanningCalendarController(
+    IPlannedActivityQueryService queryService,
+    IStringLocalizer<PlanningMessages> localizer) : ControllerBase
 {
-    private readonly IPlanningApplicationService _planningService;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlanningCalendarController"/> class.
-    /// </summary>
-    /// <param name="planningService">Planning application use cases.</param>
-    public PlanningCalendarController(IPlanningApplicationService planningService)
-    {
-        _planningService = planningService;
-    }
-
-    /// <summary>
-    /// Lists planned activities in an inclusive UTC interval.
-    /// </summary>
-    /// <param name="ranchId">The ranch identifier.</param>
-    /// <param name="from">The first inclusive UTC instant.</param>
-    /// <param name="to">The last inclusive UTC instant.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The authorized activities in the interval.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<PlanningActivityResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public Task<ActionResult<IReadOnlyList<PlanningActivityResource>>> GetCalendar(
+    [EndpointSummary("List planned activities in a calendar interval")]
+    [EndpointDescription("Returns the activities of the ranch scheduled between the two inclusive UTC instants, ordered by their schedule.")]
+    [ProducesResponseType<IReadOnlyList<PlanningActivityResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetCalendarAsync(
         [FromQuery] Guid ranchId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken cancellationToken)
     {
-        var query = new GetPlanningCalendarQuery(ranchId, from, to);
-
-        return ExecuteAsync<IReadOnlyList<PlanningActivityResource>>(async () =>
+        var result = await queryService.HandleAsync(new GetPlanningCalendarQuery(ranchId, from, to), cancellationToken);
+        if (result.IsFailure)
         {
-            var activities = await _planningService.GetCalendarAsync(query, cancellationToken);
-            return activities.Select(PlanningResourceMapper.ToResource).ToArray();
-        });
+            return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return Ok(result.Value!.Select(PlannedActivityResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 }

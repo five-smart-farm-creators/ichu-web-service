@@ -1,80 +1,102 @@
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
 
 /// <summary>
-/// Represents a scheduled Planning activity without duplicating the clinical intervention record.
+/// Schedules work for a ranch or one animal, and owns the applications and follow-ups recorded against it.
 /// </summary>
-public sealed class PlannedActivity
+public sealed class PlannedActivity : AggregateRoot
 {
-    private PlannedActivity(Guid id, Guid ranchId, Guid? campaignId, Guid? cattleId, string title, DateTimeOffset scheduledAt)
+    private readonly List<ApplicationRecord> _applications = [];
+    private readonly List<FollowUp> _followUps = [];
+
+    // Entity Framework Core materializes activities without running the factory.
+    private PlannedActivity()
     {
-        Id = id;
-        RanchId = ranchId;
-        CampaignId = campaignId;
-        CattleId = cattleId;
-        Title = title;
-        ScheduledAt = scheduledAt;
     }
 
-    /// <summary>
-    /// Gets the planned activity identifier.
-    /// </summary>
-    public Guid Id { get; }
+    public PlannedActivityId Id { get; private set; }
 
-    /// <summary>
-    /// Gets the ranch identifier.
-    /// </summary>
-    public Guid RanchId { get; }
+    public Guid RanchId { get; private set; }
 
-    /// <summary>
-    /// Gets the optional campaign identifier.
-    /// </summary>
-    public Guid? CampaignId { get; }
+    public PlanningCampaignId? CampaignId { get; private set; }
 
-    /// <summary>
-    /// Gets the optional animal identifier from CattleInformation.
-    /// </summary>
-    public Guid? CattleId { get; }
+    public Guid? CattleId { get; private set; }
 
-    /// <summary>
-    /// Gets the activity title.
-    /// </summary>
-    public string Title { get; }
+    public string Title { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Gets the scheduled instant in UTC.
-    /// </summary>
-    public DateTimeOffset ScheduledAt { get; }
+    public DateTimeOffset ScheduledAt { get; private set; }
 
-    /// <summary>
-    /// Creates a scheduled activity after validating its identifiers and timestamp.
-    /// </summary>
-    /// <param name="id">The activity identifier.</param>
-    /// <param name="ranchId">The ranch identifier.</param>
-    /// <param name="campaignId">An optional campaign identifier.</param>
-    /// <param name="cattleId">An optional animal identifier.</param>
-    /// <param name="title">The activity title.</param>
-    /// <param name="scheduledAt">The scheduled UTC instant.</param>
-    /// <returns>A valid planned activity.</returns>
-    /// <exception cref="PlanningDomainException">An identifier, title, or timestamp is invalid.</exception>
-    public static PlannedActivity Create(Guid id, Guid ranchId, Guid? campaignId, Guid? cattleId, string title, DateTimeOffset scheduledAt)
+    public IReadOnlyCollection<ApplicationRecord> Applications => _applications.AsReadOnly();
+
+    public IReadOnlyCollection<FollowUp> FollowUps => _followUps.AsReadOnly();
+
+    public static Result<PlannedActivity> Create(
+        Guid ranchId,
+        PlanningCampaignId? campaignId,
+        Guid? cattleId,
+        string title,
+        DateTimeOffset scheduledAt)
     {
-        if (id == Guid.Empty || ranchId == Guid.Empty || campaignId == Guid.Empty || cattleId == Guid.Empty)
+        if (ranchId == Guid.Empty || campaignId?.Value == Guid.Empty || cattleId == Guid.Empty)
         {
-            throw new PlanningDomainException("planning.invalid_identifier", "Activity identifiers must not be empty.");
+            return Result<PlannedActivity>.Failure(PlanningErrors.InvalidIdentifier);
         }
 
         if (string.IsNullOrWhiteSpace(title))
         {
-            throw new PlanningDomainException("planning.activity_title_required", "An activity title is required.");
+            return Result<PlannedActivity>.Failure(PlanningErrors.ActivityTitleRequired);
         }
 
         if (scheduledAt.Offset != TimeSpan.Zero)
         {
-            throw new PlanningDomainException("planning.utc_timestamp_required", "The scheduled timestamp must use UTC.");
+            return Result<PlannedActivity>.Failure(PlanningErrors.UtcTimestampRequired);
         }
 
-        return new PlannedActivity(id, ranchId, campaignId, cattleId, title.Trim(), scheduledAt);
+        return Result<PlannedActivity>.Success(new PlannedActivity
+        {
+            Id = new PlannedActivityId(Guid.NewGuid()),
+            RanchId = ranchId,
+            CampaignId = campaignId,
+            CattleId = cattleId,
+            Title = title.Trim(),
+            ScheduledAt = scheduledAt
+        });
+    }
+
+    /// <summary>
+    /// An activity tied to one animal accepts applications only for that animal.
+    /// </summary>
+    public Result<ApplicationRecord> RecordApplication(Guid cattleId, DateTimeOffset appliedAt, Guid? interventionId)
+    {
+        if (CattleId is { } plannedCattleId && plannedCattleId != cattleId)
+        {
+            return Result<ApplicationRecord>.Failure(PlanningErrors.ActivityCattleMismatch);
+        }
+
+        var application = ApplicationRecord.Create(Id, cattleId, appliedAt, interventionId);
+        if (application.IsFailure)
+        {
+            return application;
+        }
+
+        _applications.Add(application.Value!);
+        return application;
+    }
+
+    public Result<FollowUp> ScheduleFollowUp(DateTimeOffset dueAt)
+    {
+        var followUp = FollowUp.Create(Id, dueAt);
+        if (followUp.IsFailure)
+        {
+            return followUp;
+        }
+
+        _followUps.Add(followUp.Value!);
+        return followUp;
     }
 }
