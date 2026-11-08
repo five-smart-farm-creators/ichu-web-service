@@ -120,6 +120,9 @@ public class CattleCommandServiceTests
         public Task<IReadOnlyList<Cattle>> SearchAsync(SearchCattleQuery query, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Cattle>>(Items);
 
+        public Task<IReadOnlyList<Cattle>> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The command tests do not read the herd.");
+
         public Task AddAsync(Cattle cattle, CancellationToken cancellationToken = default)
         {
             Items.Add(cattle);

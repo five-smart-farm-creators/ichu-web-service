@@ -18,7 +18,7 @@ public sealed class CattleInformationContextFacade(
     /// <inheritdoc />
     public async Task<CattleSnapshot?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
     {
-        if (!await CanReadAsync(ranchId, cattleId, cancellationToken))
+        if (cattleId == Guid.Empty || !await CanReadRanchAsync(ranchId, cancellationToken))
         {
             return null;
         }
@@ -30,7 +30,7 @@ public sealed class CattleInformationContextFacade(
     /// <inheritdoc />
     public async Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
     {
-        if (!await CanReadAsync(ranchId, lotId, cancellationToken))
+        if (lotId == Guid.Empty || !await CanReadRanchAsync(ranchId, cancellationToken))
         {
             return false;
         }
@@ -56,7 +56,7 @@ public sealed class CattleInformationContextFacade(
     public async Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId,
         CancellationToken cancellationToken)
     {
-        if (!await CanReadAsync(ranchId, lotId, cancellationToken))
+        if (lotId == Guid.Empty || !await CanReadRanchAsync(ranchId, cancellationToken))
         {
             return [];
         }
@@ -78,10 +78,28 @@ public sealed class CattleInformationContextFacade(
         }
     }
 
-    // Unknown and unauthorized targets look the same to other contexts, so ids of other ranches cannot be probed.
-    private async Task<bool> CanReadAsync(Guid ranchId, Guid resourceId, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken)
     {
-        if (ranchId == Guid.Empty || resourceId == Guid.Empty)
+        if (!await CanReadRanchAsync(ranchId, cancellationToken))
+        {
+            return [];
+        }
+
+        // An animal can hold memberships in several lots; its latest assignment is the lot it is in now.
+        var currentLots = (await lots.FindMembershipsByRanchAsNoTrackingAsync(ranchId, cancellationToken))
+            .GroupBy(membership => membership.CattleId.Value)
+            .ToDictionary(group => group.Key,
+                group => (Guid?)group.OrderByDescending(membership => membership.AssignedAt).First().LotId.Value);
+        var herd = await cattles.FindByRanchAsNoTrackingAsync(ranchId, cancellationToken);
+        return herd.Select(cattle => new HerdMemberSnapshot(cattle.Id.Value, currentLots.GetValueOrDefault(cattle.Id.Value),
+            cattle.BirthDate, cattle.ExitReason?.ToString(), cattle.ExitDate)).ToList();
+    }
+
+    // Unknown and unauthorized ranches look the same to other contexts, so ids of other ranches cannot be probed.
+    private async Task<bool> CanReadRanchAsync(Guid ranchId, CancellationToken cancellationToken)
+    {
+        if (ranchId == Guid.Empty)
         {
             return false;
         }

@@ -1,38 +1,28 @@
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.Internal.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Services;
-using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest.Filters;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Infrastructure.Configuration.Extensions;
 
 /// <summary>
-///     Registers analytics query services and the integration adapters supplied by the host.
+///     Registers the DashboardAnalytics context. The host must also register the IAM, Subscription Plans, Cattle Information and Operations and Monitoring modules, because the adapters read through their facades.
 /// </summary>
 public static class DashboardAnalyticsServiceCollectionExtensions
 {
-    /// <summary>
-    ///     Registers analytics with explicit source, subscription, and access adapters.
-    /// </summary>
-    /// <typeparam name="TSource">The adapter supplying analytics observations.</typeparam>
-    /// <typeparam name="TEntitlements">The adapter checking subscription export rights.</typeparam>
-    /// <typeparam name="TAccess">The adapter enforcing current-account ranch access.</typeparam>
-    /// <param name="services">The dependency-injection collection to configure.</param>
-    /// <returns>The configured service collection.</returns>
-    public static IServiceCollection AddDashboardAnalytics<TSource, TEntitlements, TAccess>(this IServiceCollection services)
-        where TSource : class, IAnalyticsSource
-        where TEntitlements : class, IAnalyticsEntitlements
-        where TAccess : class, IAnalyticsAccess
+    public static IServiceCollection AddDashboardAnalytics(this IServiceCollection services, IConfiguration configuration)
     {
-        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
-        services.AddScoped<IAnalyticsSource, TSource>();
-        services.AddScoped<IAnalyticsEntitlements, TEntitlements>();
-        services.AddScoped<IAnalyticsAccess, TAccess>();
+        services.Configure<DashboardAnalyticsOptions>(configuration.GetSection(DashboardAnalyticsOptions.SectionName));
+        services.TryAddSingleton(TimeProvider.System);
+
+        services.AddScoped<IAnalyticsAccessControl, IamAnalyticsAccessControl>();
+        services.AddScoped<IAnalyticsEntitlements, SubscriptionPlansAnalyticsEntitlements>();
+        services.AddScoped<IAnalyticsSource, PlatformAnalyticsSource>();
         services.AddScoped<AnalyticsDomainService>();
         services.AddScoped<IAnalyticsQueryService, AnalyticsQueryService>();
         services.AddScoped<IExecutiveReportQueryService, ExecutiveReportQueryService>();
-        services.AddScoped<AnalyticsExceptionFilter>();
         return services;
     }
 }

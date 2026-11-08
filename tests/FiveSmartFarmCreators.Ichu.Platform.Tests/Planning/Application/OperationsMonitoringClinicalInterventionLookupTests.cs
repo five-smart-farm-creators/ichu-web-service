@@ -49,5 +49,11 @@ public class OperationsMonitoringClinicalInterventionLookupTests
 
         public Task<IReadOnlyList<LivestockOperationRecord>> GetLivestockOperationsAsync(Guid cattleId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Planning only resolves clinical interventions.");
+
+        public Task<IReadOnlyList<LivestockOperationRecord>> GetRanchLivestockOperationsAsync(Guid ranchId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Planning only resolves clinical interventions.");
+
+        public Task<OpenAlertCounts> GetOpenAlertCountsAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Planning only resolves clinical interventions.");
     }
 }

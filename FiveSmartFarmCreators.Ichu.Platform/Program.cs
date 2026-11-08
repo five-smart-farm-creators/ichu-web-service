@@ -1,6 +1,7 @@
 using Cortex.Mediator.Commands;
 using Cortex.Mediator.DependencyInjection;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
@@ -80,6 +81,7 @@ builder.Services.AddIoTAssets(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
 builder.Services.AddPlanning();
+builder.Services.AddDashboardAnalytics(builder.Configuration);
 
 var app = builder.Build();
 

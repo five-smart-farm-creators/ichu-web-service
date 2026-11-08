@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="DashboardAnalytics.InvalidPeriod" xml:space="preserve">
+    <value>The period start must precede its end.</value>
+  </data>
+  <data name="DashboardAnalytics.RanchRequired" xml:space="preserve">
+    <value>A ranch identifier is required.</value>
+  </data>
+  <data name="DashboardAnalytics.LotRequired" xml:space="preserve">
+    <value>A lot identifier is required.</value>
+  </data>
+  <data name="DashboardAnalytics.InvalidOutlierDeviation" xml:space="preserve">
+    <value>The outlier deviation must be a positive finite number.</value>
+  </data>
+  <data name="DashboardAnalytics.UnsupportedMetric" xml:space="preserve">
+    <value>The metric must be body-temperature, activity-index or rumination-minutes.</value>
+  </data>
+  <data name="DashboardAnalytics.ConditionRequired" xml:space="preserve">
+    <value>A health condition is required.</value>
+  </data>
+  <data name="DashboardAnalytics.UnsupportedReportFormat" xml:space="preserve">
+    <value>The supported report formats are json and csv.</value>
+  </data>
+  <data name="DashboardAnalytics.RanchAccessDenied" xml:space="preserve">
+    <value>The account is not authorized for this ranch.</value>
+  </data>
+  <data name="DashboardAnalytics.ExportNotIncluded" xml:space="preserve">
+    <value>The current subscription does not include report exports.</value>
+  </data>
+  <data name="DashboardAnalytics.NoDataToExport" xml:space="preserve">
+    <value>There is insufficient data to export this period.</value>
+  </data>
+  <data name="DashboardAnalytics.SourceUnavailable" xml:space="preserve">
+    <value>The analytics source returned an inconsistent snapshot.</value>
+  </data>
+</root>

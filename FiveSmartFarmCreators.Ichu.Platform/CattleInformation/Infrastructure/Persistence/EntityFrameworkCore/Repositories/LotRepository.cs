@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -24,6 +25,13 @@ public sealed class LotRepository(AppDbContext context) : ILotRepository
             .Where(lot => lot.RanchId == ranchId)
             .OrderBy(lot => lot.Name)
             .ThenBy(lot => lot.Id)
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<LotMembership>> FindMembershipsByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+        await context.Set<LotMembership>()
+            .AsNoTracking()
+            .Where(membership => membership.RanchId == ranchId)
             .ToListAsync(cancellationToken);
 
     /// <inheritdoc />

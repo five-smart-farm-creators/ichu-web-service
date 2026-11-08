@@ -54,10 +54,28 @@ public class OperationsMonitoringContextFacade(
         CancellationToken cancellationToken)
     {
         var history = await operations.FindByCattleAsync(cattleId, new TimePeriod(from, to), cancellationToken);
-        return history
-            .Select(o => new LivestockOperationRecord(o.Id.Value, o.RanchId, o.CattleId, o.Type, LivestockOperation.IsClinical(o.Type),
-                o.OccurredAt, o.AuthorId, o.Product, o.Dose, o.Observation))
-            .ToList();
+        return history.Select(ToOperationRecord).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<LivestockOperationRecord>> GetRanchLivestockOperationsAsync(
+        Guid ranchId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        var history = await operations.FindByRanchAndPeriodAsNoTrackingAsync(ranchId, new TimePeriod(from, to), cancellationToken);
+        return history.Select(ToOperationRecord).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<OpenAlertCounts> GetOpenAlertCountsAsync(Guid ranchId, CancellationToken cancellationToken)
+    {
+        var counts = await alerts.CountOpenByRanchAndSeverityAsync(ranchId, cancellationToken);
+        return new OpenAlertCounts(
+            counts.GetValueOrDefault(AlertSeverity.Critical),
+            counts.GetValueOrDefault(AlertSeverity.Warning),
+            counts.GetValueOrDefault(AlertSeverity.Informative));
     }
 
     /// <inheritdoc />
@@ -69,6 +87,10 @@ public class OperationsMonitoringContextFacade(
             : new ClinicalInterventionRecord(
                 operation.Id.Value, operation.RanchId, operation.CattleId, operation.Type.ToString(), operation.OccurredAt);
     }
+
+    private static LivestockOperationRecord ToOperationRecord(LivestockOperation operation) =>
+        new(operation.Id.Value, operation.RanchId, operation.CattleId, operation.Type, LivestockOperation.IsClinical(operation.Type),
+            operation.OccurredAt, operation.AuthorId, operation.Product, operation.Dose, operation.Observation);
 
     private static MonitoringReadingRecord ToRecord(TelemetryReading reading) =>
         new(

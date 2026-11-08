@@ -20,6 +20,11 @@ public interface ICattleRepository
     Task<Cattle?> FindByIdAsNoTrackingAsync(CattleId cattleId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    ///     Lists every animal of the ranch, active and exited, without tracking them, for herd aggregates.
+    /// </summary>
+    Task<IReadOnlyList<Cattle>> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     ///     Finds the animal that holds an ear tag in the ranch, including inactive animals that still reserve it.
     /// </summary>
     Task<CattleId?> FindIdByEarTagAsync(Guid ranchId, EarTag earTag, CancellationToken cancellationToken = default);
