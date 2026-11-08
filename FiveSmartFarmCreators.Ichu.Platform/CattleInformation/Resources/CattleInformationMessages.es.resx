@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="CattleInformation.RanchIdentifierRequired" xml:space="preserve">
+    <value>Se requiere un identificador de rancho.</value>
+  </data>
+  <data name="CattleInformation.CattleIdentifierRequired" xml:space="preserve">
+    <value>Se requiere un identificador de animal.</value>
+  </data>
+  <data name="CattleInformation.LotIdentifierRequired" xml:space="preserve">
+    <value>Se requiere un identificador de lote.</value>
+  </data>
+  <data name="CattleInformation.InvalidEarTag" xml:space="preserve">
+    <value>La caravana debe tener entre 1 y 30 caracteres.</value>
+  </data>
+  <data name="CattleInformation.InvalidBreed" xml:space="preserve">
+    <value>La raza no es válida.</value>
+  </data>
+  <data name="CattleInformation.InvalidSex" xml:space="preserve">
+    <value>El sexo no es válido.</value>
+  </data>
+  <data name="CattleInformation.InvalidBirthDate" xml:space="preserve">
+    <value>Se requiere una fecha de nacimiento válida que no sea futura.</value>
+  </data>
+  <data name="CattleInformation.BirthDateAfterLifeStage" xml:space="preserve">
+    <value>La fecha de nacimiento no puede ser posterior a una etapa productiva registrada.</value>
+  </data>
+  <data name="CattleInformation.InvalidLifeStage" xml:space="preserve">
+    <value>La etapa productiva no es válida.</value>
+  </data>
+  <data name="CattleInformation.InvalidLifeStageDate" xml:space="preserve">
+    <value>La fecha de la etapa productiva no puede anteceder al período vigente ni ser futura.</value>
+  </data>
+  <data name="CattleInformation.InvalidExitReason" xml:space="preserve">
+    <value>El motivo de salida no es válido.</value>
+  </data>
+  <data name="CattleInformation.InvalidExitDate" xml:space="preserve">
+    <value>La fecha de salida no puede anteceder a la etapa productiva vigente ni ser futura.</value>
+  </data>
+  <data name="CattleInformation.InvalidLotName" xml:space="preserve">
+    <value>El nombre del lote debe tener entre 1 y 80 caracteres.</value>
+  </data>
+  <data name="CattleInformation.InvalidLotCriterion" xml:space="preserve">
+    <value>El criterio del lote no puede superar los 120 caracteres.</value>
+  </data>
+  <data name="CattleInformation.CattleFromAnotherRanch" xml:space="preserve">
+    <value>El animal debe pertenecer al rancho del lote.</value>
+  </data>
+  <data name="CattleInformation.AssignmentTimeRequired" xml:space="preserve">
+    <value>Se requiere la fecha y hora de la asignación.</value>
+  </data>
+  <data name="CattleInformation.InvalidSearch" xml:space="preserve">
+    <value>Los filtros de búsqueda o la paginación no son válidos.</value>
+  </data>
+  <data name="CattleInformation.CattleNotFound" xml:space="preserve">
+    <value>No se encontró el animal en este rancho.</value>
+  </data>
+  <data name="CattleInformation.LotNotFound" xml:space="preserve">
+    <value>No se encontró el lote en este rancho.</value>
+  </data>
+  <data name="CattleInformation.CattleVersionMismatch" xml:space="preserve">
+    <value>El animal cambió. Vuelva a cargarlo antes de reintentar.</value>
+  </data>
+  <data name="CattleInformation.LotVersionMismatch" xml:space="preserve">
+    <value>El lote cambió. Vuelva a cargarlo antes de reintentar.</value>
+  </data>
+  <data name="CattleInformation.CattleInactive" xml:space="preserve">
+    <value>No se puede modificar un animal inactivo.</value>
+  </data>
+  <data name="CattleInformation.InactiveCattleAssignment" xml:space="preserve">
+    <value>Un animal inactivo no puede asignarse a un lote.</value>
+  </data>
+  <data name="CattleInformation.LifeStageAlreadyCurrent" xml:space="preserve">
+    <value>La etapa productiva ya es la vigente.</value>
+  </data>
+  <data name="CattleInformation.DuplicateEarTag" xml:space="preserve">
+    <value>Otro animal de este rancho ya usa esta caravana.</value>
+  </data>
+  <data name="CattleInformation.Unauthenticated" xml:space="preserve">
+    <value>Se requiere una cuenta verificada.</value>
+  </data>
+  <data name="CattleInformation.RanchAccessDenied" xml:space="preserve">
+    <value>La cuenta no está autorizada para este rancho.</value>
+  </data>
+</root>

@@ -1,10 +1,16 @@
+using Cortex.Mediator.Commands;
+using Cortex.Mediator.DependencyInjection;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.OpenApi;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Pipeline.Middleware.Components;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +56,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
     options.UseNpgsql(connectionString)
         .UseLoggerFactory(serviceProvider.GetRequiredService<ILoggerFactory>())
+        .AddInterceptors(serviceProvider.GetRequiredService<DispatchDomainEventsInterceptor>())
         .EnableDetailedErrors();
 
     if (builder.Environment.IsDevelopment())
@@ -61,10 +68,19 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 // Modules that depend on the base DbContext type receive the shared application context.
 builder.Services.AddScoped<DbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<DispatchDomainEventsInterceptor>();
+
+// Command pipeline behaviors and event handler discovery are shared by every bounded context.
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(ExceptionHandlingCommandBehavior<>));
+builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(TransactionCommandBehavior<>));
+builder.Services.AddCortexMediator([typeof(Program)]);
 
 // The Firebase project identifier and Web API key come from configuration, never from source control.
 builder.Services.AddIam(builder.Configuration);
 builder.Services.AddSubscriptionPlans(builder.Configuration);
+builder.Services.AddCattleInformation();
+builder.Services.AddIoTAssets(builder.Configuration);
 
 builder.Services.AddOperationsMonitoring(builder.Configuration);
 if (builder.Environment.IsDevelopment())

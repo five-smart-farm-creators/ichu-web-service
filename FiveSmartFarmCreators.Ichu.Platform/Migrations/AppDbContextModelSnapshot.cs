@@ -23,6 +23,168 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Cattle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date")
+                        .HasColumnName("birth_date");
+
+                    b.Property<string>("Breed")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("breed");
+
+                    b.Property<string>("CurrentStage")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("current_stage");
+
+                    b.Property<string>("EarTag")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("ear_tag");
+
+                    b.Property<DateOnly?>("ExitDate")
+                        .HasColumnType("date")
+                        .HasColumnName("exit_date");
+
+                    b.Property<string>("ExitReason")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("exit_reason");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<string>("Sex")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("sex");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("RanchId", "Id")
+                        .HasName("ak_cattle_ranch_id_id");
+
+                    b.HasIndex("RanchId", "EarTag")
+                        .IsUnique()
+                        .HasDatabaseName("uq_cattle_ranch_ear_tag");
+
+                    b.ToTable("cattle", "cattle");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Lot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Criterion")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("criterion");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("RanchId", "Id")
+                        .HasName("ak_lots_ranch_id_id");
+
+                    b.ToTable("lots", "cattle");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities.LotMembership", b =>
+                {
+                    b.Property<Guid>("CattleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cattle_id");
+
+                    b.Property<Guid>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.HasKey("CattleId", "LotId");
+
+                    b.HasIndex("RanchId", "CattleId");
+
+                    b.HasIndex("RanchId", "LotId");
+
+                    b.ToTable("lot_memberships", "cattle");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities.StagePeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CattleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cattle_id");
+
+                    b.Property<string>("LifeStage")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("life_stage");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_from");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_to");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CattleId", "ValidFrom");
+
+                    b.ToTable("stage_periods", "cattle");
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.HerdAdvisory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -207,6 +369,176 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                         .IsUnique();
 
                     b.ToTable("RanchMemberships", "iam");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("BatteryRecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("battery_recorded_at");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FirmwareVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("firmware_version");
+
+                    b.Property<DateTimeOffset?>("LastCommunicationAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_communication_at");
+
+                    b.Property<DateTimeOffset?>("LastCommunicationReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_communication_received_at");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("device_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanchId");
+
+                    b.ToTable("devices", "iot", t =>
+                        {
+                            t.HasCheckConstraint("ck_iot_devices_battery", "battery_percentage BETWEEN 0 AND 100");
+
+                            t.HasCheckConstraint("ck_iot_devices_status", "status IN ('Available', 'InService', 'Maintenance')");
+
+                            t.HasCheckConstraint("ck_iot_devices_type", "device_type IN ('SmartCollar', 'WaterController')");
+                        });
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.WaterTrough", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanchId");
+
+                    b.ToTable("water_troughs", "iot", t =>
+                        {
+                            t.HasCheckConstraint("ck_iot_troughs_temperature", "(min_temperature_celsius IS NULL AND max_temperature_celsius IS NULL) OR (min_temperature_celsius IS NOT NULL AND max_temperature_celsius IS NOT NULL AND min_temperature_celsius < max_temperature_celsius)");
+                        });
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities.DeviceAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ended_at");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<string>("ReleaseReason")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("release_reason");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_iot_assignments_open_device")
+                        .HasFilter("ended_at IS NULL");
+
+                    b.HasIndex("DeviceId", "RanchId");
+
+                    b.HasIndex("RanchId", "TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_iot_assignments_open_target")
+                        .HasFilter("ended_at IS NULL");
+
+                    b.ToTable("device_assignments", "iot", t =>
+                        {
+                            t.HasCheckConstraint("ck_iot_assignments_interval", "ended_at IS NULL OR ended_at >= started_at");
+
+                            t.HasCheckConstraint("ck_iot_assignments_release", "(ended_at IS NULL AND release_reason IS NULL) OR (ended_at IS NOT NULL AND release_reason IS NOT NULL AND length(trim(release_reason)) > 0)");
+
+                            t.HasCheckConstraint("ck_iot_assignments_target", "target_type IN ('Cattle', 'WaterTrough')");
+                        });
                 });
 
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.Geofence", b =>
@@ -677,6 +1009,32 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.ToTable("subscriptions", "subscription");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities.LotMembership", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Cattle", null)
+                        .WithMany()
+                        .HasForeignKey("RanchId", "CattleId")
+                        .HasPrincipalKey("RanchId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Lot", null)
+                        .WithMany("Memberships")
+                        .HasForeignKey("RanchId", "LotId")
+                        .HasPrincipalKey("RanchId", "Id")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities.StagePeriod", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Cattle", null)
+                        .WithMany("StagePeriods")
+                        .HasForeignKey("CattleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.HerdAdvisory", b =>
                 {
                     b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.RanchRegistration", null)
@@ -746,6 +1104,92 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.HasOne("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.UserAccount", null)
                         .WithMany()
                         .HasForeignKey("UserAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", b =>
+                {
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects.BatteryLevel", "Battery", b1 =>
+                        {
+                            b1.Property<Guid>("IoTDeviceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<short>("Percentage")
+                                .HasColumnType("smallint")
+                                .HasColumnName("battery_percentage");
+
+                            b1.HasKey("IoTDeviceId");
+
+                            b1.ToTable("devices", "iot");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IoTDeviceId");
+                        });
+
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects.DeviceSerial", "Serial", b1 =>
+                        {
+                            b1.Property<Guid>("IoTDeviceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("serial");
+
+                            b1.HasKey("IoTDeviceId");
+
+                            b1.HasIndex("Value")
+                                .IsUnique()
+                                .HasDatabaseName("ux_iot_devices_serial");
+
+                            b1.ToTable("devices", "iot");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IoTDeviceId");
+                        });
+
+                    b.Navigation("Battery");
+
+                    b.Navigation("Serial")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.WaterTrough", b =>
+                {
+                    b.OwnsOne("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects.TemperatureRange", "TemperatureRange", b1 =>
+                        {
+                            b1.Property<Guid>("WaterTroughId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("MaximumCelsius")
+                                .HasPrecision(4, 1)
+                                .HasColumnType("numeric(4,1)")
+                                .HasColumnName("max_temperature_celsius");
+
+                            b1.Property<decimal>("MinimumCelsius")
+                                .HasPrecision(4, 1)
+                                .HasColumnType("numeric(4,1)")
+                                .HasColumnName("min_temperature_celsius");
+
+                            b1.HasKey("WaterTroughId");
+
+                            b1.ToTable("water_troughs", "iot");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WaterTroughId");
+                        });
+
+                    b.Navigation("TemperatureRange");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities.DeviceAssignment", b =>
+                {
+                    b.HasOne("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", null)
+                        .WithMany("Assignments")
+                        .HasForeignKey("DeviceId", "RanchId")
+                        .HasPrincipalKey("Id", "RanchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1104,6 +1548,21 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
 
                     b.Navigation("Total")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Cattle", b =>
+                {
+                    b.Navigation("StagePeriods");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates.Lot", b =>
+                {
+                    b.Navigation("Memberships");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates.IoTDevice", b =>
+                {
+                    b.Navigation("Assignments");
                 });
 #pragma warning restore 612, 618
         }

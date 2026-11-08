@@ -3,118 +3,157 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entitie
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Events;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 
 /// <summary>
-/// Owns an animal's identity, productive-stage history and lifecycle within one ranch.
+///     Owns an animal's identity, productive-stage history and lifecycle within one ranch. Stage changes and exits close
+///     the current period instead of deleting it, so the animal's history stays complete.
 /// </summary>
-public sealed class Cattle
+public sealed class Cattle : AggregateRoot
 {
     private readonly List<StagePeriod> _stagePeriods = [];
-    private readonly List<ICattleEvent> _events = [];
 
+    // Entity Framework Core materializes animals without running the factory.
     private Cattle()
     {
     }
 
+    public CattleId Id { get; private set; }
+
+    public Guid RanchId { get; private set; }
+
+    public EarTag EarTag { get; private set; } = null!;
+
+    public Breed Breed { get; private set; }
+
+    public Sex Sex { get; private set; }
+
+    public DateOnly BirthDate { get; private set; }
+
+    public CattleStatus Status { get; private set; }
+
+    public LifeStage CurrentStage { get; private set; }
+
+    public ExitReason? ExitReason { get; private set; }
+
+    public DateOnly? ExitDate { get; private set; }
+
     /// <summary>
-    /// Registers an active animal whose first known stage starts on the registration date.
+    ///     Advanced by every change, so a caller holding an older version is refused instead of overwriting newer data.
     /// </summary>
-    /// <param name="command">The ranch, identity and current productive details to register.</param>
-    /// <param name="today">The registration date and upper bound for the birth date.</param>
-    /// <exception cref="CattleInformationException">An identifier, ear tag, classification or birth date is invalid.</exception>
-    public Cattle(RegisterCattleCommand command, DateOnly today)
+    public Guid Version { get; private set; }
+
+    public IReadOnlyCollection<StagePeriod> StagePeriods => _stagePeriods.AsReadOnly();
+
+    /// <summary>
+    ///     Registers an active animal whose first known stage starts on the registration date.
+    /// </summary>
+    public static Result<Cattle> Register(RegisterCattleCommand command, DateOnly today)
     {
         if (command.RanchId == Guid.Empty)
         {
-            throw new CattleInformationException("invalid_input", "A ranch identifier is required.");
+            return Result<Cattle>.Failure(CattleInformationErrors.RanchIdentifierRequired);
         }
 
-        var earTag = new EarTag(command.EarTag);
-        ValidateDetails(command.Breed, command.Sex, command.BirthDate, today);
-        ValidateEnum(command.LifeStage, "life stage");
+        var earTag = EarTag.Create(command.EarTag);
+        if (earTag.IsFailure)
+        {
+            return Result<Cattle>.Failure(earTag.DomainError);
+        }
 
-        Id = Guid.NewGuid();
-        RanchId = command.RanchId;
-        EarTag = earTag;
-        Breed = command.Breed;
-        Sex = command.Sex;
-        BirthDate = command.BirthDate;
-        Status = CattleStatus.Active;
-        CurrentStage = command.LifeStage;
-        Version = Guid.NewGuid();
-        _stagePeriods.Add(new StagePeriod(Id, CurrentStage, today));
-        _events.Add(new CattleRegisteredEvent(
-            Guid.NewGuid(), DateTimeOffset.UtcNow, RanchId, Id, EarTag.Value,
-            Breed, Sex, BirthDate, CurrentStage));
+        var details = ValidateDetails(command.Breed, command.Sex, command.BirthDate, today);
+        if (details.IsFailure)
+        {
+            return Result<Cattle>.Failure(details.DomainError);
+        }
+
+        if (!Enum.IsDefined(command.LifeStage))
+        {
+            return Result<Cattle>.Failure(CattleInformationErrors.InvalidLifeStage);
+        }
+
+        var cattle = new Cattle
+        {
+            Id = new CattleId(Guid.NewGuid()),
+            RanchId = command.RanchId,
+            EarTag = earTag.Value!,
+            Breed = command.Breed,
+            Sex = command.Sex,
+            BirthDate = command.BirthDate,
+            Status = CattleStatus.Active,
+            CurrentStage = command.LifeStage,
+            Version = Guid.NewGuid()
+        };
+        cattle._stagePeriods.Add(new StagePeriod(cattle.Id, cattle.CurrentStage, today));
+        cattle.AddDomainEvent(new CattleRegisteredEvent(cattle.RanchId, cattle.Id, cattle.EarTag.Value,
+            cattle.Breed, cattle.Sex, cattle.BirthDate, cattle.CurrentStage));
+        return Result<Cattle>.Success(cattle);
     }
 
-    public Guid Id { get; private set; }
-    public Guid RanchId { get; private set; }
-    public EarTag EarTag { get; private set; } = null!;
-    public Breed Breed { get; private set; }
-    public Sex Sex { get; private set; }
-    public DateOnly BirthDate { get; private set; }
-    public CattleStatus Status { get; private set; }
-    public LifeStage CurrentStage { get; private set; }
-    public ExitReason? ExitReason { get; private set; }
-    public DateOnly? ExitDate { get; private set; }
     /// <summary>
-    /// Gets the concurrency token advanced by animal changes and new lot assignments.
+    ///     Corrects an active animal's identity while keeping its birth date consistent with its recorded stages.
     /// </summary>
-    public Guid Version { get; private set; }
-    public IReadOnlyCollection<StagePeriod> StagePeriods => _stagePeriods.AsReadOnly();
-    /// <summary>
-    /// Gets lifecycle facts awaiting persistence with the animal's state changes.
-    /// </summary>
-    public IReadOnlyCollection<ICattleEvent> Events => _events.AsReadOnly();
-
-    /// <summary>
-    /// Corrects an active animal's details while keeping its birth date consistent with recorded stages.
-    /// </summary>
-    /// <param name="command">The proposed identity corrections and expected animal version.</param>
-    /// <param name="today">The latest permitted birth date.</param>
-    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the details violate its history.</exception>
-    public void Update(UpdateCattleCommand command, DateOnly today)
+    public Result Update(UpdateCattleCommand command, DateOnly today)
     {
-        ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
-        var earTag = new EarTag(command.EarTag);
-        ValidateDetails(command.Breed, command.Sex, command.BirthDate, today);
+        var mutation = VerifyMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
+        if (mutation.IsFailure)
+        {
+            return mutation;
+        }
+
+        var earTag = EarTag.Create(command.EarTag);
+        if (earTag.IsFailure)
+        {
+            return Result.Failure(earTag.DomainError);
+        }
+
+        var details = ValidateDetails(command.Breed, command.Sex, command.BirthDate, today);
+        if (details.IsFailure)
+        {
+            return details;
+        }
+
         if (_stagePeriods.Any(period => period.ValidFrom < command.BirthDate))
         {
-            throw new CattleInformationException(
-                "invalid_input", "The birth date cannot follow a recorded life stage.");
+            return Result.Failure(CattleInformationErrors.BirthDateAfterLifeStage);
         }
 
-        EarTag = earTag;
+        EarTag = earTag.Value!;
         Breed = command.Breed;
         Sex = command.Sex;
         BirthDate = command.BirthDate;
         Version = Guid.NewGuid();
+        return Result.Success();
     }
 
     /// <summary>
-    /// Changes an active animal's stage and retains the preceding period, including same-day changes.
+    ///     Changes an active animal's stage and keeps the preceding period, including a change on the same day.
     /// </summary>
-    /// <param name="command">The new stage, its effective date and the expected animal version.</param>
-    /// <param name="today">The latest permitted effective date.</param>
-    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the stage or effective date is invalid.</exception>
-    public void ChangeStage(ChangeLifeStageCommand command, DateOnly today)
+    public Result ChangeStage(ChangeLifeStageCommand command, DateOnly today)
     {
-        ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
-        ValidateEnum(command.LifeStage, "life stage");
+        var mutation = VerifyMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
+        if (mutation.IsFailure)
+        {
+            return mutation;
+        }
+
+        if (!Enum.IsDefined(command.LifeStage))
+        {
+            return Result.Failure(CattleInformationErrors.InvalidLifeStage);
+        }
+
         if (command.LifeStage == CurrentStage)
         {
-            throw new CattleInformationException("invalid_state", "The life stage is already current.");
+            return Result.Failure(CattleInformationErrors.LifeStageAlreadyCurrent);
         }
 
         var currentPeriod = _stagePeriods.Single(period => period.ValidTo is null);
-        if (command.ValidFrom < BirthDate || command.ValidFrom > today ||
-            command.ValidFrom < currentPeriod.ValidFrom)
+        if (command.ValidFrom < BirthDate || command.ValidFrom > today || command.ValidFrom < currentPeriod.ValidFrom)
         {
-            throw new CattleInformationException(
-                "invalid_input", "The life stage date cannot precede the current period or be in the future.");
+            return Result.Failure(CattleInformationErrors.InvalidLifeStageDate);
         }
 
         var previousStage = CurrentStage;
@@ -122,27 +161,30 @@ public sealed class Cattle
         CurrentStage = command.LifeStage;
         _stagePeriods.Add(new StagePeriod(Id, CurrentStage, command.ValidFrom));
         Version = Guid.NewGuid();
-        _events.Add(new CattleLifeStageChangedEvent(
-            Guid.NewGuid(), DateTimeOffset.UtcNow, RanchId, Id,
-            previousStage, CurrentStage, command.ValidFrom));
+        AddDomainEvent(new CattleLifeStageChangedEvent(RanchId, Id, previousStage, CurrentStage, command.ValidFrom));
+        return Result.Success();
     }
 
     /// <summary>
-    /// Records an exit and closes the current stage without deleting the animal or its history.
+    ///     Records an exit and closes the current stage without deleting the animal or its history.
     /// </summary>
-    /// <param name="command">The exit reason, calendar event date and expected animal version.</param>
-    /// <param name="today">The latest permitted exit date.</param>
-    /// <exception cref="CattleInformationException">The target or version is invalid, the animal is inactive, or the exit reason or date is invalid.</exception>
-    public void Deactivate(DeactivateCattleCommand command, DateOnly today)
+    public Result Deactivate(DeactivateCattleCommand command, DateOnly today, DateTimeOffset recordedAt)
     {
-        ValidateMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
-        ValidateEnum(command.Reason, "exit reason");
-        var currentPeriod = _stagePeriods.Single(period => period.ValidTo is null);
-        if (command.ExitDate < BirthDate || command.ExitDate > today ||
-            command.ExitDate < currentPeriod.ValidFrom)
+        var mutation = VerifyMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
+        if (mutation.IsFailure)
         {
-            throw new CattleInformationException(
-                "invalid_input", "The exit date cannot precede the current life stage or be in the future.");
+            return mutation;
+        }
+
+        if (!Enum.IsDefined(command.Reason))
+        {
+            return Result.Failure(CattleInformationErrors.InvalidExitReason);
+        }
+
+        var currentPeriod = _stagePeriods.Single(period => period.ValidTo is null);
+        if (command.ExitDate < BirthDate || command.ExitDate > today || command.ExitDate < currentPeriod.ValidFrom)
+        {
+            return Result.Failure(CattleInformationErrors.InvalidExitDate);
         }
 
         currentPeriod.Close(command.ExitDate);
@@ -150,67 +192,60 @@ public sealed class Cattle
         ExitReason = command.Reason;
         ExitDate = command.ExitDate;
         Version = Guid.NewGuid();
-        _events.Add(new CattleDeactivatedEvent(
-            Guid.NewGuid(), DateTimeOffset.UtcNow, RanchId, Id, command.Reason, command.ExitDate));
+        AddDomainEvent(new CattleDeactivatedEvent(RanchId, Id, command.Reason, command.ExitDate, recordedAt.ToUniversalTime()));
+        return Result.Success();
     }
 
     /// <summary>
-    /// Clears pending lifecycle facts after their successful persistence with the animal.
+    ///     Called only after the lot verified that the animal is active. The version change makes a concurrent
+    ///     deactivation conflict with this assignment.
     /// </summary>
-    public void ClearEvents()
-    {
-        _events.Clear();
-    }
-
     internal void RecordLotAssignment()
     {
-        if (Status != CattleStatus.Active)
-        {
-            throw new CattleInformationException("invalid_state", "Inactive cattle cannot be assigned to a lot.");
-        }
-
-        // The cattle version protects lot assignment against concurrent deactivation.
         Version = Guid.NewGuid();
     }
 
-    private void ValidateMutation(Guid ranchId, Guid cattleId, Guid expectedVersion)
+    private Result VerifyMutation(Guid ranchId, CattleId cattleId, Guid expectedVersion)
     {
-        if (ranchId == Guid.Empty || cattleId == Guid.Empty)
+        if (ranchId == Guid.Empty)
         {
-            throw new CattleInformationException("invalid_input", "Ranch and cattle identifiers are required.");
+            return Result.Failure(CattleInformationErrors.RanchIdentifierRequired);
+        }
+
+        if (cattleId.Value == Guid.Empty)
+        {
+            return Result.Failure(CattleInformationErrors.CattleIdentifierRequired);
         }
 
         if (ranchId != RanchId || cattleId != Id)
         {
-            throw new CattleInformationException("not_found", "Cattle was not found in the ranch.");
+            return Result.Failure(CattleInformationErrors.CattleNotFound);
         }
 
         if (expectedVersion == Guid.Empty || expectedVersion != Version)
         {
-            throw new CattleInformationException("conflict", "Cattle has changed. Reload it before retrying.");
+            return Result.Failure(CattleInformationErrors.CattleVersionMismatch);
         }
 
-        if (Status != CattleStatus.Active)
-        {
-            throw new CattleInformationException("invalid_state", "Inactive cattle cannot be changed.");
-        }
+        return Status == CattleStatus.Active
+            ? Result.Success()
+            : Result.Failure(CattleInformationErrors.CattleInactive);
     }
 
-    private static void ValidateDetails(Breed breed, Sex sex, DateOnly birthDate, DateOnly today)
+    private static Result ValidateDetails(Breed breed, Sex sex, DateOnly birthDate, DateOnly today)
     {
-        ValidateEnum(breed, "breed");
-        ValidateEnum(sex, "sex");
-        if (birthDate == default || birthDate > today)
+        if (!Enum.IsDefined(breed))
         {
-            throw new CattleInformationException("invalid_input", "A valid birth date that is not in the future is required.");
+            return Result.Failure(CattleInformationErrors.InvalidBreed);
         }
-    }
 
-    private static void ValidateEnum<T>(T value, string field) where T : struct, Enum
-    {
-        if (!Enum.IsDefined(value))
+        if (!Enum.IsDefined(sex))
         {
-            throw new CattleInformationException("invalid_input", $"The {field} is invalid.");
+            return Result.Failure(CattleInformationErrors.InvalidSex);
         }
+
+        return birthDate == default || birthDate > today
+            ? Result.Failure(CattleInformationErrors.InvalidBirthDate)
+            : Result.Success();
     }
 }

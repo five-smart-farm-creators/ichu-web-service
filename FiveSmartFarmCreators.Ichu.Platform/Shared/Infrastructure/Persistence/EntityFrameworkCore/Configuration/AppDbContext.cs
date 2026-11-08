@@ -1,3 +1,5 @@
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
@@ -23,11 +25,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(builder);
 
-        // Only IAM is mapped from the assembly; CattleInformation and Planning join in their own phases and migrations.
+        // Only IAM is mapped from the assembly; Planning joins in its own phase and migration.
         builder.ApplyConfigurationsFromAssembly(
             typeof(AppDbContext).Assembly,
             type => type.Namespace is not null && type.Namespace.StartsWith("FiveSmartFarmCreators.Ichu.Platform.Iam.", StringComparison.Ordinal));
         builder.ApplyOperationsMonitoringConfiguration();
         builder.ApplySubscriptionPlansConfiguration();
+        builder.ApplyCattleInformationConfiguration();
+        builder.ApplyIoTAssetsConfiguration();
     }
 }

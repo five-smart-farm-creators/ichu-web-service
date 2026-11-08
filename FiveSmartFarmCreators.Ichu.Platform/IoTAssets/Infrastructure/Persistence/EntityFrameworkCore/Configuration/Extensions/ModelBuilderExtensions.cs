@@ -1,15 +1,30 @@
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.ValueConverters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
+/// <summary>
+///     Entity Framework Core mappings of the IoT Assets context. Each device has at most one open assignment, and the
+///     database enforces that a serial and a target are never held twice.
+/// </summary>
 public static class ModelBuilderExtensions
 {
+    /// <summary>
+    ///     Applies the mappings of devices, assignments and water troughs under the iot schema. The shared database context calls it from OnModelCreating.
+    /// </summary>
     public static void ApplyIoTAssetsConfiguration(this ModelBuilder builder)
     {
-        var devices = builder.Entity<IoTDevice>();
+        ConfigureDevice(builder.Entity<IoTDevice>());
+        ConfigureDeviceAssignment(builder.Entity<DeviceAssignment>());
+        ConfigureWaterTrough(builder.Entity<WaterTrough>());
+    }
+
+    private static void ConfigureDevice(EntityTypeBuilder<IoTDevice> devices)
+    {
         devices.ToTable("devices", "iot", table =>
         {
             table.HasCheckConstraint("ck_iot_devices_type", "device_type IN ('SmartCollar', 'WaterController')");
@@ -18,7 +33,7 @@ public static class ModelBuilderExtensions
         });
         devices.HasKey(d => d.Id);
         devices.HasAlternateKey(d => new { d.Id, d.RanchId });
-        devices.Property(d => d.Id).HasColumnName("id").ValueGeneratedNever();
+        devices.Property(d => d.Id).HasConversion(DeviceIdConverter()).HasColumnName("id").ValueGeneratedNever();
         devices.Property(d => d.RanchId).HasColumnName("ranch_id").IsRequired();
         devices.Property(d => d.Type).HasColumnName("device_type").HasConversion<string>().HasMaxLength(20).IsRequired();
         devices.Property(d => d.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20).IsRequired();
@@ -32,7 +47,7 @@ public static class ModelBuilderExtensions
         devices.Ignore(d => d.DomainEvents);
         devices.OwnsOne(d => d.Serial, serial =>
         {
-            serial.Property(s => s.Value).HasColumnName("serial").HasMaxLength(50).IsRequired();
+            serial.Property(s => s.Value).HasColumnName("serial").HasMaxLength(DeviceSerial.MaximumLength).IsRequired();
             serial.HasIndex(s => s.Value).IsUnique().HasDatabaseName("ux_iot_devices_serial");
         });
         devices.Navigation(d => d.Serial).IsRequired();
@@ -47,8 +62,10 @@ public static class ModelBuilderExtensions
             .OnDelete(DeleteBehavior.Restrict);
         devices.Navigation(d => d.Assignments).HasField("_assignments").UsePropertyAccessMode(PropertyAccessMode.Field);
         devices.HasIndex(d => d.RanchId);
+    }
 
-        var assignments = builder.Entity<DeviceAssignment>();
+    private static void ConfigureDeviceAssignment(EntityTypeBuilder<DeviceAssignment> assignments)
+    {
         assignments.ToTable("device_assignments", "iot", table =>
         {
             table.HasCheckConstraint("ck_iot_assignments_interval", "ended_at IS NULL OR ended_at >= started_at");
@@ -58,8 +75,8 @@ public static class ModelBuilderExtensions
                 "(ended_at IS NOT NULL AND release_reason IS NOT NULL AND length(trim(release_reason)) > 0)");
         });
         assignments.HasKey(a => a.Id);
-        assignments.Property(a => a.Id).HasColumnName("id").ValueGeneratedNever();
-        assignments.Property(a => a.DeviceId).HasColumnName("device_id");
+        assignments.Property(a => a.Id).HasConversion(DeviceAssignmentIdConverter()).HasColumnName("id").ValueGeneratedNever();
+        assignments.Property(a => a.DeviceId).HasConversion(DeviceIdConverter()).HasColumnName("device_id");
         assignments.Property(a => a.RanchId).HasColumnName("ranch_id");
         assignments.Property(a => a.TargetId).HasColumnName("target_id");
         assignments.Property(a => a.TargetType).HasColumnName("target_type").HasConversion<string>().HasMaxLength(20);
@@ -70,8 +87,10 @@ public static class ModelBuilderExtensions
             .HasFilter("ended_at IS NULL").HasDatabaseName("ux_iot_assignments_open_device");
         assignments.HasIndex(a => new { a.RanchId, a.TargetType, a.TargetId }).IsUnique()
             .HasFilter("ended_at IS NULL").HasDatabaseName("ux_iot_assignments_open_target");
+    }
 
-        var troughs = builder.Entity<WaterTrough>();
+    private static void ConfigureWaterTrough(EntityTypeBuilder<WaterTrough> troughs)
+    {
         troughs.ToTable("water_troughs", "iot", table =>
         {
             table.HasCheckConstraint("ck_iot_troughs_temperature",
@@ -80,7 +99,7 @@ public static class ModelBuilderExtensions
                 "AND min_temperature_celsius < max_temperature_celsius)");
         });
         troughs.HasKey(t => t.Id);
-        troughs.Property(t => t.Id).HasColumnName("id").ValueGeneratedNever();
+        troughs.Property(t => t.Id).HasConversion(WaterTroughIdConverter()).HasColumnName("id").ValueGeneratedNever();
         troughs.Property(t => t.RanchId).HasColumnName("ranch_id").IsRequired();
         troughs.Property(t => t.Name).HasColumnName("name").HasMaxLength(80).IsRequired();
         troughs.Property(t => t.LotId).HasColumnName("lot_id");
@@ -96,4 +115,13 @@ public static class ModelBuilderExtensions
         troughs.Navigation(t => t.TemperatureRange).IsRequired(false);
         troughs.HasIndex(t => t.RanchId);
     }
+
+    private static StronglyTypedIdConverter<DeviceId, Guid> DeviceIdConverter() =>
+        new(id => id.Value, value => new DeviceId(value));
+
+    private static StronglyTypedIdConverter<DeviceAssignmentId, Guid> DeviceAssignmentIdConverter() =>
+        new(id => id.Value, value => new DeviceAssignmentId(value));
+
+    private static StronglyTypedIdConverter<WaterTroughId, Guid> WaterTroughIdConverter() =>
+        new(id => id.Value, value => new WaterTroughId(value));
 }

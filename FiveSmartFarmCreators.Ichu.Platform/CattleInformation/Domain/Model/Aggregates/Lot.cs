@@ -2,114 +2,135 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Command
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 
 /// <summary>
-/// Groups animals for management while keeping their identities independent of lot membership.
+///     Groups animals for management while keeping their identities independent of lot membership.
 /// </summary>
-public sealed class Lot
+public sealed class Lot : AggregateRoot
 {
+    private const int MaximumNameLength = 80;
+    private const int MaximumCriterionLength = 120;
+
     private readonly List<LotMembership> _memberships = [];
 
+    // Entity Framework Core materializes lots without running the factory.
     private Lot()
     {
     }
 
-    public Lot(CreateLotCommand command)
+    public LotId Id { get; private set; }
+
+    public Guid RanchId { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public string? Criterion { get; private set; }
+
+    /// <summary>
+    ///     Advanced by every membership change, so that concurrent assignments cannot both succeed silently.
+    /// </summary>
+    public Guid Version { get; private set; }
+
+    public IReadOnlyCollection<LotMembership> Memberships => _memberships.AsReadOnly();
+
+    public static Result<Lot> Create(CreateLotCommand command)
     {
         if (command.RanchId == Guid.Empty)
         {
-            throw new CattleInformationException("invalid_input", "A ranch identifier is required.");
+            return Result<Lot>.Failure(CattleInformationErrors.RanchIdentifierRequired);
         }
 
-        if (string.IsNullOrWhiteSpace(command.Name) || command.Name.Trim().Length > 80)
+        if (string.IsNullOrWhiteSpace(command.Name) || command.Name.Trim().Length > MaximumNameLength)
         {
-            throw new CattleInformationException("invalid_input", "The lot name must contain between 1 and 80 characters.");
+            return Result<Lot>.Failure(CattleInformationErrors.InvalidLotName);
         }
 
-        if (command.Criterion?.Trim().Length > 120)
+        if (command.Criterion?.Trim().Length > MaximumCriterionLength)
         {
-            throw new CattleInformationException("invalid_input", "The lot criterion cannot exceed 120 characters.");
+            return Result<Lot>.Failure(CattleInformationErrors.InvalidLotCriterion);
         }
 
-        Id = Guid.NewGuid();
-        RanchId = command.RanchId;
-        Name = command.Name.Trim();
-        Criterion = string.IsNullOrWhiteSpace(command.Criterion) ? null : command.Criterion.Trim();
-        Version = Guid.NewGuid();
+        var lot = new Lot
+        {
+            Id = new LotId(Guid.NewGuid()),
+            RanchId = command.RanchId,
+            Name = command.Name.Trim(),
+            Criterion = string.IsNullOrWhiteSpace(command.Criterion) ? null : command.Criterion.Trim(),
+            Version = Guid.NewGuid()
+        };
+        return Result<Lot>.Success(lot);
     }
 
-    public Guid Id { get; private set; }
-    public Guid RanchId { get; private set; }
-    public string Name { get; private set; } = string.Empty;
-    public string? Criterion { get; private set; }
-    public Guid Version { get; private set; }
-    public IReadOnlyCollection<LotMembership> Memberships => _memberships.AsReadOnly();
-
     /// <summary>
-    /// Adds active cattle from the same ranch; a new membership advances both versions to guard against concurrent deactivation.
+    ///     Adds an active animal of the same ranch. Adding an animal that is already a member changes nothing.
     /// </summary>
-    /// <param name="cattle">The animal whose identity remains independent of the lot.</param>
-    /// <param name="expectedVersion">The lot version observed by the caller.</param>
-    /// <param name="assignedAt">The assignment instant, stored in UTC for a new membership.</param>
-    /// <remarks>A duplicate membership leaves both versions unchanged when the expected lot version is current.</remarks>
-    /// <exception cref="CattleInformationException">The lot version is stale, the animal belongs to another ranch or is inactive, or the timestamp is missing.</exception>
-    public void AddCattle(Cattle cattle, Guid expectedVersion, DateTimeOffset assignedAt)
+    public Result AddCattle(Cattle cattle, Guid expectedVersion, DateTimeOffset assignedAt)
     {
-        ValidateVersion(expectedVersion);
+        var version = VerifyVersion(expectedVersion);
+        if (version.IsFailure)
+        {
+            return version;
+        }
+
         if (cattle.RanchId != RanchId)
         {
-            throw new CattleInformationException("invalid_input", "Cattle must belong to the lot ranch.");
+            return Result.Failure(CattleInformationErrors.CattleFromAnotherRanch);
         }
 
         if (cattle.Status != CattleStatus.Active)
         {
-            throw new CattleInformationException("invalid_state", "Inactive cattle cannot be assigned to a lot.");
+            return Result.Failure(CattleInformationErrors.InactiveCattleAssignment);
         }
 
         if (assignedAt == default)
         {
-            throw new CattleInformationException("invalid_input", "An assignment timestamp is required.");
+            return Result.Failure(CattleInformationErrors.AssignmentTimeRequired);
         }
 
         if (_memberships.Any(membership => membership.CattleId == cattle.Id))
         {
-            return;
+            return Result.Success();
         }
 
         cattle.RecordLotAssignment();
         _memberships.Add(new LotMembership(Id, RanchId, cattle.Id, assignedAt));
         Version = Guid.NewGuid();
+        return Result.Success();
     }
 
     /// <summary>
-    /// Removes membership without deleting the animal; an absent membership leaves a current lot version unchanged.
+    ///     Removes membership without deleting the animal. Removing a non-member changes nothing.
     /// </summary>
-    /// <exception cref="CattleInformationException">The lot version is stale or the animal identifier is empty.</exception>
-    public void RemoveCattle(Guid cattleId, Guid expectedVersion)
+    public Result RemoveCattle(CattleId cattleId, Guid expectedVersion)
     {
-        ValidateVersion(expectedVersion);
-        if (cattleId == Guid.Empty)
+        var version = VerifyVersion(expectedVersion);
+        if (version.IsFailure)
         {
-            throw new CattleInformationException("invalid_input", "A cattle identifier is required.");
+            return version;
+        }
+
+        if (cattleId.Value == Guid.Empty)
+        {
+            return Result.Failure(CattleInformationErrors.CattleIdentifierRequired);
         }
 
         var membership = _memberships.SingleOrDefault(item => item.CattleId == cattleId);
         if (membership is null)
         {
-            return;
+            return Result.Success();
         }
 
         _memberships.Remove(membership);
         Version = Guid.NewGuid();
+        return Result.Success();
     }
 
-    private void ValidateVersion(Guid expectedVersion)
-    {
-        if (expectedVersion == Guid.Empty || expectedVersion != Version)
-        {
-            throw new CattleInformationException("conflict", "The lot has changed. Reload it before retrying.");
-        }
-    }
+    private Result VerifyVersion(Guid expectedVersion) =>
+        expectedVersion == Guid.Empty || expectedVersion != Version
+            ? Result.Failure(CattleInformationErrors.LotVersionMismatch)
+            : Result.Success();
 }

@@ -3,44 +3,67 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.QuerySer
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Application.Internal.QueryServices;
 
 /// <summary>
-/// Composes authorized animal profiles using external device data without storing copies.
+///     Composes authorized animal profiles from local identity and external device data without storing copies.
 /// </summary>
 public sealed class CattleQueryService(
-    ICattleRepository cattleRepository,
+    ICattleRepository cattles,
     ICattleAccessService accessService,
     ICattleProfileIntegrationService profileIntegrationService) : ICattleQueryService
 {
     /// <inheritdoc />
-    public async Task<CattleProfile> HandleAsync(GetCattleByIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<CattleProfile>> HandleAsync(GetCattleByIdQuery query, CancellationToken cancellationToken)
     {
-        await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);
-        if (query.RanchId == Guid.Empty || query.CattleId == Guid.Empty)
+        var access = await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);
+        if (access.IsFailure)
         {
-            throw new CattleInformationException("invalid_input", "Ranch and cattle identifiers are required.");
+            return Result<CattleProfile>.Failure(access.DomainError);
         }
 
-        var cattle = await cattleRepository.FindByIdAsync(query.RanchId, query.CattleId, cancellationToken)
-            ?? throw new CattleInformationException("not_found", "The animal was not found in this ranch.");
-        var device = await profileIntegrationService.GetAsync(query.RanchId, query.CattleId, cancellationToken);
-        return new CattleProfile(cattle, device);
+        if (query.RanchId == Guid.Empty)
+        {
+            return Result<CattleProfile>.Failure(CattleInformationErrors.RanchIdentifierRequired);
+        }
+
+        if (query.CattleId.Value == Guid.Empty)
+        {
+            return Result<CattleProfile>.Failure(CattleInformationErrors.CattleIdentifierRequired);
+        }
+
+        var cattle = await cattles.FindByIdAsync(query.RanchId, query.CattleId, cancellationToken);
+        if (cattle is null)
+        {
+            return Result<CattleProfile>.Failure(CattleInformationErrors.CattleNotFound);
+        }
+
+        var device = await profileIntegrationService.GetAsync(query.RanchId, query.CattleId.Value, cancellationToken);
+        return Result<CattleProfile>.Success(new CattleProfile(cattle, device));
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Cattle>> HandleAsync(SearchCattleQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<Cattle>>> HandleAsync(SearchCattleQuery query, CancellationToken cancellationToken)
     {
-        await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);
-        if (query.RanchId == Guid.Empty || query.Page < 1 || query.PageSize is < 1 or > 100
-            || (long)(query.Page - 1) * query.PageSize > int.MaxValue
-            || query.LotId == Guid.Empty || (query.Status.HasValue && !Enum.IsDefined(query.Status.Value)))
+        var access = await accessService.EnsureReadAccessAsync(query.RanchId, cancellationToken);
+        if (access.IsFailure)
         {
-            throw new CattleInformationException("invalid_input", "The search filters or pagination are invalid.");
+            return Result<IReadOnlyList<Cattle>>.Failure(access.DomainError);
         }
 
-        return await cattleRepository.SearchAsync(query, cancellationToken);
+        if (query.RanchId == Guid.Empty || query.Page < 1 || query.PageSize is < 1 or > 100
+            || (long)(query.Page - 1) * query.PageSize > int.MaxValue
+            || query.LotId?.Value == Guid.Empty
+            || (query.Status.HasValue && !Enum.IsDefined(query.Status.Value))
+            || (!string.IsNullOrWhiteSpace(query.EarTag) && EarTag.Create(query.EarTag).IsFailure))
+        {
+            return Result<IReadOnlyList<Cattle>>.Failure(CattleInformationErrors.InvalidSearch);
+        }
+
+        return Result<IReadOnlyList<Cattle>>.Success(await cattles.SearchAsync(query, cancellationToken));
     }
 }

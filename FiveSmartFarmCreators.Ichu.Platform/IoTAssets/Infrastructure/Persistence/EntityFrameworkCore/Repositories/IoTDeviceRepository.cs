@@ -13,12 +13,12 @@ public class IoTDeviceRepository(AppDbContext context) : IIoTDeviceRepository
         await context.Set<IoTDevice>().AddAsync(device, cancellationToken);
     }
 
-    public Task<IoTDevice?> FindByIdAsync(Guid ranchId, Guid deviceId, CancellationToken cancellationToken)
+    public Task<IoTDevice?> FindByIdAsync(Guid ranchId, DeviceId deviceId, CancellationToken cancellationToken)
     {
         return Devices().FirstOrDefaultAsync(d => d.RanchId == ranchId && d.Id == deviceId, cancellationToken);
     }
 
-    public Task<IoTDevice?> FindByIdAsNoTrackingAsync(Guid ranchId, Guid deviceId, CancellationToken cancellationToken)
+    public Task<IoTDevice?> FindByIdAsNoTrackingAsync(Guid ranchId, DeviceId deviceId, CancellationToken cancellationToken)
     {
         return Devices().AsNoTracking().FirstOrDefaultAsync(d => d.RanchId == ranchId && d.Id == deviceId, cancellationToken);
     }

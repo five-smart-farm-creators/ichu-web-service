@@ -5,12 +5,16 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.Queries;
+using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Acl;
 
+/// <summary>
+///     Serves device facts to other contexts behind the caller's ranch access, as snapshots that expose plain identifiers.
+/// </summary>
 public class IoTAssetsContextFacade(
     IDeviceCommandService deviceCommandService,
     IDeviceQueryService deviceQueryService,
@@ -46,7 +50,7 @@ public class IoTAssetsContextFacade(
             return Result<DeviceAssignmentSnapshot?>.Failure(IoTAssetsErrors.InvalidInput);
         }
 
-        var result = await deviceQueryService.HandleAsync(new GetDeviceByIdQuery(ranchId, deviceId), cancellationToken);
+        var result = await deviceQueryService.HandleAsync(new GetDeviceByIdQuery(ranchId, new DeviceId(deviceId)), cancellationToken);
         if (result.IsFailure)
         {
             return Result<DeviceAssignmentSnapshot?>.Failure(result.DomainError);
@@ -66,7 +70,7 @@ public class IoTAssetsContextFacade(
         }
 
         var assignments = result.Value!.SelectMany(d => d.Assignments).Where(a => a.IsOpen())
-            .OrderBy(a => a.StartedAt).ThenBy(a => a.Id).Select(ToSnapshot).ToArray();
+            .OrderBy(a => a.StartedAt).ThenBy(a => a.Id.Value).Select(ToSnapshot).ToArray();
         return Result<IReadOnlyList<DeviceAssignmentSnapshot>>.Success(assignments);
     }
 
@@ -74,14 +78,14 @@ public class IoTAssetsContextFacade(
         CancellationToken cancellationToken)
     {
         var result = await waterTroughQueryService.HandleAsync(
-            new GetWaterTroughByIdQuery(ranchId, waterTroughId), cancellationToken);
+            new GetWaterTroughByIdQuery(ranchId, new WaterTroughId(waterTroughId)), cancellationToken);
         if (result.IsFailure)
         {
             return Result<WaterTroughConfiguration>.Failure(result.DomainError);
         }
 
         var trough = result.Value!;
-        return Result<WaterTroughConfiguration>.Success(new WaterTroughConfiguration(trough.Id, trough.RanchId,
+        return Result<WaterTroughConfiguration>.Success(new WaterTroughConfiguration(trough.Id.Value, trough.RanchId,
             trough.Name, trough.LotId, trough.TemperatureRange?.MinimumCelsius, trough.TemperatureRange?.MaximumCelsius,
             trough.Version));
     }
@@ -90,7 +94,7 @@ public class IoTAssetsContextFacade(
         DateTimeOffset receivedAt, int? batteryPercentage, CancellationToken cancellationToken)
     {
         var result = await deviceCommandService.HandleAsync(new RegisterDeviceCommunicationCommand(
-            ranchId, deviceId, communicatedAt, receivedAt, batteryPercentage), cancellationToken);
+            ranchId, new DeviceId(deviceId), communicatedAt, receivedAt, batteryPercentage), cancellationToken);
         return result.IsSuccess ? Result.Success() : Result.Failure(result.DomainError);
     }
 
@@ -102,6 +106,6 @@ public class IoTAssetsContextFacade(
     }
 
     private static DeviceAssignmentSnapshot ToSnapshot(DeviceAssignment assignment) =>
-        new(assignment.Id, assignment.DeviceId, assignment.RanchId, assignment.TargetId,
+        new(assignment.Id.Value, assignment.DeviceId.Value, assignment.RanchId, assignment.TargetId,
             assignment.TargetType.ToString(), assignment.StartedAt, assignment.EndedAt);
 }

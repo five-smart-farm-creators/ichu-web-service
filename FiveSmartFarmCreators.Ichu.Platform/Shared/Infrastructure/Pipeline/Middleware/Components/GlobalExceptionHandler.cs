@@ -27,10 +27,10 @@ public class GlobalExceptionHandler(
             statusCode = StatusCodes.Status409Conflict;
             title = "The operation was cancelled.";
         }
-        else if (IsUniqueViolation(exception))
+        else if (IsConcurrentModification(exception))
         {
             // A concurrent request stored the same resource first, so a retry reads the stored state.
-            logger.LogWarning(exception, "A concurrent request stored the same resource first.");
+            logger.LogWarning(exception, "A concurrent request changed the same resource first.");
             statusCode = StatusCodes.Status409Conflict;
             title = localizer["ConcurrentModification"].Value;
         }
@@ -55,6 +55,7 @@ public class GlobalExceptionHandler(
         });
     }
 
-    private static bool IsUniqueViolation(Exception exception) =>
-        exception is DbUpdateException { InnerException: PostgresException { SqlState: UniqueViolationSqlState } };
+    private static bool IsConcurrentModification(Exception exception) =>
+        exception is DbUpdateConcurrencyException
+        || exception is DbUpdateException { InnerException: PostgresException { SqlState: UniqueViolationSqlState } };
 }

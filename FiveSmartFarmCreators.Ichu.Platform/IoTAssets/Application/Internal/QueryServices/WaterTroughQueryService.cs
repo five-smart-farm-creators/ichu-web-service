@@ -13,7 +13,7 @@ public class WaterTroughQueryService(IWaterTroughRepository waterTroughRepositor
 {
     public async Task<Result<WaterTrough>> HandleAsync(GetWaterTroughByIdQuery query, CancellationToken cancellationToken)
     {
-        if (query.RanchId == Guid.Empty || query.WaterTroughId == Guid.Empty)
+        if (query.RanchId == Guid.Empty || query.WaterTroughId.Value == Guid.Empty)
         {
             return Result<WaterTrough>.Failure(IoTAssetsErrors.InvalidInput);
         }

@@ -10,7 +10,7 @@ public static class DeviceResourceFromEntityAssembler
         var currentAssignment = device.Assignments.SingleOrDefault(a => a.IsOpen());
         bool? isBatteryLow = device.Battery is not null && lowBatteryThreshold is int threshold
             ? device.Battery.IsLow(threshold) : null;
-        return new DeviceResource(device.Id, device.RanchId, device.Serial.Value, device.Type.ToString(),
+        return new DeviceResource(device.Id.Value, device.RanchId, device.Serial.Value, device.Type.ToString(),
             device.Status.ToString(), device.IsAvailable(), device.GetCommunicationStatus(now).ToString(),
             device.LastCommunicationAt, device.LastCommunicationReceivedAt, device.Battery?.Percentage,
             device.BatteryRecordedAt, isBatteryLow, device.FirmwareVersion, device.Version,

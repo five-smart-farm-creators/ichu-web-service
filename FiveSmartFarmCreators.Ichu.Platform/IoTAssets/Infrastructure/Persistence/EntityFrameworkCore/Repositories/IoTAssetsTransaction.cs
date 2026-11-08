@@ -36,10 +36,6 @@ public class IoTAssetsTransaction(AppDbContext context, IUnitOfWork unitOfWork) 
             committed = true;
             return result;
         }
-        catch (IoTAssetsException exception)
-        {
-            return Result<T>.Failure(exception.Error);
-        }
         catch (DbUpdateConcurrencyException)
         {
             return Result<T>.Failure(IoTAssetsErrors.Conflict);

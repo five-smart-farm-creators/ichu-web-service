@@ -6,6 +6,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest.Transfor
 public static class DeviceAssignmentResourceFromEntityAssembler
 {
     public static DeviceAssignmentResource ToResourceFromEntity(DeviceAssignment assignment) =>
-        new(assignment.Id, assignment.DeviceId, assignment.RanchId, assignment.TargetId, assignment.TargetType.ToString(),
+        new(assignment.Id.Value, assignment.DeviceId.Value, assignment.RanchId, assignment.TargetId, assignment.TargetType.ToString(),
             assignment.StartedAt, assignment.EndedAt, assignment.ReleaseReason);
 }
