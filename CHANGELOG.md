@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared: unique-constraint violations and concurrent updates are answered with 409 Conflict instead of 500 Internal Server Error.
 - Cattle Information: business failures are returned as results with stable error codes instead of exceptions, and duplicate ear tags report the animal that holds them.
 - IoT Assets: business failures are returned as results with stable error codes, and problem responses carry the localized message.
+- Operations and Monitoring: business failures are returned as results with stable error codes instead of exceptions, and problem responses carry the localized message and the error code.
+- Operations and Monitoring: aggregates share the common aggregate root, the context identifiers are strongly typed, and read-only queries no longer track entities, without any schema change.
+- Operations and Monitoring: messages are available in English and Spanish, and the code documents only the rules and reasons behind it.
 
 ### Removed
 

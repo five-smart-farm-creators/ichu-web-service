@@ -17,7 +17,14 @@ using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Interfaces.Rest;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -31,8 +38,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FiveSmartFarmCreators.Ichu.Platform.Tests.Shared.Infrastructure.Configuration;
 
 /// <summary>
-///     Builds the host registrations of Program.cs without a database connection and proves that every Cattle and IoT
-///     service and controller can be created, so a missing port fails in the test instead of at startup.
+///     Builds the host registrations of Program.cs without a database connection and proves that every module service and
+///     controller can be created, so a missing port fails in the test instead of at startup.
 /// </summary>
 public class DependencyInjectionCompositionTests
 {
@@ -68,6 +75,40 @@ public class DependencyInjectionCompositionTests
     }
 
     [Fact]
+    public void EveryOperationsMonitoringServiceResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<ITelemetryReadingRepository>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringAlertRepository>());
+        Assert.NotNull(services.GetRequiredService<IGeofenceRepository>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringThresholdRepository>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringRuleSetRepository>());
+        Assert.NotNull(services.GetRequiredService<ILivestockOperationRepository>());
+        Assert.NotNull(services.GetRequiredService<IOperationsMonitoringUnitOfWork>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringRuleRevisionService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringAccessControl>());
+        Assert.NotNull(services.GetRequiredService<IEdgeGatewayAuthenticator>());
+        Assert.NotNull(services.GetRequiredService<ICattleLookup>());
+        Assert.NotNull(services.GetRequiredService<IDeviceAttributionLookup>());
+        Assert.NotNull(services.GetRequiredService<ITelemetryReadingCommandService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringAlertCommandService>());
+        Assert.NotNull(services.GetRequiredService<IEdgeSynchronizationCommandService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringThresholdCommandService>());
+        Assert.NotNull(services.GetRequiredService<IGeofenceCommandService>());
+        Assert.NotNull(services.GetRequiredService<ILivestockOperationCommandService>());
+        Assert.NotNull(services.GetRequiredService<ITelemetryReadingQueryService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringAlertQueryService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringThresholdQueryService>());
+        Assert.NotNull(services.GetRequiredService<IGeofenceQueryService>());
+        Assert.NotNull(services.GetRequiredService<IMonitoringRuleSetQueryService>());
+        Assert.NotNull(services.GetRequiredService<ILivestockOperationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IOperationsMonitoringContextFacade>());
+    }
+
+    [Fact]
     public void EveryCattleAndIoTControllerReceivesItsDependencies()
     {
         using var provider = BuildHost();
@@ -80,6 +121,21 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<DeviceAssignmentsController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<WaterTroughsController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<CattleDeactivatedEventHandler>(services));
+    }
+
+    [Fact]
+    public void EveryOperationsMonitoringControllerReceivesItsDependencies()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(ActivatorUtilities.CreateInstance<AlertsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<EdgeGatewaysController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<GeofencesController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<LivestockOperationsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<MonitoringThresholdsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<TelemetryController>(services));
     }
 
     private static ServiceProvider BuildHost()
@@ -110,6 +166,7 @@ public class DependencyInjectionCompositionTests
         services.AddIam(configuration);
         services.AddSubscriptionPlans(configuration);
         services.AddOperationsMonitoring(configuration);
+        services.AddOperationsMonitoringSimulation(configuration);
         services.AddCattleInformation();
         services.AddIoTAssets(configuration);
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
