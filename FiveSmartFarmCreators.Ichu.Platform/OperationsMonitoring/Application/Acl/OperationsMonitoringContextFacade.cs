@@ -60,6 +60,16 @@ public class OperationsMonitoringContextFacade(
             .ToList();
     }
 
+    /// <inheritdoc />
+    public async Task<ClinicalInterventionRecord?> FindClinicalInterventionAsync(Guid operationId, CancellationToken cancellationToken)
+    {
+        var operation = await operations.FindByIdAsync(new LivestockOperationId(operationId), cancellationToken);
+        return operation is null || !LivestockOperation.IsClinical(operation.Type)
+            ? null
+            : new ClinicalInterventionRecord(
+                operation.Id.Value, operation.RanchId, operation.CattleId, operation.Type.ToString(), operation.OccurredAt);
+    }
+
     private static MonitoringReadingRecord ToRecord(TelemetryReading reading) =>
         new(
             reading.ReadingId,
