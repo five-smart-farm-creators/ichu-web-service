@@ -29,6 +29,15 @@ public class GlobalExceptionHandlerTests
     }
 
     [Fact]
+    public async Task TryHandleAsync_MapsConcurrencyConflictsToConflict()
+    {
+        var (httpContext, written) = await HandleInEnglishAsync(new DbUpdateConcurrencyException("The row changed."));
+
+        Assert.Equal(StatusCodes.Status409Conflict, httpContext.Response.StatusCode);
+        Assert.Equal("The resource changed concurrently; retry the request.", written.ProblemDetails.Title);
+    }
+
+    [Fact]
     public async Task TryHandleAsync_KeepsOtherDatabaseErrorsAsInternalErrors()
     {
         var (httpContext, _) = await HandleInEnglishAsync(DatabaseError(ForeignKeyViolation));
