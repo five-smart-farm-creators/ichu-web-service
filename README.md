@@ -46,6 +46,16 @@ Create a new migration after changing a mapping with `dotnet tool restore` and `
 
 Epidemiological curves compare the observation window with the incubation period of each health condition, set in the `DashboardAnalytics:ConditionIncubationDays` section of `appsettings.json`. The shipped values (`temperature` and `activity`, 7 days each) are placeholders that the team must validate before the curves inform any decision. A condition without a configured value returns its curve with the reason that no incubation period is set.
 
+## Tests
+
+Run `dotnet test --configuration Release` from the repository root to run the unit tests and the HTTP integration tests. The integration tests need a PostgreSQL 17 server and a user environment variable named `ICHU_TEST_CONNECTION` that holds the connection string without a database, with the password written as a placeholder:
+
+```text
+Host=localhost;Port=5432;Username=postgres;Password=%ICHU_DB_PASSWORD%
+```
+
+Define `ICHU_DB_PASSWORD` as a user environment variable too, so that the password stays out of the repository and of the test output. Each run creates a database named `ichu_it_<8 hex characters>`, migrates it on startup, and drops it when the run ends. The integration tests host the API in the Testing environment and cover routing, the Firebase authentication handler with a fake identity provider, IAM access checks, controllers, EF Core persistence, and localized problem responses for every bounded context. They never reach Firebase. A test that documents a reported bug is skipped with a `Bug:` reason until the bug is fixed.
+
 
 ## Repository structure
 

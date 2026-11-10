@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Operations and Monitoring: Development seeds body temperature and activity thresholds for the seeded life stages and a geofence for the seeded lot, so that the edge raises alerts in demos. The values are placeholders, not validated clinical ranges.
+- Shared: added HTTP integration tests that run the API against a PostgreSQL database created for each test run and dropped afterwards, covering every bounded context.
+- Shared: added a test job to the Git Flow checks workflow that runs the unit and integration tests against PostgreSQL 17.
+
+### Fixed
+
+- IoT Assets: registering a device or an edge gateway, releasing a device and registering a water trough answered 500, because their request records declared validation attributes on properties; the attributes now sit on the constructor parameters, which ASP.NET Core validates.
 
 ## [0.3.0] - 2026-11-08
 
