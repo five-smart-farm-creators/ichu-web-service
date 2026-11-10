@@ -24,15 +24,15 @@ public class LivestockOperationQueryService(
             return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
-        if (cattle is null)
-        {
-            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.AnimalNotFound);
-        }
-
-        if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
+        if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
             return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
+        if (cattle is null || cattle.RanchId != query.RanchId)
+        {
+            return Result<IReadOnlyList<LivestockOperation>>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         return Result<IReadOnlyList<LivestockOperation>>.Success(

@@ -11,7 +11,7 @@ Feature: Record a health event during field work
     Then the request returns status 201
     And the response has:
       | field       | value                  |
-      | animalId    | <monitored cattle>     |
+      | cattleId    | <monitored cattle>     |
       | type        | HealthEvent            |
       | isClinical  | false                  |
       | authorId    | <manager account>      |

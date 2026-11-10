@@ -152,6 +152,27 @@ public sealed class IamApiTests(IchuApiFactory factory)
         Assert.Equal("Iam.InvalidCredentials", problem.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task DecideAdvisory_UnderAnotherRanchOfTheOwner_IsNotFound()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        using var veterinarian = factory.CreateClient(TestIdentity.Create());
+        await Arrange.RegisterVeterinarianAsync(veterinarian);
+        await Arrange.CompleteVeterinarianProfileAsync(veterinarian);
+        var advisoryId = await Arrange.RequestHerdAdvisoryAsync(veterinarian, ranchId);
+        using var otherOwner = factory.CreateClient(TestIdentity.Create());
+        var otherRanchId = await otherOwner.RegisterManagerAsync();
+
+        using var response = await otherOwner.PatchJsonAsync($"api/v1/ranches/{otherRanchId}/herd-advisories/{advisoryId}", new
+        {
+            decision = "reject"
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("Iam.AdvisoryNotFound", problem.GetProperty("code").GetString());
+    }
+
     private static object ManagerRequest() => new
     {
         role = "RanchManager",

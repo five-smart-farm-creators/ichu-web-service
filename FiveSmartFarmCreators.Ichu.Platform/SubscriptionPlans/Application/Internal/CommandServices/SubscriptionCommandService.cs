@@ -83,16 +83,17 @@ public class SubscriptionCommandService(
     /// <inheritdoc />
     public async Task<Result<Subscription>> Handle(CancelSubscriptionCommand command, CancellationToken cancellationToken)
     {
-        var subscription = await subscriptions.FindByIdAsync(command.SubscriptionId, cancellationToken);
-        if (subscription is null)
-        {
-            return Result<Subscription>.Failure(SubscriptionPlansErrors.SubscriptionNotFound);
-        }
-
-        var access = await accessService.EnsureManageAccessAsync(subscription.RanchId, cancellationToken);
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
         if (access.IsFailure)
         {
             return Result<Subscription>.Failure(access.DomainError);
+        }
+
+        // The ranch is checked before the lookup, and a subscription of another ranch is reported as missing, so identifiers cannot be probed.
+        var subscription = await subscriptions.FindByIdAsync(command.SubscriptionId, cancellationToken);
+        if (subscription is null || subscription.RanchId != command.RanchId)
+        {
+            return Result<Subscription>.Failure(SubscriptionPlansErrors.SubscriptionNotFound);
         }
 
         var cancellation = subscription.Cancel(command.Reason, clock.GetUtcNow());

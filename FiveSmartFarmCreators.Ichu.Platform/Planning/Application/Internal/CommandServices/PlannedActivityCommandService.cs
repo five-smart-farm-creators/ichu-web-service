@@ -65,16 +65,16 @@ public sealed class PlannedActivityCommandService(
     /// <inheritdoc />
     public async Task<Result<ApplicationRecord>> HandleAsync(RecordApplicationCommand command, CancellationToken cancellationToken)
     {
-        var activity = await activities.FindByIdAsync(command.ActivityId, cancellationToken);
-        if (activity is null)
-        {
-            return Result<ApplicationRecord>.Failure(PlanningErrors.ActivityNotFound);
-        }
-
-        var access = await guard.EnsureRanchAccessAsync(activity.RanchId, PlanningPermission.RecordClinicalPlanning, cancellationToken);
+        var access = await guard.EnsureRanchAccessAsync(command.RanchId, PlanningPermission.RecordClinicalPlanning, cancellationToken);
         if (access.IsFailure)
         {
             return Result<ApplicationRecord>.Failure(access.DomainError);
+        }
+
+        var activity = await activities.FindByIdAsync(command.ActivityId, cancellationToken);
+        if (activity is null || activity.RanchId != command.RanchId)
+        {
+            return Result<ApplicationRecord>.Failure(PlanningErrors.ActivityNotFound);
         }
 
         var cattle = await guard.EnsureCattleBelongsToRanchAsync(activity.RanchId, command.CattleId, cancellationToken);
@@ -103,16 +103,16 @@ public sealed class PlannedActivityCommandService(
     /// <inheritdoc />
     public async Task<Result<FollowUp>> HandleAsync(ScheduleFollowUpCommand command, CancellationToken cancellationToken)
     {
-        var activity = await activities.FindByIdAsync(command.ActivityId, cancellationToken);
-        if (activity is null)
-        {
-            return Result<FollowUp>.Failure(PlanningErrors.ActivityNotFound);
-        }
-
-        var access = await guard.EnsureRanchAccessAsync(activity.RanchId, PlanningPermission.ManagePlanning, cancellationToken);
+        var access = await guard.EnsureRanchAccessAsync(command.RanchId, PlanningPermission.ManagePlanning, cancellationToken);
         if (access.IsFailure)
         {
             return Result<FollowUp>.Failure(access.DomainError);
+        }
+
+        var activity = await activities.FindByIdAsync(command.ActivityId, cancellationToken);
+        if (activity is null || activity.RanchId != command.RanchId)
+        {
+            return Result<FollowUp>.Failure(PlanningErrors.ActivityNotFound);
         }
 
         var followUp = activity.ScheduleFollowUp(command.DueAt);

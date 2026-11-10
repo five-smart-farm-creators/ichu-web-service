@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 public record TelemetryReadingResource(
     Guid ReadingId,
     Guid DeviceId,
-    Guid? AnimalId,
+    Guid? CattleId,
     Guid GatewayId,
     string Origin,
     DateTimeOffset RecordedAt,

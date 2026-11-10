@@ -20,11 +20,11 @@ public sealed class AccountSteps(ApiScenarioContext context)
         await Arrange.RegisterVeterinarianAsync(veterinarian);
         await Arrange.CompleteVeterinarianProfileAsync(veterinarian);
         var advisoryId = await Arrange.RequestHerdAdvisoryAsync(veterinarian, context.Id("ranch"));
-        await Arrange.GrantReadAdvisoryAsync(context.Actor("manager"), advisoryId, DateTimeOffset.UtcNow.AddDays(1));
+        await Arrange.GrantReadAdvisoryAsync(context.Actor("manager"), context.Id("ranch"), advisoryId, DateTimeOffset.UtcNow.AddDays(1));
         context.Remember("veterinarian advisory", advisoryId);
     }
 
     [When("the ranch owner revokes the authorization of the veterinarian")]
     public async Task WhenOwnerRevokesVeterinarianAuthorization() =>
-        await Arrange.RevokeAdvisoryAsync(context.Actor("manager"), context.Id("veterinarian advisory"));
+        await Arrange.RevokeAdvisoryAsync(context.Actor("manager"), context.Id("ranch"), context.Id("veterinarian advisory"));
 }

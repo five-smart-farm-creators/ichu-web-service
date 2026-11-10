@@ -19,7 +19,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(39.5, threshold.GetProperty("maxValue").GetDouble());
         Assert.Equal("Warning", threshold.GetProperty("severity").GetString());
         Assert.Equal(1, threshold.GetProperty("revision").GetInt64());
-        using var response = await client.GetAsync($"api/v1/monitoring-thresholds?ranchId={ranchId}");
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds");
         var listed = Assert.Single((await response.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
         Assert.Equal("MilkingCow", listed.GetProperty("lifeStage").GetString());
     }
@@ -30,9 +30,8 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
 
-        using var response = await client.PutJsonAsync("api/v1/monitoring-thresholds", new
+        using var response = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", new
         {
-            ranchId,
             lifeStage = "MilkingCow",
             metric = "BodyTemperature",
             minValue = 39.5,
@@ -52,7 +51,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var lot = await Arrange.CreateLotAsync(client, ranchId, "North pasture");
         var lotId = lot.GetProperty("id").GetGuid();
 
-        using var response = await client.PostJsonAsync("api/v1/geofences", GeofenceRequest(ranchId, lotId, "North pasture boundary"));
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/geofences", GeofenceRequest(lotId, "North pasture boundary"));
 
         var geofence = await response.ReadJsonAsync(HttpStatusCode.Created);
         Assert.Equal(ranchId, geofence.GetProperty("ranchId").GetGuid());
@@ -70,9 +69,9 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
         var lotId = (await Arrange.CreateLotAsync(client, ranchId, "North pasture")).GetProperty("id").GetGuid();
-        await client.PostJsonAsync("api/v1/geofences", GeofenceRequest(ranchId, lotId, "First boundary"));
+        await client.PostJsonAsync($"api/v1/ranches/{ranchId}/geofences", GeofenceRequest(lotId, "First boundary"));
 
-        using var response = await client.PostJsonAsync("api/v1/geofences", GeofenceRequest(ranchId, lotId, "Second boundary"));
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/geofences", GeofenceRequest(lotId, "Second boundary"));
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.Conflict);
         Assert.Equal("OperationsMonitoring.GeofenceAlreadyDefined", problem.GetProperty("code").GetString());
@@ -85,9 +84,8 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         var lotId = (await Arrange.CreateLotAsync(client, ranchId, "North pasture")).GetProperty("id").GetGuid();
 
-        using var response = await client.PostJsonAsync("api/v1/geofences", new
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/geofences", new
         {
-            ranchId,
             lotId,
             name = "Degenerate boundary",
             toleranceMeters = 10,
@@ -107,18 +105,18 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-0300", lifeStage: 3)).GetProperty("id").GetGuid();
         var occurredAt = DateTimeOffset.UtcNow.AddHours(-1);
 
-        using var fieldEvent = await client.PostJsonAsync("api/v1/field-events", new
+        using var fieldEvent = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/field-events", new
         {
             operationId = Guid.NewGuid(),
-            animalId = cattleId,
+            cattleId,
             type = "HealthEvent",
             occurredAt,
             observation = "Mild lameness"
         });
-        using var intervention = await client.PostJsonAsync("api/v1/clinical-interventions", new
+        using var intervention = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/clinical-interventions", new
         {
             operationId = Guid.NewGuid(),
-            animalId = cattleId,
+            cattleId,
             type = "Vaccination",
             occurredAt,
             product = "Foot-and-mouth vaccine",
@@ -131,7 +129,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.True(recordedIntervention.GetProperty("isClinical").GetBoolean());
         Assert.Equal("Foot-and-mouth vaccine", recordedIntervention.GetProperty("product").GetString());
         using var history = await client.GetAsync(
-            $"api/v1/animals/{cattleId}/livestock-operations?from={(occurredAt.AddDays(-1)).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
+            $"api/v1/ranches/{ranchId}/cattle/{cattleId}/livestock-operations?from={(occurredAt.AddDays(-1)).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
         var operations = await history.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(2, operations.GetArrayLength());
     }
@@ -145,14 +143,14 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var request = new
         {
             operationId = Guid.NewGuid(),
-            animalId = cattleId,
+            cattleId,
             type = "Birth",
             occurredAt = DateTimeOffset.UtcNow.AddHours(-2)
         };
-        using var first = await client.PostJsonAsync("api/v1/field-events", request);
+        using var first = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/field-events", request);
         await first.ReadBodyAsync(HttpStatusCode.Created);
 
-        using var retried = await client.PostJsonAsync("api/v1/field-events", request);
+        using var retried = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/field-events", request);
 
         await retried.ReadBodyAsync(HttpStatusCode.OK);
     }
@@ -164,10 +162,10 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-0302", lifeStage: 3)).GetProperty("id").GetGuid();
 
-        using var response = await client.PostJsonAsync("api/v1/field-events", new
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/field-events", new
         {
             operationId = Guid.NewGuid(),
-            animalId = cattleId,
+            cattleId,
             type = "Treatment",
             occurredAt = DateTimeOffset.UtcNow.AddHours(-1)
         });
@@ -183,10 +181,10 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-0303", lifeStage: 3)).GetProperty("id").GetGuid();
 
-        using var response = await client.GetAsync($"api/v1/animals/{cattleId}/telemetry/latest");
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/cattle/{cattleId}/telemetry/latest");
 
         var latest = await response.ReadJsonAsync(HttpStatusCode.OK);
-        Assert.Equal(cattleId, latest.GetProperty("animalId").GetGuid());
+        Assert.Equal(cattleId, latest.GetProperty("cattleId").GetGuid());
         Assert.Equal("Unavailable", latest.GetProperty("bodyTemperature").GetProperty("status").GetString());
         Assert.Equal("Unavailable", latest.GetProperty("lastKnownPosition").GetProperty("status").GetString());
     }
@@ -199,7 +197,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-0304", lifeStage: 3)).GetProperty("id").GetGuid();
 
         using var response = await client.GetAsync(
-            $"api/v1/animals/{cattleId}/telemetry?from={DateTimeOffset.UtcNow.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.ToQueryValue()}");
+            $"api/v1/ranches/{ranchId}/cattle/{cattleId}/telemetry?from={DateTimeOffset.UtcNow.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.ToQueryValue()}");
 
         var history = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(0, history.GetProperty("totalCount").GetInt32());
@@ -212,7 +210,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
 
-        using var response = await client.GetAsync($"api/v1/alerts?ranchId={ranchId}");
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/alerts");
 
         var page = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(0, page.GetProperty("totalCount").GetInt32());
@@ -223,9 +221,9 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
     public async Task AcknowledgeAlert_WhenAlertDoesNotExist_ReturnsNotFound()
     {
         using var client = factory.CreateClient(TestIdentity.Create());
-        await client.RegisterManagerAsync();
+        var ranchId = await client.RegisterManagerAsync();
 
-        using var response = await client.PatchJsonAsync($"api/v1/alerts/{Guid.NewGuid()}", new
+        using var response = await client.PatchJsonAsync($"api/v1/ranches/{ranchId}/alerts/{Guid.NewGuid()}", new
         {
             status = "Acknowledged",
             finding = "Checked",
@@ -266,7 +264,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var monitored = await MonitorCattleAsync(client);
         await Arrange.ConfigureFeverThresholdAsync(client, monitored.RanchId);
         var lotId = (await Arrange.CreateLotAsync(client, monitored.RanchId, "North pasture")).GetProperty("id").GetGuid();
-        await client.PostJsonAsync("api/v1/geofences", GeofenceRequest(monitored.RanchId, lotId, "North pasture boundary"));
+        await client.PostJsonAsync($"api/v1/ranches/{monitored.RanchId}/geofences", GeofenceRequest(lotId, "North pasture boundary"));
 
         using var response = await client.GetWithGatewayKeyAsync(
             $"api/v1/edge-gateways/{monitored.GatewayId}/monitoring-rules?afterRevision=0", monitored.GatewayKey);
@@ -312,10 +310,10 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal("Accepted", entries[0].GetProperty("status").GetString());
         Assert.Equal("Alert", entries[1].GetProperty("kind").GetString());
         Assert.Equal("Accepted", entries[1].GetProperty("status").GetString());
-        using var alerts = await client.GetAsync($"api/v1/alerts?ranchId={monitored.RanchId}");
+        using var alerts = await client.GetAsync($"api/v1/ranches/{monitored.RanchId}/alerts");
         var alert = Assert.Single((await alerts.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("items").EnumerateArray());
         Assert.Equal(alertId, alert.GetProperty("alertId").GetGuid());
-        Assert.Equal(monitored.CattleId, alert.GetProperty("animalId").GetGuid());
+        Assert.Equal(monitored.CattleId, alert.GetProperty("cattleId").GetGuid());
         Assert.Equal("Pending", alert.GetProperty("status").GetString());
         Assert.Equal(40.2, alert.GetProperty("detectedValue").GetDouble());
         Assert.Equal(39.5, alert.GetProperty("thresholdMaxValue").GetDouble());
@@ -372,11 +370,11 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
             expectedVersion = 1
         };
 
-        using var first = await client.PatchJsonAsync($"api/v1/alerts/{alertId}", acknowledgement);
+        using var first = await client.PatchJsonAsync($"api/v1/ranches/{monitored.RanchId}/alerts/{alertId}", acknowledgement);
         var acknowledged = await first.ReadJsonAsync(HttpStatusCode.OK);
-        using var retried = await client.PatchJsonAsync($"api/v1/alerts/{alertId}", acknowledgement);
+        using var retried = await client.PatchJsonAsync($"api/v1/ranches/{monitored.RanchId}/alerts/{alertId}", acknowledgement);
         await retried.ReadBodyAsync(HttpStatusCode.OK);
-        using var stale = await client.PatchJsonAsync($"api/v1/alerts/{alertId}", new
+        using var stale = await client.PatchJsonAsync($"api/v1/ranches/{monitored.RanchId}/alerts/{alertId}", new
         {
             status = "Acknowledged",
             finding = "A different finding",
@@ -401,7 +399,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var readingId = Guid.NewGuid();
         await Arrange.SynchronizeReadingAsync(client, monitored.GatewayKey, monitored.DeviceId, readingId, 38.6, DateTimeOffset.UtcNow);
 
-        using var response = await client.GetAsync($"api/v1/animals/{monitored.CattleId}/telemetry/latest");
+        using var response = await client.GetAsync($"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/telemetry/latest");
 
         var latest = await response.ReadJsonAsync(HttpStatusCode.OK);
         var temperature = latest.GetProperty("bodyTemperature");
@@ -421,7 +419,7 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         await Arrange.SynchronizeReadingAsync(client, monitored.GatewayKey, monitored.DeviceId, readingId, 38.6, recordedAt);
 
         using var response = await client.GetAsync(
-            $"api/v1/animals/{monitored.CattleId}/telemetry?from={recordedAt.AddHours(-1).ToQueryValue()}&to={recordedAt.AddHours(1).ToQueryValue()}");
+            $"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/telemetry?from={recordedAt.AddHours(-1).ToQueryValue()}&to={recordedAt.AddHours(1).ToQueryValue()}");
 
         var history = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(1, history.GetProperty("totalCount").GetInt32());
@@ -429,6 +427,44 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(readingId, reading.GetProperty("readingId").GetGuid());
         Assert.Equal(38.6, reading.GetProperty("bodyTemperature").GetProperty("value").GetDouble());
         Assert.Equal("Valid", reading.GetProperty("bodyTemperature").GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task AcknowledgeAlert_OfAnotherRanch_IsNotFound()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(owner);
+        await Arrange.ConfigureFeverThresholdAsync(owner, monitored.RanchId);
+        var alertId = Guid.NewGuid();
+        await Arrange.SynchronizeFeverAsync(owner, monitored.GatewayKey, monitored.DeviceId, Guid.NewGuid(), alertId, 40.2,
+            DateTimeOffset.UtcNow);
+        using var other = factory.CreateClient(TestIdentity.Create());
+        var otherRanchId = await other.RegisterManagerAsync();
+
+        using var response = await other.PatchJsonAsync($"api/v1/ranches/{otherRanchId}/alerts/{alertId}", new
+        {
+            status = "Acknowledged",
+            finding = "Checked",
+            operationId = Guid.NewGuid(),
+            expectedVersion = 1
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("OperationsMonitoring.AlertNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task LatestTelemetry_OfCattleOfAnotherRanch_IsNotFound()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(owner);
+        using var other = factory.CreateClient(TestIdentity.Create());
+        var otherRanchId = await other.RegisterManagerAsync();
+
+        using var response = await other.GetAsync($"api/v1/ranches/{otherRanchId}/cattle/{monitored.CattleId}/telemetry/latest");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("OperationsMonitoring.AnimalNotFound", problem.GetProperty("code").GetString());
     }
 
     /// <summary>
@@ -446,9 +482,8 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         return new MonitoredRanch(ranchId, cattleId, deviceId, gateway.GetProperty("id").GetGuid(), gateway.GetProperty("key").GetString()!);
     }
 
-    private static object GeofenceRequest(Guid ranchId, Guid lotId, string name) => new
+    private static object GeofenceRequest(Guid lotId, string name) => new
     {
-        ranchId,
         lotId,
         name,
         toleranceMeters = 10,

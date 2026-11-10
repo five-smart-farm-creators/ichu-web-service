@@ -6,6 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 ///     Replaces the name, tolerance, severity and boundary of an existing geofence.
 /// </summary>
 public record RedefineGeofenceCommand(
+    Guid RanchId,
     GeofenceId GeofenceId,
     string Name,
     int ToleranceMeters,

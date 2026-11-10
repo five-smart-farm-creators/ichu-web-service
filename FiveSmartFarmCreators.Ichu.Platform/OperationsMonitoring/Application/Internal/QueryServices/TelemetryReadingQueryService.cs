@@ -34,15 +34,16 @@ public class TelemetryReadingQueryService(
             return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
-        if (cattle is null)
-        {
-            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.AnimalNotFound);
-        }
-
-        if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
+        if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
             return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        // An animal of another ranch is reported as missing, so identifiers cannot be probed.
+        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
+        if (cattle is null || cattle.RanchId != query.RanchId)
+        {
+            return Result<TelemetryHistory>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         var skip = (query.Page - 1) * query.PageSize;
@@ -61,15 +62,15 @@ public class TelemetryReadingQueryService(
             return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
-        if (cattle is null)
-        {
-            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.AnimalNotFound);
-        }
-
-        if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
+        if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
         {
             return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        var cattle = await cattleLookup.FindAsync(query.AnimalId, cancellationToken);
+        if (cattle is null || cattle.RanchId != query.RanchId)
+        {
+            return Result<LatestTelemetry>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
         var latest = new LatestTelemetry(

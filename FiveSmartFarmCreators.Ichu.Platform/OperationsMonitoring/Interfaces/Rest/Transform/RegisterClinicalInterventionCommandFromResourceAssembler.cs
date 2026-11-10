@@ -8,9 +8,9 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class RegisterClinicalInterventionCommandFromResourceAssembler
 {
-    public static Result<RegisterLivestockOperationCommand> ToCommandFromResource(RegisterLivestockOperationResource resource)
+    public static Result<RegisterLivestockOperationCommand> ToCommandFromResource(Guid ranchId, RegisterLivestockOperationResource resource)
     {
-        var command = RegisterLivestockOperationCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = RegisterLivestockOperationCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         return command.Type is { } type && !LivestockOperation.IsClinical(type)
             ? Result<RegisterLivestockOperationCommand>.Failure(OperationsMonitoringErrors.ClinicalInterventionTypeOnly)
             : Result<RegisterLivestockOperationCommand>.Success(command);

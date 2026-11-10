@@ -15,7 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 ///     Configures and lists the normal ranges that ranches set for each life stage and metric.
 /// </summary>
 [ApiController]
-[Route("api/v1/monitoring-thresholds")]
+[Route("api/v1/ranches/{ranchId:guid}/monitoring-thresholds")]
 [Authorize]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Monitoring Thresholds")]
@@ -32,9 +32,9 @@ public class MonitoringThresholdsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Configure(ConfigureThresholdResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Configure(Guid ranchId, ConfigureThresholdResource resource, CancellationToken cancellationToken)
     {
-        var command = ConfigureThresholdCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = ConfigureThresholdCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -51,7 +51,7 @@ public class MonitoringThresholdsController(
     [ProducesResponseType(typeof(IReadOnlyList<ThresholdResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByRanch(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await thresholdQueryService.Handle(new GetThresholdsByRanchQuery(ranchId), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,

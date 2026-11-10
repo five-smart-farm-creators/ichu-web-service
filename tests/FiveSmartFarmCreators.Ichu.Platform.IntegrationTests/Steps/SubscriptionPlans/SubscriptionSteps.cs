@@ -20,9 +20,8 @@ public sealed class SubscriptionSteps(ApiScenarioContext context)
 
     [When("the ranch manager requests a subscription to the {string} plan for the head count {string} with terms {string} and an expected total of {float}")]
     public async Task WhenManagerRequestsSubscription(string planName, string headCount, string terms, double expectedTotal) =>
-        await context.RecordAsync(context.Actor("manager").PostJsonAsync("api/v1/subscriptions", new
+        await context.RecordAsync(context.Actor("manager").PostJsonAsync($"api/v1/ranches/{context.Id("ranch")}/subscriptions", new
         {
-            ranchId = context.Id("ranch"),
             planId = context.Id(planName),
             headCount = int.Parse(headCount, CultureInfo.InvariantCulture),
             expectedTotal = (decimal)expectedTotal,
@@ -33,7 +32,7 @@ public sealed class SubscriptionSteps(ApiScenarioContext context)
 
     [When("the ranch manager reads the subscription of the ranch")]
     public async Task WhenManagerReadsSubscription() =>
-        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/subscriptions?ranchId={context.Id("ranch")}"));
+        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/ranches/{context.Id("ranch")}/subscriptions"));
 
     [Then("the plan {string} has:")]
     public void ThenPlanHas(string planName, DataTable table) =>

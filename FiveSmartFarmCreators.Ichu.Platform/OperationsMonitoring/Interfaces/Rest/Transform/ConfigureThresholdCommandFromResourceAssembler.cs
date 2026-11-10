@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class ConfigureThresholdCommandFromResourceAssembler
 {
-    public static Result<ConfigureThresholdCommand> ToCommandFromResource(ConfigureThresholdResource resource)
+    public static Result<ConfigureThresholdCommand> ToCommandFromResource(Guid ranchId, ConfigureThresholdResource resource)
     {
         if (resource.MinValue is not { } min || resource.MaxValue is not { } max)
         {
@@ -29,6 +29,6 @@ public static class ConfigureThresholdCommandFromResourceAssembler
         return range.IsFailure
             ? Result<ConfigureThresholdCommand>.Failure(range.DomainError)
             : Result<ConfigureThresholdCommand>.Success(new ConfigureThresholdCommand(
-                resource.RanchId, resource.LifeStage ?? string.Empty, metric, range.Value!, severity));
+                ranchId, resource.LifeStage ?? string.Empty, metric, range.Value!, severity));
     }
 }

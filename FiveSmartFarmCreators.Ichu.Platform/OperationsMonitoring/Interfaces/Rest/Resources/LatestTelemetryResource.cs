@@ -1,7 +1,7 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest.Resources;
 
 public record LatestTelemetryResource(
-    Guid AnimalId,
+    Guid CattleId,
     DateTimeOffset EvaluatedAt,
     DateTimeOffset? LastReadingRecordedAt,
     string Origin,

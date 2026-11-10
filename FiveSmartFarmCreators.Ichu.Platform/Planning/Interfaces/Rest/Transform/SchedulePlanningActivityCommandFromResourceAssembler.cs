@@ -9,9 +9,9 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform
 /// </summary>
 public static class SchedulePlanningActivityCommandFromResourceAssembler
 {
-    public static SchedulePlanningActivityCommand ToCommandFromResource(SchedulePlanningActivityResource resource)
+    public static SchedulePlanningActivityCommand ToCommandFromResource(Guid ranchId, SchedulePlanningActivityResource resource)
     {
         PlanningCampaignId? campaignId = resource.CampaignId is { } value ? new PlanningCampaignId(value) : null;
-        return new SchedulePlanningActivityCommand(resource.RanchId, campaignId, resource.CattleId, resource.Title, resource.ScheduledAt);
+        return new SchedulePlanningActivityCommand(ranchId, campaignId, resource.CattleId, resource.Title, resource.ScheduledAt);
     }
 }

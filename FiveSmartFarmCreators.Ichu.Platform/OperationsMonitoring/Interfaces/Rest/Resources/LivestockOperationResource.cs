@@ -3,7 +3,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 public record LivestockOperationResource(
     Guid OperationId,
     Guid RanchId,
-    Guid AnimalId,
+    Guid CattleId,
     string Type,
     bool IsClinical,
     DateTimeOffset OccurredAt,

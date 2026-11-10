@@ -15,7 +15,7 @@ Feature: Receive an alert for a health anomaly
     When the ranch manager lists the alerts of the ranch
     Then the alert "fever alert" has:
       | field             | value              |
-      | animalId          | <monitored cattle> |
+      | cattleId          | <monitored cattle> |
       | type              | Temperature        |
       | status            | Pending            |
       | detectedValue     | 40.2               |

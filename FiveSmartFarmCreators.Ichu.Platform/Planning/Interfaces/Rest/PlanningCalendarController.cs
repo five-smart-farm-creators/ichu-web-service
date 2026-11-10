@@ -15,7 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/calendar")]
+[Route("api/v1/ranches/{ranchId:guid}/calendar")]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class PlanningCalendarController(
     IPlannedActivityQueryService queryService,
@@ -28,7 +28,7 @@ public sealed class PlanningCalendarController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetCalendarAsync(
-        [FromQuery] Guid ranchId,
+        Guid ranchId,
         [FromQuery] DateTimeOffset from,
         [FromQuery] DateTimeOffset to,
         CancellationToken cancellationToken)

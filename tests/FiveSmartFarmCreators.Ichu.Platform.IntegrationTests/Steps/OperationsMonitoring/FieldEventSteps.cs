@@ -14,10 +14,10 @@ public sealed class FieldEventSteps(ApiScenarioContext context)
     public async Task WhenManagerRecordsFieldEvent(string alias, string type, string cattleAlias, string observation)
     {
         var operationId = RememberOperation(alias);
-        await context.RecordAsync(context.Actor("manager").PostJsonAsync("api/v1/field-events", new
+        await context.RecordAsync(context.Actor("manager").PostJsonAsync($"api/v1/ranches/{context.Id("ranch")}/field-events", new
         {
             operationId,
-            animalId = context.Id(cattleAlias),
+            cattleId = context.Id(cattleAlias),
             type,
             occurredAt = context.Time(alias),
             observation
@@ -33,10 +33,10 @@ public sealed class FieldEventSteps(ApiScenarioContext context)
             "type" => ((Guid?)context.Id("monitored cattle"), (string?)null),
             _ => throw new ArgumentOutOfRangeException(nameof(missing), missing, "Only the cattle or the type can be omitted.")
         };
-        await context.RecordAsync(context.Actor("manager").PostJsonAsync("api/v1/field-events", new
+        await context.RecordAsync(context.Actor("manager").PostJsonAsync($"api/v1/ranches/{context.Id("ranch")}/field-events", new
         {
             operationId = Guid.NewGuid(),
-            animalId = cattleId,
+            cattleId,
             type,
             occurredAt = MonitoringTime.Normalize(DateTimeOffset.UtcNow.AddHours(-1))
         }));
@@ -46,10 +46,10 @@ public sealed class FieldEventSteps(ApiScenarioContext context)
     public async Task WhenManagerRecordsClinicalIntervention(string alias, string type, string cattleAlias, string product, string dose)
     {
         var operationId = RememberOperation(alias);
-        await context.RecordAsync(context.Actor("manager").PostJsonAsync("api/v1/clinical-interventions", new
+        await context.RecordAsync(context.Actor("manager").PostJsonAsync($"api/v1/ranches/{context.Id("ranch")}/clinical-interventions", new
         {
             operationId,
-            animalId = context.Id(cattleAlias),
+            cattleId = context.Id(cattleAlias),
             type,
             occurredAt = context.Time(alias),
             product,
@@ -78,5 +78,5 @@ public sealed class FieldEventSteps(ApiScenarioContext context)
 
     private async Task RequestOperationsAsync(string actor, string cattleAlias, int days) =>
         await context.RecordAsync(context.Actor(actor)
-            .GetAsync($"api/v1/animals/{context.Id(cattleAlias)}/livestock-operations?{ApiScenarioContext.LastDaysQuery(days)}"));
+            .GetAsync($"api/v1/ranches/{context.Id("ranch")}/cattle/{context.Id(cattleAlias)}/livestock-operations?{ApiScenarioContext.LastDaysQuery(days)}"));
 }

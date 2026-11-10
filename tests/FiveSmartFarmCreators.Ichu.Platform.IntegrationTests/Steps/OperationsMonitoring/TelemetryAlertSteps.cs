@@ -40,10 +40,10 @@ public sealed class TelemetryAlertSteps(ApiScenarioContext context)
 
     private async Task RequestTelemetryAsync(string actor, string cattleAlias, int days) =>
         await context.RecordAsync(context.Actor(actor)
-            .GetAsync($"api/v1/animals/{context.Id(cattleAlias)}/telemetry?{ApiScenarioContext.LastDaysQuery(days)}"));
+            .GetAsync($"api/v1/ranches/{context.Id("ranch")}/cattle/{context.Id(cattleAlias)}/telemetry?{ApiScenarioContext.LastDaysQuery(days)}"));
 
     private async Task ListAlertsAsync(string actor) =>
-        await context.RecordAsync(context.Actor(actor).GetAsync($"api/v1/alerts?ranchId={context.Id("ranch")}"));
+        await context.RecordAsync(context.Actor(actor).GetAsync($"api/v1/ranches/{context.Id("ranch")}/alerts"));
 
     private JsonElement FindAlert(string alias) =>
         TableAssertions.FindByText(context.RequireBody().GetProperty("items"), "alertId", context.Id(alias).ToString());

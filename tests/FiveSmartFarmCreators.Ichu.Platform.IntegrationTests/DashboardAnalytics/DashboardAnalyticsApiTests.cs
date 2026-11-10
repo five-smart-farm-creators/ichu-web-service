@@ -114,7 +114,7 @@ public sealed class DashboardAnalyticsApiTests(IchuApiFactory factory)
         var trend = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(38.6, trend.GetProperty("lotAverage").GetDouble());
         var point = Assert.Single(trend.GetProperty("points").EnumerateArray());
-        Assert.Equal(cattleId, point.GetProperty("animalId").GetGuid());
+        Assert.Equal(cattleId, point.GetProperty("cattleId").GetGuid());
         Assert.Equal(38.6, point.GetProperty("value").GetDouble());
         Assert.Empty(trend.GetProperty("outlierAnimals").EnumerateArray());
     }

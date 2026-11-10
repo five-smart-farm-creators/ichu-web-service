@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class RedefineGeofenceCommandFromResourceAssembler
 {
-    public static Result<RedefineGeofenceCommand> ToCommandFromResource(Guid geofenceId, RedefineGeofenceResource resource)
+    public static Result<RedefineGeofenceCommand> ToCommandFromResource(Guid ranchId, Guid geofenceId, RedefineGeofenceResource resource)
     {
         if (resource.ToleranceMeters is not { } tolerance)
         {
@@ -24,6 +24,6 @@ public static class RedefineGeofenceCommandFromResourceAssembler
         return boundary.IsFailure
             ? Result<RedefineGeofenceCommand>.Failure(boundary.DomainError)
             : Result<RedefineGeofenceCommand>.Success(new RedefineGeofenceCommand(
-                new GeofenceId(geofenceId), resource.Name ?? string.Empty, tolerance, severity, boundary.Value!));
+                ranchId, new GeofenceId(geofenceId), resource.Name ?? string.Empty, tolerance, severity, boundary.Value!));
     }
 }
