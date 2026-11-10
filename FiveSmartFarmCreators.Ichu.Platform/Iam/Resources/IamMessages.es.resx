@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="Iam.InvalidIdentifier" xml:space="preserve">
+    <value>Un identificador requerido no puede estar vacío.</value>
+  </data>
+  <data name="Iam.InvalidRole" xml:space="preserve">
+    <value>El rol solicitado no es válido.</value>
+  </data>
+  <data name="Iam.InvalidRegistration" xml:space="preserve">
+    <value>Registre un gerente con un rancho, o un veterinario sin rancho.</value>
+  </data>
+  <data name="Iam.InvalidExternalIdentity" xml:space="preserve">
+    <value>Se requieren una identidad externa válida y un rol.</value>
+  </data>
+  <data name="Iam.InvalidEmail" xml:space="preserve">
+    <value>Se requiere una dirección de correo electrónico válida.</value>
+  </data>
+  <data name="Iam.PasswordRequired" xml:space="preserve">
+    <value>Se requiere una contraseña.</value>
+  </data>
+  <data name="Iam.RanchDetailsRequired" xml:space="preserve">
+    <value>Se requieren el nombre, la región y el distrito del rancho, y un número de cabezas no negativo.</value>
+  </data>
+  <data name="Iam.InvalidProfile" xml:space="preserve">
+    <value>Se requieren la especialidad, el número de licencia y una experiencia no negativa.</value>
+  </data>
+  <data name="Iam.InvalidAdvisory" xml:space="preserve">
+    <value>Se requieren el veterinario, el rancho y el motivo de la asesoría.</value>
+  </data>
+  <data name="Iam.InvalidAdvisoryScope" xml:space="preserve">
+    <value>El alcance de la asesoría debe ser Read o ClinicalWrite.</value>
+  </data>
+  <data name="Iam.ExpirationRequired" xml:space="preserve">
+    <value>Se requiere una fecha de vencimiento.</value>
+  </data>
+  <data name="Iam.ExpirationNotInFuture" xml:space="preserve">
+    <value>Una concesión debe vencer en el futuro.</value>
+  </data>
+  <data name="Iam.InvalidDecision" xml:space="preserve">
+    <value>La decisión debe ser grant, reject o revoke.</value>
+  </data>
+  <data name="Iam.ProfileOnlyForVeterinarians" xml:space="preserve">
+    <value>Solo los veterinarios tienen perfiles profesionales.</value>
+  </data>
+  <data name="Iam.VeterinarianProfileRequired" xml:space="preserve">
+    <value>Se requiere un perfil profesional de veterinario completo.</value>
+  </data>
+  <data name="Iam.OwnerRequired" xml:space="preserve">
+    <value>Solo el dueño del rancho puede decidir u otorgar asesorías.</value>
+  </data>
+  <data name="Iam.RanchAccessDenied" xml:space="preserve">
+    <value>La cuenta no está autorizada para este rancho.</value>
+  </data>
+  <data name="Iam.Unauthenticated" xml:space="preserve">
+    <value>Se requiere una identidad verificada.</value>
+  </data>
+  <data name="Iam.AccountNotActive" xml:space="preserve">
+    <value>Se requiere una cuenta verificada y activa.</value>
+  </data>
+  <data name="Iam.InvalidCredentials" xml:space="preserve">
+    <value>No se pudo conceder el acceso.</value>
+  </data>
+  <data name="Iam.RanchNotFound" xml:space="preserve">
+    <value>No se encontró el rancho.</value>
+  </data>
+  <data name="Iam.AdvisoryNotFound" xml:space="preserve">
+    <value>No se encontró la asesoría.</value>
+  </data>
+  <data name="Iam.AccountAlreadyExists" xml:space="preserve">
+    <value>Ya existe una cuenta para esta identidad.</value>
+  </data>
+  <data name="Iam.LicenseAlreadyRegistered" xml:space="preserve">
+    <value>La licencia profesional ya está registrada.</value>
+  </data>
+  <data name="Iam.AdvisoryRequestAlreadyOpen" xml:space="preserve">
+    <value>Ya existe una solicitud pendiente o una asesoría activa.</value>
+  </data>
+  <data name="Iam.AdvisoryAlreadyActive" xml:space="preserve">
+    <value>Ya existe una asesoría activa.</value>
+  </data>
+  <data name="Iam.AdvisoryNotPending" xml:space="preserve">
+    <value>Solo se pueden otorgar asesorías pendientes.</value>
+  </data>
+  <data name="Iam.AdvisoryTransitionInvalid" xml:space="preserve">
+    <value>La asesoría no puede cambiar desde su estado actual.</value>
+  </data>
+  <data name="Iam.VeterinarianNotEligible" xml:space="preserve">
+    <value>Se requiere un veterinario activo con perfil completo.</value>
+  </data>
+  <data name="Iam.IdentityProviderUnavailable" xml:space="preserve">
+    <value>El proveedor de identidad no está disponible temporalmente.</value>
+  </data>
+  <data name="Iam.IdentityProviderNotConfigured" xml:space="preserve">
+    <value>Firebase no está configurado.</value>
+  </data>
+</root>

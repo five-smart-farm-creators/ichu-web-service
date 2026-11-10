@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="Iam.InvalidIdentifier" xml:space="preserve">
+    <value>A required identifier must not be empty.</value>
+  </data>
+  <data name="Iam.InvalidRole" xml:space="preserve">
+    <value>The requested role is invalid.</value>
+  </data>
+  <data name="Iam.InvalidRegistration" xml:space="preserve">
+    <value>Register a manager with a ranch or a veterinarian without a ranch.</value>
+  </data>
+  <data name="Iam.InvalidExternalIdentity" xml:space="preserve">
+    <value>A valid external identity and role are required.</value>
+  </data>
+  <data name="Iam.InvalidEmail" xml:space="preserve">
+    <value>A valid email address is required.</value>
+  </data>
+  <data name="Iam.PasswordRequired" xml:space="preserve">
+    <value>A password is required.</value>
+  </data>
+  <data name="Iam.RanchDetailsRequired" xml:space="preserve">
+    <value>Ranch name, region, district and a nonnegative head count are required.</value>
+  </data>
+  <data name="Iam.InvalidProfile" xml:space="preserve">
+    <value>Specialty, license number and nonnegative experience are required.</value>
+  </data>
+  <data name="Iam.InvalidAdvisory" xml:space="preserve">
+    <value>Veterinarian, ranch and advisory reason are required.</value>
+  </data>
+  <data name="Iam.InvalidAdvisoryScope" xml:space="preserve">
+    <value>The advisory scope must be Read or ClinicalWrite.</value>
+  </data>
+  <data name="Iam.ExpirationRequired" xml:space="preserve">
+    <value>An expiration is required.</value>
+  </data>
+  <data name="Iam.ExpirationNotInFuture" xml:space="preserve">
+    <value>A grant must expire in the future.</value>
+  </data>
+  <data name="Iam.InvalidDecision" xml:space="preserve">
+    <value>Decision must be grant, reject or revoke.</value>
+  </data>
+  <data name="Iam.ProfileOnlyForVeterinarians" xml:space="preserve">
+    <value>Only veterinarians have professional profiles.</value>
+  </data>
+  <data name="Iam.VeterinarianProfileRequired" xml:space="preserve">
+    <value>A complete veterinarian profile is required.</value>
+  </data>
+  <data name="Iam.OwnerRequired" xml:space="preserve">
+    <value>Only the ranch owner may decide or grant advisories.</value>
+  </data>
+  <data name="Iam.RanchAccessDenied" xml:space="preserve">
+    <value>The account is not authorized for this ranch.</value>
+  </data>
+  <data name="Iam.Unauthenticated" xml:space="preserve">
+    <value>A verified identity is required.</value>
+  </data>
+  <data name="Iam.AccountNotActive" xml:space="preserve">
+    <value>An active verified account is required.</value>
+  </data>
+  <data name="Iam.InvalidCredentials" xml:space="preserve">
+    <value>Access could not be granted.</value>
+  </data>
+  <data name="Iam.RanchNotFound" xml:space="preserve">
+    <value>The ranch was not found.</value>
+  </data>
+  <data name="Iam.AdvisoryNotFound" xml:space="preserve">
+    <value>The advisory was not found.</value>
+  </data>
+  <data name="Iam.AccountAlreadyExists" xml:space="preserve">
+    <value>An account already exists for this identity.</value>
+  </data>
+  <data name="Iam.LicenseAlreadyRegistered" xml:space="preserve">
+    <value>The professional license is already registered.</value>
+  </data>
+  <data name="Iam.AdvisoryRequestAlreadyOpen" xml:space="preserve">
+    <value>A pending request or active advisory already exists.</value>
+  </data>
+  <data name="Iam.AdvisoryAlreadyActive" xml:space="preserve">
+    <value>An active advisory already exists.</value>
+  </data>
+  <data name="Iam.AdvisoryNotPending" xml:space="preserve">
+    <value>Only pending advisories can be granted.</value>
+  </data>
+  <data name="Iam.AdvisoryTransitionInvalid" xml:space="preserve">
+    <value>The advisory cannot transition from its current state.</value>
+  </data>
+  <data name="Iam.VeterinarianNotEligible" xml:space="preserve">
+    <value>An active veterinarian with a complete profile is required.</value>
+  </data>
+  <data name="Iam.IdentityProviderUnavailable" xml:space="preserve">
+    <value>The identity provider is temporarily unavailable.</value>
+  </data>
+  <data name="Iam.IdentityProviderNotConfigured" xml:space="preserve">
+    <value>Firebase has not been configured.</value>
+  </data>
+</root>

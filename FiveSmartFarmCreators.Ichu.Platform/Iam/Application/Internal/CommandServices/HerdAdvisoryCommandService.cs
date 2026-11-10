@@ -6,83 +6,183 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
 
 /// <summary>
-///     Coordinates advisory requests and owner decisions.
+///     Coordinates advisory requests and owner decisions. Expired grants are saved before a request is refused, so
+///     the stored state stays current.
 /// </summary>
-public sealed class HerdAdvisoryCommandService(IIamRepository repository, ICurrentAccount currentAccount,
-    AuthorizationDomainService authorization, TimeProvider clock) : IHerdAdvisoryCommandService
+public sealed class HerdAdvisoryCommandService(
+    IRanchRegistrationRepository ranches,
+    IUserAccountRepository accounts,
+    IHerdAdvisoryRepository advisories,
+    ICurrentAccount currentAccount,
+    AuthorizationDomainService authorization,
+    IUnitOfWork unitOfWork,
+    TimeProvider clock) : IHerdAdvisoryCommandService
 {
+    private const string DirectGrantReason = "Direct authorization by the ranch owner.";
+
     /// <inheritdoc />
-    public async Task<HerdAdvisory> HandleAsync(RequestHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<HerdAdvisory>> HandleAsync(RequestHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
     {
         var actor = await currentAccount.GetAsync(cancellationToken);
-        if (actor.Role != UserRole.Veterinarian || actor.Profile is null)
-            throw new IamException("forbidden", "A complete veterinarian profile is required.");
-        if (!await repository.RanchExistsAsync(command.RanchId, cancellationToken))
-            throw new IamException("not_found", "The ranch was not found.");
+        if (actor.IsFailure)
+        {
+            return Result<HerdAdvisory>.Failure(actor.DomainError);
+        }
+
+        var veterinarian = actor.Value!;
+        if (veterinarian.Role != UserRole.Veterinarian || veterinarian.Profile is null)
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.VeterinarianProfileRequired);
+        }
+
+        if (!await ranches.ExistsAsync(command.RanchId, cancellationToken))
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.RanchNotFound);
+        }
+
         var now = clock.GetUtcNow();
-        var previous = await repository.FindAdvisoriesAsync(command.RanchId, actor.Id, cancellationToken);
-        foreach (var advisory in previous) advisory.Expire(now);
-        if (previous.Any(a => a.Status == AdvisoryStatus.Pending || a.IsValidOn(now)))
-            throw new IamException("conflict", "A pending request or active advisory already exists.");
-        await repository.SaveAsync(cancellationToken);
-        var request = new HerdAdvisory(actor.Id, command.RanchId, command.Reason, now);
-        repository.AddAdvisory(request);
-        await repository.SaveAsync(cancellationToken);
+        var previous = await advisories.FindByRanchAndVeterinarianAsync(command.RanchId, veterinarian.Id, cancellationToken);
+        foreach (var advisory in previous)
+        {
+            advisory.Expire(now);
+        }
+
+        if (previous.Any(advisory => advisory.Status == AdvisoryStatus.Pending || advisory.IsValidOn(now)))
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryRequestAlreadyOpen);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        var request = HerdAdvisory.Create(veterinarian.Id, command.RanchId, command.Reason, now);
+        if (request.IsFailure)
+        {
+            return request;
+        }
+
+        await advisories.AddAsync(request.Value!, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
         return request;
     }
 
     /// <inheritdoc />
-    public async Task<HerdAdvisory> HandleAsync(DecideHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<HerdAdvisory>> HandleAsync(DecideHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
     {
         var actor = await currentAccount.GetAsync(cancellationToken);
-        var advisory = await repository.FindAdvisoryAsync(command.AdvisoryId, cancellationToken)
-            ?? throw new IamException("not_found", "The advisory was not found.");
-        var memberships = await repository.FindMembershipsAsync(actor.Id, cancellationToken);
-        if (!authorization.CanAccessRanch(actor, advisory.RanchId, AccessScope.Manage, memberships, [], clock.GetUtcNow()))
-            throw new IamException("forbidden", "Only the ranch owner may decide this advisory.");
-        var vet = await repository.FindAccountAsync(advisory.VeterinarianId, cancellationToken);
-        switch (command.Decision)
+        if (actor.IsFailure)
         {
-            case "grant":
-                if (vet is null || !vet.IsActive(clock.GetUtcNow()) || vet.Profile is null)
-                    throw new IamException("conflict", "An active veterinarian with a complete profile is required.");
-                advisory.Grant(actor.Id, command.Scope, command.ExpiresAt ?? throw new ArgumentException("An expiration is required."), clock.GetUtcNow());
-                break;
-            case "reject": advisory.End(actor.Id, true, clock.GetUtcNow()); break;
-            case "revoke": advisory.End(actor.Id, false, clock.GetUtcNow()); break;
-            default: throw new ArgumentException("Decision must be grant, reject or revoke.");
+            return Result<HerdAdvisory>.Failure(actor.DomainError);
         }
-        await repository.SaveAsync(cancellationToken);
-        return advisory;
+
+        var owner = actor.Value!;
+        var advisory = await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
+        if (advisory is null)
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryNotFound);
+        }
+
+        var now = clock.GetUtcNow();
+        var memberships = await ranches.FindMembershipsByAccountAsync(owner.Id, cancellationToken);
+        if (!authorization.CanAccessRanch(owner, advisory.RanchId, AccessScope.Manage, memberships, [], now))
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.OwnerRequired);
+        }
+
+        var veterinarian = await accounts.FindByIdAsNoTrackingAsync(advisory.VeterinarianId, cancellationToken);
+        var outcome = command.Decision switch
+        {
+            "grant" => GrantPending(advisory, owner, veterinarian, command, now),
+            "reject" => advisory.End(owner.Id, reject: true, now),
+            "revoke" => advisory.End(owner.Id, reject: false, now),
+            _ => Result.Failure(IamErrors.InvalidDecision)
+        };
+        if (outcome.IsFailure)
+        {
+            return Result<HerdAdvisory>.Failure(outcome.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<HerdAdvisory>.Success(advisory);
     }
 
     /// <inheritdoc />
-    public async Task<HerdAdvisory> HandleAsync(GrantHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<HerdAdvisory>> HandleAsync(GrantHerdAdvisoryCommand command, CancellationToken cancellationToken = default)
     {
         var actor = await currentAccount.GetAsync(cancellationToken);
+        if (actor.IsFailure)
+        {
+            return Result<HerdAdvisory>.Failure(actor.DomainError);
+        }
+
+        var owner = actor.Value!;
         var now = clock.GetUtcNow();
-        var memberships = await repository.FindMembershipsAsync(actor.Id, cancellationToken);
-        if (!authorization.CanAccessRanch(actor, command.RanchId, AccessScope.Manage, memberships, [], now))
-            throw new IamException("forbidden", "Only the ranch owner may grant an advisory.");
-        var vet = await repository.FindAccountAsync(command.VeterinarianId, cancellationToken);
-        if (vet is null || vet.Role != UserRole.Veterinarian || !vet.IsActive(now) || vet.Profile is null)
-            throw new IamException("conflict", "An active veterinarian with a complete profile is required.");
-        var entries = await repository.FindAdvisoriesAsync(command.RanchId, command.VeterinarianId, cancellationToken);
-        foreach (var entry in entries) entry.Expire(now);
-        if (entries.Any(a => a.IsValidOn(now))) throw new IamException("conflict", "An active advisory already exists.");
-        var advisory = entries.FirstOrDefault(a => a.Status == AdvisoryStatus.Pending);
-        await repository.SaveAsync(cancellationToken);
+        var memberships = await ranches.FindMembershipsByAccountAsync(owner.Id, cancellationToken);
+        if (!authorization.CanAccessRanch(owner, command.RanchId, AccessScope.Manage, memberships, [], now))
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.OwnerRequired);
+        }
+
+        var veterinarianId = new UserAccountId(command.VeterinarianId);
+        var veterinarian = await accounts.FindByIdAsNoTrackingAsync(veterinarianId, cancellationToken);
+        if (veterinarian is null || veterinarian.Role != UserRole.Veterinarian || !veterinarian.IsActive(now) ||
+            veterinarian.Profile is null)
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.VeterinarianNotEligible);
+        }
+
+        var entries = await advisories.FindByRanchAndVeterinarianAsync(command.RanchId, veterinarianId, cancellationToken);
+        foreach (var entry in entries)
+        {
+            entry.Expire(now);
+        }
+
+        if (entries.Any(entry => entry.IsValidOn(now)))
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryAlreadyActive);
+        }
+
+        var advisory = entries.FirstOrDefault(entry => entry.Status == AdvisoryStatus.Pending);
+        await unitOfWork.CompleteAsync(cancellationToken);
         if (advisory is null)
         {
-            advisory = new HerdAdvisory(command.VeterinarianId, command.RanchId, "Direct authorization by the ranch owner.", now);
-            repository.AddAdvisory(advisory);
+            var created = HerdAdvisory.Create(veterinarianId, command.RanchId, DirectGrantReason, now);
+            if (created.IsFailure)
+            {
+                return created;
+            }
+
+            advisory = created.Value!;
+            await advisories.AddAsync(advisory, cancellationToken);
         }
-        advisory.Grant(actor.Id, command.Scope, command.ExpiresAt, now);
-        await repository.SaveAsync(cancellationToken);
-        return advisory;
+
+        var grant = advisory.Grant(owner.Id, command.Scope, command.ExpiresAt, now);
+        if (grant.IsFailure)
+        {
+            return Result<HerdAdvisory>.Failure(grant.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<HerdAdvisory>.Success(advisory);
+    }
+
+    private static Result GrantPending(HerdAdvisory advisory, UserAccount owner, UserAccount? veterinarian,
+        DecideHerdAdvisoryCommand command, DateTimeOffset now)
+    {
+        if (veterinarian is null || !veterinarian.IsActive(now) || veterinarian.Profile is null)
+        {
+            return Result.Failure(IamErrors.VeterinarianNotEligible);
+        }
+
+        if (command.ExpiresAt is not { } expiresAt)
+        {
+            return Result.Failure(IamErrors.ExpirationRequired);
+        }
+
+        return advisory.Grant(owner.Id, command.Scope, expiresAt, now);
     }
 }

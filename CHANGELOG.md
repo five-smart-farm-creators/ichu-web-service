@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operations and Monitoring, Subscription Plans: added Gherkin acceptance scenarios, run against the API, for the monitoring, edge synchronization and subscription stories that the backend implements.
 - Shared: added a test job to the Git Flow checks workflow that runs the unit and integration tests against PostgreSQL 17.
 
+### Changed
+
+- Identity and Access: failures are returned as results with stable codes (`Iam.<Name>`) and localized messages in English and Spanish, so problem responses carry the code and the title in the request language.
+- Identity and Access: the repositories are split per aggregate, and the account and advisory identifiers are strongly typed, without any schema change.
+
+### Removed
+
+- Identity and Access: removed the identity exception and its exception filter, since failures are returned as results.
+
 ### Fixed
 
 - IoT Assets: registering a device or an edge gateway, releasing a device and registering a water trough answered 500, because their request records declared validation attributes on properties; the attributes now sit on the constructor parameters, which ASP.NET Core validates.

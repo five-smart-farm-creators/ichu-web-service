@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Commands;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Resources;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Transform;

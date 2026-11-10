@@ -13,7 +13,13 @@ using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.QuerySe
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.EventHandlers;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.OutboundServices;
@@ -232,6 +238,39 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<PortfolioController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<ReportsController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<TrendsController>(services));
+    }
+
+    [Fact]
+    public void EveryIamServiceResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IUserAccountRepository>());
+        Assert.NotNull(services.GetRequiredService<IRanchRegistrationRepository>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryRepository>());
+        Assert.NotNull(services.GetRequiredService<IIdentityProvider>());
+        Assert.NotNull(services.GetRequiredService<ICurrentAccount>());
+        Assert.NotNull(services.GetRequiredService<IAccountCommandService>());
+        Assert.NotNull(services.GetRequiredService<IProfessionalProfileCommandService>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryCommandService>());
+        Assert.NotNull(services.GetRequiredService<IAccountQueryService>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryQueryService>());
+        Assert.NotNull(services.GetRequiredService<IAuthorizationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IIamContextFacade>());
+    }
+
+    [Fact]
+    public void EveryIamControllerReceivesItsDependencies()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(ActivatorUtilities.CreateInstance<AccountsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<HerdAdvisoriesController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<ProfilesController>(services));
     }
 
     private static ServiceProvider BuildHost()
