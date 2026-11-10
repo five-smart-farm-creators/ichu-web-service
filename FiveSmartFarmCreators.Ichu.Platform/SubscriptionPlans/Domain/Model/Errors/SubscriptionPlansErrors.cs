@@ -48,6 +48,24 @@ public static class SubscriptionPlansErrors
 
     public static readonly Error Unauthenticated = Define("Unauthenticated", EErrorType.Unauthorized);
 
+    /// <summary>The payment provider is not configured, so checkout and webhook verification cannot run.</summary>
+    public static readonly Error PaymentProviderNotConfigured = Define("PaymentProviderNotConfigured", EErrorType.Unavailable);
+
+    /// <summary>The payment provider cannot answer right now, so the request can be retried later.</summary>
+    public static readonly Error PaymentProviderUnavailable = Define("PaymentProviderUnavailable", EErrorType.Unavailable);
+
+    /// <summary>Only a pending subscription can start a checkout.</summary>
+    public static readonly Error SubscriptionNotPending = Define("SubscriptionNotPending", EErrorType.Conflict);
+
+    /// <summary>The signature of a payment event does not match the webhook secret, so the event is not trusted.</summary>
+    public static readonly Error PaymentSignatureInvalid = Define("PaymentSignatureInvalid", EErrorType.Validation);
+
+    /// <summary>The paid amount or currency differs from the subscription total, so nothing is activated.</summary>
+    public static readonly Error PaymentAmountMismatch = Define("PaymentAmountMismatch", EErrorType.Conflict);
+
+    /// <summary>The payment event does not change any subscription, such as an event of another product.</summary>
+    public static readonly Error PaymentEventIgnored = Define("PaymentEventIgnored", EErrorType.Validation);
+
     private static Error Define(string name, EErrorType type)
     {
         var code = $"SubscriptionPlans.{name}";

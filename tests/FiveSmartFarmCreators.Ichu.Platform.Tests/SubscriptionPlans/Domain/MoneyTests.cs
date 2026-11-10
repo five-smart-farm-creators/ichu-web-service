@@ -49,4 +49,16 @@ public class MoneyTests
 
         Assert.Equal(14400m, devicesCost.Amount);
     }
+
+    [Fact]
+    public void ToMinorUnits_ConvertsTheAmountToHundredths()
+    {
+        Assert.Equal(300000L, new Money(3000m, "PEN").ToMinorUnits());
+    }
+
+    [Fact]
+    public void ToMinorUnits_UsesTheAmountRoundedAwayFromZero()
+    {
+        Assert.Equal(1001L, new Money(10.005m, "PEN").ToMinorUnits());
+    }
 }

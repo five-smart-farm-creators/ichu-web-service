@@ -18,6 +18,9 @@ public sealed class IchuApiFactory : WebApplicationFactory<Program>, IAsyncLifet
 {
     private const string ConnectionVariable = "ICHU_TEST_CONNECTION";
 
+    // Payment events are signed with this test secret, so no test needs the Stripe webhook secret.
+    public const string StripeWebhookSecret = "whsec_integration_test";
+
     // Program creates and migrates this database on startup and expands the password placeholder itself.
     private readonly string _applicationConnectionString;
 
@@ -50,7 +53,13 @@ public sealed class IchuApiFactory : WebApplicationFactory<Program>, IAsyncLifet
     {
         builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration(configuration => configuration.AddInMemoryCollection(
-            new Dictionary<string, string?> { ["ConnectionStrings:DefaultConnection"] = _applicationConnectionString }));
+            new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = _applicationConnectionString,
+                // Tests never reach Stripe, so the secret key stays empty even when a developer has one configured.
+                ["Stripe:SecretKey"] = string.Empty,
+                ["Stripe:WebhookSecret"] = StripeWebhookSecret
+            }));
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IIdentityProvider>();

@@ -94,6 +94,27 @@ public class SubscriptionsController(
         return Ok(await ToResourceAsync(result.Value!, cancellationToken));
     }
 
+    [HttpPost("{subscriptionId:guid}/checkout-sessions")]
+    [EndpointSummary("Start the payment of a subscription")]
+    [EndpointDescription("Creates a hosted Stripe Checkout page that charges the total of a pending subscription in soles. The subscription becomes active when the payment is confirmed.")]
+    [ProducesResponseType(typeof(CheckoutSessionResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> StartCheckout(Guid ranchId, Guid subscriptionId, CancellationToken cancellationToken)
+    {
+        var command = new StartSubscriptionCheckoutCommand(ranchId, new SubscriptionId(subscriptionId));
+        var result = await subscriptionCommandService.Handle(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return SubscriptionPlansActionResultAssembler.ToProblem(this, result.DomainError, localizer);
+        }
+
+        return StatusCode(StatusCodes.Status201Created, CheckoutSessionResourceFromValueAssembler.ToResourceFromValue(result.Value!));
+    }
+
     private async Task<SubscriptionResource> ToResourceAsync(Subscription subscription, CancellationToken cancellationToken)
     {
         // Subscriptions refer only to seeded plans, so a missing plan means corrupted data rather than a business error.
