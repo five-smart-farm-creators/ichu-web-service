@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared: added HTTP integration tests that run the API against a PostgreSQL database created for each test run and dropped afterwards, covering every bounded context.
 - Operations and Monitoring, Subscription Plans: added Gherkin acceptance scenarios, run against the API, for the monitoring, edge synchronization and subscription stories that the backend implements.
 - Shared: added a test job to the Git Flow checks workflow that runs the unit and integration tests against PostgreSQL 17.
+- Development: a Firebase user with a verified email can own the seeded ranch as a demo account, and `scripts/firebase-dev-session.ps1` signs that user in with a one-hour ID token for Swagger UI.
 
 ### Changed
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - IoT Assets: registering a device or an edge gateway, releasing a device and registering a water trough answered 500, because their request records declared validation attributes on properties; the attributes now sit on the constructor parameters, which ASP.NET Core validates.
+- Shared: Swagger UI at `/swagger` reads the built-in OpenAPI document in Development, so the bearer and `X-Gateway-Key` inputs appear and Try it out is enabled.
 
 ## [0.3.0] - 2026-11-08
 

@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
@@ -99,6 +100,8 @@ if (app.Environment.IsDevelopment())
 {
     // The seeders run in dependency order, and each one skips the records that already exist.
     using var seedScope = app.Services.CreateScope();
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentIamSeeder>()
+        .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentSubscriptionSeeder>()
         .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentCattleSeeder>()
@@ -122,9 +125,12 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
+    // The built-in document declares the bearer and gateway key schemes, which the Swashbuckle generator omits.
+    // Try it out is enabled so that a developer can call the API from Swagger UI with the demo token.
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ICHU API v1");
+        options.SwaggerEndpoint("/openapi/v1.json", "ICHU API v1");
+        options.EnableTryItOutByDefault();
     });
 }
 
