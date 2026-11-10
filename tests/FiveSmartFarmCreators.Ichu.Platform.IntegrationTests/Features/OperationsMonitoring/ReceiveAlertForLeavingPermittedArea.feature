@@ -19,7 +19,7 @@ Feature: Receive an alert when cattle leave the permitted area
       | field                    | value              |
       | type                     | Geofence           |
       | status                   | Pending            |
-      | animalId                 | <monitored cattle> |
+      | cattleId                 | <monitored cattle> |
       | geofenceId               | <North boundary>   |
       | latitude                 | -13.52             |
       | longitude                | -72.12             |

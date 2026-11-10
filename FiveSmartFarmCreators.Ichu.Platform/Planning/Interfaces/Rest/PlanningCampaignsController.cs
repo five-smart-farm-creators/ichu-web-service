@@ -17,7 +17,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/planning-campaigns")]
+[Route("api/v1/ranches/{ranchId:guid}/planning-campaigns")]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class PlanningCampaignsController(
     IPlanningCampaignCommandService commandService,
@@ -29,7 +29,7 @@ public sealed class PlanningCampaignsController(
     [EndpointDescription("Returns the campaigns of the ranch ordered by their start date.")]
     [ProducesResponseType<IReadOnlyList<PlanningCampaignResource>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetCampaignsAsync([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCampaignsAsync(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(new GetPlanningCampaignsByRanchQuery(ranchId), cancellationToken);
         if (result.IsFailure)
@@ -46,10 +46,10 @@ public sealed class PlanningCampaignsController(
     [ProducesResponseType<PlanningCampaignResource>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetCampaignAsync(Guid campaignId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCampaignAsync(Guid ranchId, Guid campaignId, CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(
-            new GetPlanningCampaignByIdQuery(new PlanningCampaignId(campaignId)), cancellationToken);
+            new GetPlanningCampaignByIdQuery(ranchId, new PlanningCampaignId(campaignId)), cancellationToken);
         if (result.IsFailure)
         {
             return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
@@ -65,10 +65,11 @@ public sealed class PlanningCampaignsController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateCampaignAsync(
+        Guid ranchId,
         [FromBody] CreatePlanningCampaignResource resource,
         CancellationToken cancellationToken)
     {
-        var command = CreatePlanningCampaignCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = CreatePlanningCampaignCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         var result = await commandService.HandleAsync(command, cancellationToken);
         if (result.IsFailure)
         {
@@ -76,6 +77,6 @@ public sealed class PlanningCampaignsController(
         }
 
         var campaign = PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return Created($"/api/v1/planning-campaigns/{campaign.Id}", campaign);
+        return Created($"/api/v1/ranches/{ranchId}/planning-campaigns/{campaign.Id}", campaign);
     }
 }

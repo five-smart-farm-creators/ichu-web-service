@@ -10,6 +10,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Tests.Planning.Application;
 public class PlannedActivityQueryServiceTests
 {
     private static readonly Guid RanchId = Guid.Parse("11111111-1111-4111-8111-111111111111");
+    private static readonly Guid OtherRanchId = Guid.Parse("22222222-2222-4222-8222-222222222222");
     private static readonly Guid AccountId = Guid.Parse("44444444-4444-4444-8444-444444444444");
     private static readonly DateTimeOffset From = new(2026, 11, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -47,7 +48,18 @@ public class PlannedActivityQueryServiceTests
     public async Task GetActivity_OfAnUnknownIdentifier_IsNotFound()
     {
         var result = await _service.HandleAsync(
-            new GetPlannedActivityByIdQuery(new PlannedActivityId(Guid.NewGuid())), CancellationToken.None);
+            new GetPlannedActivityByIdQuery(RanchId, new PlannedActivityId(Guid.NewGuid())), CancellationToken.None);
+
+        Assert.Equal(PlanningErrors.ActivityNotFound.Code, result.DomainError.Code);
+    }
+
+    [Fact]
+    public async Task GetActivity_OfAnotherRanch_IsNotFound()
+    {
+        var activity = PlannedActivity.Create(OtherRanchId, null, null, "Vaccination", From).Value!;
+        _activities.Items.Add(activity);
+
+        var result = await _service.HandleAsync(new GetPlannedActivityByIdQuery(RanchId, activity.Id), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.ActivityNotFound.Code, result.DomainError.Code);
     }
@@ -61,7 +73,7 @@ public class PlannedActivityQueryServiceTests
         activity.RecordApplication(animal, From.AddDays(1), null);
         _activities.Items.Add(activity);
 
-        var result = await _service.HandleAsync(new GetApplicationRecordsByActivityQuery(activity.Id), CancellationToken.None);
+        var result = await _service.HandleAsync(new GetApplicationRecordsByActivityQuery(RanchId, activity.Id), CancellationToken.None);
 
         Assert.Equal(new[] { From.AddDays(1), From.AddDays(2) }, result.Value!.Select(application => application.AppliedAt));
     }

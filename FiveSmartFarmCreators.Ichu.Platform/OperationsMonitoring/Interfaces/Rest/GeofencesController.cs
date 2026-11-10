@@ -15,7 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 ///     Defines, redefines and lists the geofences of lots.
 /// </summary>
 [ApiController]
-[Route("api/v1/geofences")]
+[Route("api/v1/ranches/{ranchId:guid}/geofences")]
 [Authorize]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Geofences")]
@@ -33,9 +33,9 @@ public class GeofencesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Define(DefineGeofenceResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Define(Guid ranchId, DefineGeofenceResource resource, CancellationToken cancellationToken)
     {
-        var command = DefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = DefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -43,7 +43,7 @@ public class GeofencesController(
 
         var result = await geofenceCommandService.Handle(command.Value!, cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
-            geofence => Created($"/api/v1/geofences?ranchId={geofence.RanchId}",
+            geofence => Created($"/api/v1/ranches/{ranchId}/geofences",
                 GeofenceResourceFromEntityAssembler.ToResourceFromEntity(geofence)));
     }
 
@@ -56,9 +56,9 @@ public class GeofencesController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Redefine(Guid geofenceId, RedefineGeofenceResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Redefine(Guid ranchId, Guid geofenceId, RedefineGeofenceResource resource, CancellationToken cancellationToken)
     {
-        var command = RedefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(geofenceId, resource);
+        var command = RedefineGeofenceCommandFromResourceAssembler.ToCommandFromResource(ranchId, geofenceId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -75,7 +75,7 @@ public class GeofencesController(
     [ProducesResponseType(typeof(IReadOnlyList<GeofenceResource>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByRanch(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await geofenceQueryService.Handle(new GetGeofencesByRanchQuery(ranchId), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,

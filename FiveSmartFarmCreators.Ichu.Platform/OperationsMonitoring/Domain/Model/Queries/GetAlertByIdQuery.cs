@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Retrieves one alert by its identifier.
 /// </summary>
-public record GetAlertByIdQuery(MonitoringAlertId AlertId);
+public record GetAlertByIdQuery(Guid RanchId, MonitoringAlertId AlertId);

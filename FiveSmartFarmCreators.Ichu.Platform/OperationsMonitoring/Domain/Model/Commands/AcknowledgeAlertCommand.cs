@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Attention for a pending alert. The operation identifier is reused on every retry of the same request.
 /// </summary>
-public record AcknowledgeAlertCommand(MonitoringAlertId AlertId, Guid OperationId, string Finding, string? Action, int ExpectedVersion);
+public record AcknowledgeAlertCommand(Guid RanchId, MonitoringAlertId AlertId, Guid OperationId, string Finding, string? Action, int ExpectedVersion);

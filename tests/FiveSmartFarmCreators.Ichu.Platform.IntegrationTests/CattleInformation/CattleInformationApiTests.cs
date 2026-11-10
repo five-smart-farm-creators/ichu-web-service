@@ -178,6 +178,21 @@ public sealed class CattleInformationApiTests(IchuApiFactory factory)
         Assert.Equal("CattleInformation.RanchAccessDenied", problem.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task GetCattle_UnderAnotherRanchOfTheCaller_IsNotFound()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var cattle = await Arrange.RegisterCattleAsync(owner, ranchId, "PE-0061");
+        using var other = factory.CreateClient(TestIdentity.Create());
+        var otherRanchId = await other.RegisterManagerAsync();
+
+        using var response = await other.GetAsync($"api/v1/ranches/{otherRanchId}/cattle/{cattle.GetProperty("id").GetGuid()}");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("CattleInformation.CattleNotFound", problem.GetProperty("code").GetString());
+    }
+
     private static object UpdateRequest(string earTag, int breed, Guid expectedVersion) => new
     {
         earTag,

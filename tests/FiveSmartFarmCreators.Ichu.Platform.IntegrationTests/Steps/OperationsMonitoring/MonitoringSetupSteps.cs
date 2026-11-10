@@ -72,7 +72,7 @@ public sealed class MonitoringSetupSteps(ApiScenarioContext context)
 
     [When("the ranch manager lists the geofences of the ranch")]
     public async Task WhenManagerListsGeofences() =>
-        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/geofences?ranchId={context.Id("ranch")}"));
+        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/ranches/{context.Id("ranch")}/geofences"));
 
     [Given("a collar {string} is registered without an assignment")]
     public async Task GivenCollarRegisteredWithoutAssignment(string alias)
@@ -122,9 +122,8 @@ public sealed class MonitoringSetupSteps(ApiScenarioContext context)
     }
 
     private Task<HttpResponseMessage> PostGeofenceAsync(string geofenceName, string lotName, IEnumerable<(double Latitude, double Longitude)> boundary) =>
-        context.Actor("manager").PostJsonAsync("api/v1/geofences", new
+        context.Actor("manager").PostJsonAsync($"api/v1/ranches/{context.Id("ranch")}/geofences", new
         {
-            ranchId = context.Id("ranch"),
             lotId = context.Id(lotName),
             name = geofenceName,
             toleranceMeters = 10,

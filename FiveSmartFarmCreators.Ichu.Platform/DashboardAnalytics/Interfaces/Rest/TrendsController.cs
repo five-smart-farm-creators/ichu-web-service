@@ -41,14 +41,14 @@ public sealed class TrendsController(
             : Ok(TrendSeriesResourceFromValueObjectAssembler.ToResourceFromValueObject(result.Value!));
     }
 
-    [HttpGet("animals/{animalId:guid}/comparison")]
+    [HttpGet("cattle/{cattleId:guid}/comparison")]
     [EndpointSummary("Compare an animal with its lot")]
     [EndpointDescription("Compares the average of the metric for one animal with its lot, when at least five animals have valid readings.")]
     [ProducesResponseType<AnimalComparisonResource>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<IActionResult> Compare(Guid ranchId, Guid animalId, Guid lotId, DateTimeOffset from,
+    public async Task<IActionResult> Compare(Guid ranchId, Guid cattleId, Guid lotId, DateTimeOffset from,
         DateTimeOffset to, string metric, double deviation, CancellationToken cancellationToken)
     {
         var period = DateRange.Create(from, to);
@@ -58,7 +58,7 @@ public sealed class TrendsController(
         }
 
         var result = await service.HandleAsync(
-            new GetAnimalComparisonQuery(ranchId, lotId, animalId, period.Value!, metric, deviation), cancellationToken);
+            new GetAnimalComparisonQuery(ranchId, lotId, cattleId, period.Value!, metric, deviation), cancellationToken);
         return result.IsFailure
             ? DashboardAnalyticsActionResultAssembler.ToProblem(this, result.DomainError, localizer)
             : Ok(AnimalComparisonResourceFromValueObjectAssembler.ToResourceFromValueObject(result.Value!));

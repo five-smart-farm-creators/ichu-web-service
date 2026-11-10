@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class AcknowledgeAlertCommandFromResourceAssembler
 {
-    public static Result<AcknowledgeAlertCommand> ToCommandFromResource(Guid alertId, AcknowledgeAlertResource resource)
+    public static Result<AcknowledgeAlertCommand> ToCommandFromResource(Guid ranchId, Guid alertId, AcknowledgeAlertResource resource)
     {
         if (MonitoringEnumParser.Parse<AlertStatus>(resource.Status) is not { } status)
         {
@@ -26,6 +26,6 @@ public static class AcknowledgeAlertCommandFromResourceAssembler
         }
 
         return Result<AcknowledgeAlertCommand>.Success(new AcknowledgeAlertCommand(
-            new MonitoringAlertId(alertId), resource.OperationId, resource.Finding ?? string.Empty, resource.Action, expectedVersion));
+            ranchId, new MonitoringAlertId(alertId), resource.OperationId, resource.Finding ?? string.Empty, resource.Action, expectedVersion));
     }
 }

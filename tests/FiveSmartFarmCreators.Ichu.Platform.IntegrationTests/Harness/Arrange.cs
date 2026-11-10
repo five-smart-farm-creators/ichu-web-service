@@ -20,9 +20,8 @@ public static class Arrange
     {
         using var quote = await client.GetAsync($"api/v1/plans/{planId}/quote?headCount={headCount}");
         var quoted = await quote.ReadJsonAsync(HttpStatusCode.OK);
-        using var response = await client.PostJsonAsync("api/v1/subscriptions", new
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions", new
         {
-            ranchId,
             planId,
             headCount,
             expectedTotal = quoted.GetProperty("total").GetProperty("amount").GetDecimal(),
@@ -145,9 +144,8 @@ public static class Arrange
     /// </summary>
     public static async Task<Guid> RequestHerdAdvisoryAsync(HttpClient veterinarian, Guid ranchId)
     {
-        using var response = await veterinarian.PostJsonAsync("api/v1/herd-advisories", new
+        using var response = await veterinarian.PostJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories", new
         {
-            ranchId,
             reason = "Herd health review"
         });
         var advisory = await response.ReadJsonAsync(HttpStatusCode.Created);
@@ -157,9 +155,9 @@ public static class Arrange
     /// <summary>
     ///     Grants read access on a requested advisory as the ranch owner.
     /// </summary>
-    public static async Task GrantReadAdvisoryAsync(HttpClient owner, Guid advisoryId, DateTimeOffset expiresAt)
+    public static async Task GrantReadAdvisoryAsync(HttpClient owner, Guid ranchId, Guid advisoryId, DateTimeOffset expiresAt)
     {
-        using var response = await owner.PatchJsonAsync($"api/v1/herd-advisories/{advisoryId}", new
+        using var response = await owner.PatchJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories/{advisoryId}", new
         {
             decision = "grant",
             scope = "Read",
@@ -171,9 +169,9 @@ public static class Arrange
     /// <summary>
     ///     Revokes an effective advisory as the ranch owner, which ends the veterinarian's access immediately.
     /// </summary>
-    public static async Task RevokeAdvisoryAsync(HttpClient owner, Guid advisoryId)
+    public static async Task RevokeAdvisoryAsync(HttpClient owner, Guid ranchId, Guid advisoryId)
     {
-        using var response = await owner.PatchJsonAsync($"api/v1/herd-advisories/{advisoryId}", new { decision = "revoke" });
+        using var response = await owner.PatchJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories/{advisoryId}", new { decision = "revoke" });
         await response.ReadBodyAsync(HttpStatusCode.OK);
     }
 
@@ -182,9 +180,8 @@ public static class Arrange
     /// </summary>
     public static async Task<JsonElement> ConfigureFeverThresholdAsync(HttpClient client, Guid ranchId)
     {
-        using var response = await client.PutJsonAsync("api/v1/monitoring-thresholds", new
+        using var response = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", new
         {
-            ranchId,
             lifeStage = "MilkingCow",
             metric = "BodyTemperature",
             minValue = 37.5,

@@ -37,7 +37,7 @@ public class TelemetryController(
             entryResults => Ok(SyncBatchResultResourceFromEntityAssembler.ToResourceFromEntity(entryResults)));
     }
 
-    [HttpGet("api/v1/animals/{animalId:guid}/telemetry")]
+    [HttpGet("api/v1/ranches/{ranchId:guid}/cattle/{cattleId:guid}/telemetry")]
     [EndpointSummary("List the telemetry of an animal")]
     [EndpointDescription("Returns the readings of an authorized animal captured within the half-open period, ordered by capture time.")]
     [Authorize]
@@ -47,7 +47,8 @@ public class TelemetryController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetHistory(
-        Guid animalId,
+        Guid ranchId,
+        Guid cattleId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         CancellationToken cancellationToken,
@@ -60,12 +61,12 @@ public class TelemetryController(
             return OperationsMonitoringActionResultAssembler.ToProblem(this, period.DomainError, localizer);
         }
 
-        var result = await readingQueryService.Handle(new GetAnimalTelemetryQuery(animalId, period.Value!, page, pageSize), cancellationToken);
+        var result = await readingQueryService.Handle(new GetAnimalTelemetryQuery(ranchId, cattleId, period.Value!, page, pageSize), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
             history => Ok(TelemetryHistoryResourceFromEntityAssembler.ToResourceFromEntity(history)));
     }
 
-    [HttpGet("api/v1/animals/{animalId:guid}/telemetry/latest")]
+    [HttpGet("api/v1/ranches/{ranchId:guid}/cattle/{cattleId:guid}/telemetry/latest")]
     [EndpointSummary("Get the latest telemetry of an animal")]
     [EndpointDescription("Returns the latest valid value of each indicator and the last known position of an authorized animal, with their capture times.")]
     [Authorize]
@@ -73,9 +74,9 @@ public class TelemetryController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetLatest(Guid animalId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLatest(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
     {
-        var result = await readingQueryService.Handle(new GetLatestAnimalTelemetryQuery(animalId), cancellationToken);
+        var result = await readingQueryService.Handle(new GetLatestAnimalTelemetryQuery(ranchId, cattleId), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
             latest => Ok(LatestTelemetryResourceFromEntityAssembler.ToResourceFromEntity(latest)));
     }

@@ -80,17 +80,18 @@ public sealed class HerdAdvisoryCommandService(
         }
 
         var owner = actor.Value!;
-        var advisory = await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
-        if (advisory is null)
-        {
-            return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryNotFound);
-        }
-
         var now = clock.GetUtcNow();
         var memberships = await ranches.FindMembershipsByAccountAsync(owner.Id, cancellationToken);
-        if (!authorization.CanAccessRanch(owner, advisory.RanchId, AccessScope.Manage, memberships, [], now))
+        if (!authorization.CanAccessRanch(owner, command.RanchId, AccessScope.Manage, memberships, [], now))
         {
             return Result<HerdAdvisory>.Failure(IamErrors.OwnerRequired);
+        }
+
+        // The ranch is checked before the lookup, and an advisory of another ranch is reported as missing, so identifiers cannot be probed.
+        var advisory = await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
+        if (advisory is null || advisory.RanchId != command.RanchId)
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryNotFound);
         }
 
         var veterinarian = await accounts.FindByIdAsNoTrackingAsync(advisory.VeterinarianId, cancellationToken);

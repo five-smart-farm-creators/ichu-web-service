@@ -28,7 +28,7 @@ public class PlanningResourceTransformTests
         var campaignId = Guid.NewGuid();
 
         var command = SchedulePlanningActivityCommandFromResourceAssembler.ToCommandFromResource(
-            new SchedulePlanningActivityResource(RanchId, campaignId, null, "Vaccination", ScheduledAt));
+            RanchId, new SchedulePlanningActivityResource(campaignId, null, "Vaccination", ScheduledAt));
 
         Assert.Equal(new PlanningCampaignId(campaignId), command.CampaignId);
     }

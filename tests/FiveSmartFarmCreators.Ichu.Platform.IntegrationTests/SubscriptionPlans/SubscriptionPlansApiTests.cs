@@ -80,11 +80,11 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
     {
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
-        var request = SubscriptionRequest(ranchId, Arrange.StandardPlanId, operationId: Guid.NewGuid());
-        using var created = await client.PostJsonAsync("api/v1/subscriptions", request);
+        var request = SubscriptionRequest(Arrange.StandardPlanId, operationId: Guid.NewGuid());
+        using var created = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions", request);
         var first = await created.ReadJsonAsync(HttpStatusCode.Created);
 
-        using var retried = await client.PostJsonAsync("api/v1/subscriptions", request);
+        using var retried = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions", request);
 
         var second = await retried.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(first.GetProperty("id").GetGuid(), second.GetProperty("id").GetGuid());
@@ -97,8 +97,8 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         await Arrange.RequestSubscriptionAsync(client, ranchId, Arrange.BasicPlanId);
 
-        using var response = await client.PostJsonAsync("api/v1/subscriptions",
-            SubscriptionRequest(ranchId, Arrange.StandardPlanId, Guid.NewGuid()));
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions",
+            SubscriptionRequest(Arrange.StandardPlanId, Guid.NewGuid()));
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.Conflict);
         Assert.Equal("SubscriptionPlans.SubscriptionAlreadyExists", problem.GetProperty("code").GetString());
@@ -110,8 +110,8 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
 
-        using var response = await client.PostJsonAsync("api/v1/subscriptions",
-            SubscriptionRequest(ranchId, Arrange.StandardPlanId, Guid.NewGuid(), termsVersion: "2020-01"));
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions",
+            SubscriptionRequest(Arrange.StandardPlanId, Guid.NewGuid(), termsVersion: "2020-01"));
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.Conflict);
         Assert.Equal("SubscriptionPlans.TermsVersionOutdated", problem.GetProperty("code").GetString());
@@ -123,8 +123,8 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         using var client = factory.CreateClient(TestIdentity.Create());
         var ranchId = await client.RegisterManagerAsync();
 
-        using var response = await client.PostJsonAsync("api/v1/subscriptions",
-            SubscriptionRequest(ranchId, Arrange.StandardPlanId, Guid.NewGuid(), expectedTotal: 2999m));
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions",
+            SubscriptionRequest(Arrange.StandardPlanId, Guid.NewGuid(), expectedTotal: 2999m));
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.Conflict);
         Assert.Equal("SubscriptionPlans.QuoteChanged", problem.GetProperty("code").GetString());
@@ -137,7 +137,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         var requested = await Arrange.RequestSubscriptionAsync(client, ranchId, Arrange.StandardPlanId);
 
-        using var response = await client.GetAsync($"api/v1/subscriptions?ranchId={ranchId}");
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/subscriptions");
 
         var subscription = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal(requested.GetProperty("id").GetGuid(), subscription.GetProperty("id").GetGuid());
@@ -151,7 +151,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         var ranchId = await client.RegisterManagerAsync();
         await Arrange.ActivateSubscriptionAsync(factory, client, ranchId, Arrange.StandardPlanId);
 
-        using var response = await client.GetAsync($"api/v1/subscriptions?ranchId={ranchId}");
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/subscriptions");
 
         var subscription = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal("Active", subscription.GetProperty("status").GetString());
@@ -168,7 +168,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         using var outsider = factory.CreateClient(TestIdentity.Create());
         await outsider.RegisterManagerAsync();
 
-        using var response = await outsider.GetAsync($"api/v1/subscriptions?ranchId={ranchId}");
+        using var response = await outsider.GetAsync($"api/v1/ranches/{ranchId}/subscriptions");
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
         Assert.Equal("SubscriptionPlans.RanchAccessDenied", problem.GetProperty("code").GetString());
@@ -182,7 +182,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         var requested = await Arrange.RequestSubscriptionAsync(client, ranchId, Arrange.BasicPlanId);
         var subscriptionId = requested.GetProperty("id").GetGuid();
 
-        using var response = await client.PostJsonAsync($"api/v1/subscriptions/{subscriptionId}/cancellations", new { reason = "Ranch sold" });
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions/{subscriptionId}/cancellations", new { reason = "Ranch sold" });
 
         var subscription = await response.ReadJsonAsync(HttpStatusCode.OK);
         Assert.Equal("Cancelled", subscription.GetProperty("status").GetString());
@@ -197,16 +197,30 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
         var requested = await Arrange.RequestSubscriptionAsync(client, ranchId, Arrange.BasicPlanId);
         var subscriptionId = requested.GetProperty("id").GetGuid();
 
-        using var response = await client.PostJsonAsync($"api/v1/subscriptions/{subscriptionId}/cancellations", new { reason = " " });
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions/{subscriptionId}/cancellations", new { reason = " " });
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
         Assert.Equal("SubscriptionPlans.CancellationReasonRequired", problem.GetProperty("code").GetString());
     }
 
-    private static object SubscriptionRequest(Guid ranchId, Guid planId, Guid operationId, string termsVersion = "2026-11", decimal expectedTotal = 3000m) =>
+    [Fact]
+    public async Task CancelSubscription_UnderAnotherRanchOfTheCaller_IsNotFound()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var subscriptionId = (await Arrange.RequestSubscriptionAsync(owner, ranchId, Arrange.BasicPlanId)).GetProperty("id").GetGuid();
+        using var other = factory.CreateClient(TestIdentity.Create());
+        var otherRanchId = await other.RegisterManagerAsync();
+
+        using var response = await other.PostJsonAsync($"api/v1/ranches/{otherRanchId}/subscriptions/{subscriptionId}/cancellations", new { reason = "Ranch sold" });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("SubscriptionPlans.SubscriptionNotFound", problem.GetProperty("code").GetString());
+    }
+
+    private static object SubscriptionRequest(Guid planId, Guid operationId, string termsVersion = "2026-11", decimal expectedTotal = 3000m) =>
         new
         {
-            ranchId,
             planId,
             headCount = 10,
             expectedTotal,

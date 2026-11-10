@@ -25,6 +25,8 @@ dotnet run --project FiveSmartFarmCreators.Ichu.Platform --launch-profile http
 
 The HTTP profile starts the service at `http://localhost:5099` in Development. View the OpenAPI document at [http://localhost:5099/openapi/v1.json](http://localhost:5099/openapi/v1.json). Business endpoints will appear as controllers are implemented.
 
+Resources that belong to a ranch are served under `/api/v1/ranches/{ranchId}/...`, and the animals of the domain language are routed as `cattle`.
+
 The service needs a local PostgreSQL 17 database named `ichu` and applies pending EF Core migrations on startup. Keep credentials outside version-controlled settings and provide them as environment variables:
 
 | Variable | Purpose |

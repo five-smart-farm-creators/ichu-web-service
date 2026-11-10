@@ -7,15 +7,15 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class GetAlertsQueryFromRequestAssembler
 {
-    public static Result<GetAlertsQuery> ToQueryFromRequest(Guid ranchId, string? status, Guid? animalId, int page, int pageSize)
+    public static Result<GetAlertsQuery> ToQueryFromRequest(Guid ranchId, string? status, Guid? cattleId, int page, int pageSize)
     {
         if (string.IsNullOrWhiteSpace(status))
         {
-            return Result<GetAlertsQuery>.Success(new GetAlertsQuery(ranchId, null, animalId, page, pageSize));
+            return Result<GetAlertsQuery>.Success(new GetAlertsQuery(ranchId, null, cattleId, page, pageSize));
         }
 
         return MonitoringEnumParser.Parse<AlertStatus>(status) is { } parsed
-            ? Result<GetAlertsQuery>.Success(new GetAlertsQuery(ranchId, parsed, animalId, page, pageSize))
+            ? Result<GetAlertsQuery>.Success(new GetAlertsQuery(ranchId, parsed, cattleId, page, pageSize))
             : Result<GetAlertsQuery>.Failure(OperationsMonitoringErrors.AlertStatusUnknown);
     }
 }

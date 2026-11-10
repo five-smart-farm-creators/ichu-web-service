@@ -2,4 +2,4 @@ using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.ValueOb
 
 namespace FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Model.Commands;
 
-public sealed record CancelSubscriptionCommand(SubscriptionId SubscriptionId, string Reason);
+public sealed record CancelSubscriptionCommand(Guid RanchId, SubscriptionId SubscriptionId, string Reason);

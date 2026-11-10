@@ -20,7 +20,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Rest;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/[controller]")]
+[Route("api/v1/ranches/{ranchId:guid}/subscriptions")]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Subscriptions")]
 public class SubscriptionsController(
@@ -39,9 +39,9 @@ public class SubscriptionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> RequestSubscription(RequestSubscriptionResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> RequestSubscription(Guid ranchId, RequestSubscriptionResource resource, CancellationToken cancellationToken)
     {
-        var command = RequestSubscriptionCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = RequestSubscriptionCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         var result = await subscriptionCommandService.Handle(command, cancellationToken);
         if (result.IsFailure)
         {
@@ -62,7 +62,7 @@ public class SubscriptionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSubscriptionByRanch([FromQuery] Guid ranchId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetSubscriptionByRanch(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await subscriptionQueryService.Handle(new GetSubscriptionByRanchQuery(ranchId), cancellationToken);
         if (result.IsFailure)
@@ -82,9 +82,9 @@ public class SubscriptionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CancelSubscription(Guid subscriptionId, CancelSubscriptionResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> CancelSubscription(Guid ranchId, Guid subscriptionId, CancelSubscriptionResource resource, CancellationToken cancellationToken)
     {
-        var command = new CancelSubscriptionCommand(new SubscriptionId(subscriptionId), resource.Reason);
+        var command = new CancelSubscriptionCommand(ranchId, new SubscriptionId(subscriptionId), resource.Reason);
         var result = await subscriptionCommandService.Handle(command, cancellationToken);
         if (result.IsFailure)
         {
