@@ -7,6 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Exten
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Interfaces.AspNetCore.OpenApi;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.OpenApi;
@@ -38,6 +39,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
+    options.AddOperationTransformer<StripeWebhookSecurityTransformer>();
 });
 builder.Services.AddSwaggerGen();
 

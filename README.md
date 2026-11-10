@@ -61,6 +61,22 @@ Without both `DevelopmentSeed__Manager__ExternalUid` and `DevelopmentSeed__Manag
 
 Epidemiological curves compare the observation window with the incubation period of each health condition, set in the `DashboardAnalytics:ConditionIncubationDays` section of `appsettings.json`. The shipped values (`temperature` and `activity`, 7 days each) are placeholders that the team must validate before the curves inform any decision. A condition without a configured value returns its curve with the reason that no incubation period is set.
 
+### Payments
+
+Ranch managers pay a pending subscription through a Stripe Checkout page in soles (PEN), with card payments only. Development runs in Stripe test mode, so use the test card `4242 4242 4242 4242` with any future expiry date and any CVC.
+
+`POST api/v1/ranches/{ranchId}/subscriptions/{subscriptionId}/checkout-sessions` returns 201 with `sessionId`, `url` and `expiresAt`. The subscription becomes active when Stripe reports the payment to `POST api/v1/payments/stripe/webhooks`, which verifies the `Stripe-Signature` header with the webhook secret. Until the secret key and both return URLs are set, checkout answers 503 with `SubscriptionPlans.PaymentProviderNotConfigured`, and the webhook answers the same while the webhook secret is missing.
+
+Set the Stripe values as user environment variables, never in `appsettings.json`:
+
+| Variable | Purpose |
+| --- | --- |
+| `Stripe__SecretKey` | Secret key of the Stripe account in test mode. |
+| `Stripe__WebhookSecret` | Signing secret of the webhook endpoint, which starts with `whsec_`. |
+| `Stripe__SuccessUrl` and `Stripe__CancelUrl` | Pages where the customer returns after paying or cancelling. The success URL receives the `session_id` query parameter. Development sets placeholders on `http://localhost:4200`. |
+
+To receive webhooks on your machine, install the [Stripe CLI](https://docs.stripe.com/stripe-cli) and run `stripe listen --forward-to http://localhost:5099/api/v1/payments/stripe/webhooks`. Set `Stripe__WebhookSecret` to the `whsec_...` value that the CLI prints, then restart the API. On Render, add the public URL of the service followed by `/api/v1/payments/stripe/webhooks` as an endpoint in the Stripe dashboard, and copy the signing secret that the dashboard shows into `Stripe__WebhookSecret`.
+
 ## Tests
 
 Run `dotnet test --configuration Release` from the repository root to run the unit tests and the HTTP integration tests. The integration tests need a PostgreSQL 17 server and a user environment variable named `ICHU_TEST_CONNECTION` that holds the connection string without a database, with the password written as a placeholder:

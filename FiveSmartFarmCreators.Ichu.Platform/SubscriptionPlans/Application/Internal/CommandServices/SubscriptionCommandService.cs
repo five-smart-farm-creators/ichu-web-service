@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 namespace FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal.CommandServices;
 
 /// <summary>
-///     Requests, cancels and activates subscriptions. It checks permissions and commercial rules here and leaves the
+///     Requests, cancels, pays and activates subscriptions. It checks permissions and commercial rules here and leaves the
 ///     state transitions to the aggregate; a rejected request saves nothing.
 /// </summary>
 public class SubscriptionCommandService(
@@ -20,6 +20,7 @@ public class SubscriptionCommandService(
     IPlanRepository plans,
     ISubscriptionRepository subscriptions,
     IUnitOfWork unitOfWork,
+    IPaymentGateway payments,
     IOptions<SubscriptionPlansOptions> options,
     TimeProvider clock) : ISubscriptionCommandService
 {
@@ -115,6 +116,77 @@ public class SubscriptionCommandService(
             return Result<Subscription>.Failure(SubscriptionPlansErrors.SubscriptionNotFound);
         }
 
+        return await ActivateAsync(subscription, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<CheckoutSession>> Handle(StartSubscriptionCheckoutCommand command, CancellationToken cancellationToken)
+    {
+        var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<CheckoutSession>.Failure(access.DomainError);
+        }
+
+        // A subscription of another ranch is reported as missing, so identifiers cannot be probed.
+        var subscription = await subscriptions.FindByIdAsync(command.SubscriptionId, cancellationToken);
+        if (subscription is null || subscription.RanchId != command.RanchId)
+        {
+            return Result<CheckoutSession>.Failure(SubscriptionPlansErrors.SubscriptionNotFound);
+        }
+
+        if (subscription.Status != SubscriptionStatus.Pending)
+        {
+            return Result<CheckoutSession>.Failure(SubscriptionPlansErrors.SubscriptionNotPending);
+        }
+
+        var plan = await plans.FindByIdAsync(subscription.PlanId, cancellationToken);
+        if (plan is null)
+        {
+            return Result<CheckoutSession>.Failure(SubscriptionPlansErrors.PlanNotFound);
+        }
+
+        return await payments.CreateCheckoutSessionAsync(subscription, plan.Name, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Subscription>> Handle(ReceivePaymentEventCommand command, CancellationToken cancellationToken)
+    {
+        var confirmation = payments.ReadConfirmation(command.Payload, command.SignatureHeader);
+        if (confirmation.IsFailure)
+        {
+            return Result<Subscription>.Failure(confirmation.DomainError);
+        }
+
+        return await Handle(new ConfirmSubscriptionPaymentCommand(confirmation.Value!), cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Subscription>> Handle(ConfirmSubscriptionPaymentCommand command, CancellationToken cancellationToken)
+    {
+        var confirmation = command.Confirmation;
+        var subscription = await subscriptions.FindByIdAsync(confirmation.SubscriptionId, cancellationToken);
+        if (subscription is null)
+        {
+            return Result<Subscription>.Failure(SubscriptionPlansErrors.SubscriptionNotFound);
+        }
+
+        // Stripe redelivers events until they are acknowledged, so a repeat for an active subscription succeeds unchanged.
+        if (subscription.Status == SubscriptionStatus.Active || !confirmation.Paid)
+        {
+            return Result<Subscription>.Success(subscription);
+        }
+
+        if (confirmation.AmountMinor != subscription.Total.ToMinorUnits() || confirmation.Currency != subscription.Total.Currency)
+        {
+            return Result<Subscription>.Failure(SubscriptionPlansErrors.PaymentAmountMismatch);
+        }
+
+        return await ActivateAsync(subscription, cancellationToken);
+    }
+
+    private async Task<Result<Subscription>> ActivateAsync(Subscription subscription, CancellationToken cancellationToken)
+    {
         var activation = subscription.Activate(clock.GetUtcNow());
         if (activation.IsFailure)
         {

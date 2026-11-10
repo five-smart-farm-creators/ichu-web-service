@@ -45,4 +45,22 @@
   <data name="SubscriptionPlans.Unauthenticated" xml:space="preserve">
     <value>A verified account is required.</value>
   </data>
+  <data name="SubscriptionPlans.PaymentProviderNotConfigured" xml:space="preserve">
+    <value>The payment provider is not configured.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentProviderUnavailable" xml:space="preserve">
+    <value>The payment provider cannot complete the request right now. Try again later.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionNotPending" xml:space="preserve">
+    <value>Only a pending subscription can be paid.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentSignatureInvalid" xml:space="preserve">
+    <value>The signature of the payment event is not valid.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentAmountMismatch" xml:space="preserve">
+    <value>The paid amount or currency does not match the subscription total.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentEventIgnored" xml:space="preserve">
+    <value>The payment event does not change any subscription.</value>
+  </data>
 </root>

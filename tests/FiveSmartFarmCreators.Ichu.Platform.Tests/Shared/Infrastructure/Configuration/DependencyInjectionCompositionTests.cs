@@ -51,7 +51,10 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -273,6 +276,20 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<AccountsController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<HerdAdvisoriesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<ProfilesController>(services));
+    }
+
+    [Fact]
+    public void EverySubscriptionPlansServiceAndControllerResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IPaymentGateway>());
+        Assert.NotNull(services.GetRequiredService<ISubscriptionCommandService>());
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PlansController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<SubscriptionsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<StripeWebhooksController>(services));
     }
 
     private static ServiceProvider BuildHost()

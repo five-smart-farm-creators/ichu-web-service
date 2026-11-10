@@ -6,6 +6,8 @@ using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Payments.Stripe.Configuration;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Payments.Stripe.Services;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Acl;
@@ -17,7 +19,8 @@ public static class SubscriptionPlansServiceCollectionExtensions
 {
     /// <summary>
     ///     Registers the module services. The host must also register the shared database context, the IAM module and
-    ///     localization. The application fails at startup when the terms version is missing.
+    ///     localization. The application fails at startup when the terms version is missing, while Stripe settings are
+    ///     checked when a payment starts, so the API runs without them.
     /// </summary>
     public static IServiceCollection AddSubscriptionPlans(this IServiceCollection services, IConfiguration configuration)
     {
@@ -26,11 +29,13 @@ public static class SubscriptionPlansServiceCollectionExtensions
             .Validate(options => !string.IsNullOrWhiteSpace(options.CurrentTermsVersion),
                 "The SubscriptionPlans:CurrentTermsVersion setting is required.")
             .ValidateOnStart();
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddScoped<IPlanRepository, PlanRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<ISubscriptionAccessService, IamSubscriptionAccessService>();
+        services.AddScoped<IPaymentGateway, StripePaymentGateway>();
         services.AddScoped<ISubscriptionCommandService, SubscriptionCommandService>();
         services.AddScoped<IPlanQueryService, PlanQueryService>();
         services.AddScoped<ISubscriptionQueryService, SubscriptionQueryService>();

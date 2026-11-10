@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Subscription Plans: a ranch manager can start the payment of a pending subscription with a Stripe Checkout page that charges the total in soles (PEN) by card; the subscription stays pending until the payment is confirmed.
+- Subscription Plans: a verified Stripe webhook activates the subscription once the paid amount and currency match its total; repeated, unpaid and unrelated events change nothing and are acknowledged.
 - Operations and Monitoring: Development seeds body temperature and activity thresholds for the seeded life stages and a geofence for the seeded lot, so that the edge raises alerts in demos. The values are placeholders, not validated clinical ranges.
 - Shared: added HTTP integration tests that run the API against a PostgreSQL database created for each test run and dropped afterwards, covering every bounded context.
 - Operations and Monitoring, Subscription Plans: added Gherkin acceptance scenarios, run against the API, for the monitoring, edge synchronization and subscription stories that the backend implements.
