@@ -16,7 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/withdrawal-periods")]
+[Route("api/v1/ranches/{ranchId:guid}/withdrawal-periods")]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class WithdrawalPeriodsController(
     IWithdrawalPeriodCommandService commandService,
@@ -31,7 +31,7 @@ public sealed class WithdrawalPeriodsController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetWithdrawalPeriodsAsync(
-        [FromQuery] Guid ranchId,
+        Guid ranchId,
         [FromQuery] Guid? cattleId,
         CancellationToken cancellationToken)
     {
@@ -53,10 +53,11 @@ public sealed class WithdrawalPeriodsController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RecordWithdrawalPeriodAsync(
+        Guid ranchId,
         [FromBody] RecordWithdrawalPeriodResource resource,
         CancellationToken cancellationToken)
     {
-        var command = RecordWithdrawalPeriodCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = RecordWithdrawalPeriodCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         var result = await commandService.HandleAsync(command, cancellationToken);
         if (result.IsFailure)
         {
@@ -64,6 +65,6 @@ public sealed class WithdrawalPeriodsController(
         }
 
         var period = WithdrawalPeriodResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return Created($"/api/v1/withdrawal-periods?ranchId={period.RanchId}&cattleId={period.CattleId}", period);
+        return Created($"/api/v1/ranches/{ranchId}/withdrawal-periods?cattleId={period.CattleId}", period);
     }
 }

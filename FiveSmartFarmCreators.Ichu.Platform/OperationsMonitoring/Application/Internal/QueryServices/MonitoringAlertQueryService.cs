@@ -50,14 +50,18 @@ public class MonitoringAlertQueryService(
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
+        if (!await accessControl.CanAccessRanchAsync(accountId, query.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken))
+        {
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        // The ranch is checked before the lookup, and an alert of another ranch is reported as missing, so identifiers cannot be probed.
         var alert = await alerts.FindByIdAsNoTrackingAsync(query.AlertId, cancellationToken);
-        if (alert is null)
+        if (alert is null || alert.RanchId != query.RanchId)
         {
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound);
         }
 
-        return await accessControl.CanAccessRanchAsync(accountId, alert.RanchId, MonitoringPermission.ReadMonitoring, cancellationToken)
-            ? Result<MonitoringAlert>.Success(alert)
-            : Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden);
+        return Result<MonitoringAlert>.Success(alert);
     }
 }

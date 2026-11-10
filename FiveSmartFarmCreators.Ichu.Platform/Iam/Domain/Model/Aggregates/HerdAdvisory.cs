@@ -1,143 +1,130 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
 /// <summary>
-///     Controls the lifecycle of a veterinarian authorization over one ranch.
+///     A request is granted, rejected, revoked or expired, and never returns to pending once decided.
 /// </summary>
-public sealed class HerdAdvisory
+public sealed class HerdAdvisory : AggregateRoot
 {
-    private HerdAdvisory() { }
+    private const int MaximumReasonLength = 1000;
 
-    /// <summary>
-    ///     Creates a pending veterinarian request for ranch access.
-    /// </summary>
-    /// <param name="veterinarianId">
-    ///     The veterinarian account requesting access.
-    /// </param>
-    /// <param name="ranchId">
-    ///     The ranch for which access is requested.
-    /// </param>
-    /// <param name="reason">
-    ///     The veterinarian's reason for the request.
-    /// </param>
-    /// <param name="now">
-    ///     The request creation instant.
-    /// </param>
-    /// <exception cref="ArgumentException">
-    ///     An identifier or request reason is invalid.
-    /// </exception>
-    public HerdAdvisory(Guid veterinarianId, Guid ranchId, string reason, DateTimeOffset now)
+    // Entity Framework Core materializes advisories without running the factory.
+    private HerdAdvisory()
     {
-        if (veterinarianId == Guid.Empty || ranchId == Guid.Empty || string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
-        {
-            throw new ArgumentException("Veterinarian, ranch and advisory reason are required.");
-        }
-        Id = Guid.NewGuid();
-        VeterinarianId = veterinarianId;
-        RanchId = ranchId;
-        Reason = reason.Trim();
-        RequestedAt = now;
-        Revision = Guid.NewGuid();
     }
 
-    public Guid Id { get; private set; }
-    public Guid VeterinarianId { get; private set; }
+    public HerdAdvisoryId Id { get; private set; }
+
+    public UserAccountId VeterinarianId { get; private set; }
+
     public Guid RanchId { get; private set; }
+
     public string Reason { get; private set; } = string.Empty;
+
     public AdvisoryStatus Status { get; private set; }
+
     public AccessScope Scope { get; private set; }
+
     public DateTimeOffset RequestedAt { get; private set; }
+
     public DateTimeOffset? GrantedAt { get; private set; }
+
     public DateTimeOffset? ExpiresAt { get; private set; }
+
     public DateTimeOffset? EndedAt { get; private set; }
-    public Guid? DecidedBy { get; private set; }
+
+    public UserAccountId? DecidedBy { get; private set; }
+
     public Guid Revision { get; private set; }
 
-    /// <summary>
-    ///     Checks whether a granted advisory remains effective at the supplied instant.
-    /// </summary>
-    /// <param name="now">
-    ///     The instant used to evaluate the grant period.
-    /// </param>
-    /// <returns>
-    ///     <see langword="true"/> when the grant has started and has not expired.
-    /// </returns>
-    public bool IsValidOn(DateTimeOffset now) => Status == AdvisoryStatus.Granted && GrantedAt <= now && ExpiresAt > now;
+    public static Result<HerdAdvisory> Create(UserAccountId veterinarianId, Guid ranchId, string reason, DateTimeOffset now)
+    {
+        if (veterinarianId.Value == Guid.Empty || ranchId == Guid.Empty ||
+            string.IsNullOrWhiteSpace(reason) || reason.Length > MaximumReasonLength)
+        {
+            return Result<HerdAdvisory>.Failure(IamErrors.InvalidAdvisory);
+        }
+
+        return Result<HerdAdvisory>.Success(new HerdAdvisory
+        {
+            Id = new HerdAdvisoryId(Guid.NewGuid()),
+            VeterinarianId = veterinarianId,
+            RanchId = ranchId,
+            Reason = reason.Trim(),
+            Status = AdvisoryStatus.Pending,
+            RequestedAt = now,
+            Revision = Guid.NewGuid()
+        });
+    }
+
+    public bool IsValidOn(DateTimeOffset now) =>
+        Status == AdvisoryStatus.Granted && GrantedAt <= now && ExpiresAt > now;
 
     /// <summary>
-    ///     Grants a pending advisory with an explicit scope and future expiration.
+    ///     Only a pending request can be granted, and a grant must expire in the future.
     /// </summary>
-    /// <param name="actorId">
-    ///     The account making the decision.
-    /// </param>
-    /// <param name="scope">
-    ///     The access scope granted to the veterinarian.
-    /// </param>
-    /// <param name="expiresAt">
-    ///     The instant when the grant stops being effective.
-    /// </param>
-    /// <param name="now">
-    ///     The instant of the grant decision.
-    /// </param>
-    /// <exception cref="IamException">
-    ///     The advisory is not pending.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    ///     The actor, scope, or expiration is invalid.
-    /// </exception>
-    public void Grant(Guid actorId, AccessScope scope, DateTimeOffset expiresAt, DateTimeOffset now)
+    public Result Grant(UserAccountId actorId, AccessScope scope, DateTimeOffset expiresAt, DateTimeOffset now)
     {
-        if (Status != AdvisoryStatus.Pending) throw new IamException("conflict", "Only pending advisories can be granted.");
-        if (actorId == Guid.Empty || scope is not (AccessScope.Read or AccessScope.ClinicalWrite) || expiresAt <= now)
+        if (Status != AdvisoryStatus.Pending)
         {
-            throw new ArgumentException("A deciding account, permitted scope and future expiration are required.");
+            return Result.Failure(IamErrors.AdvisoryNotPending);
         }
+
+        if (actorId.Value == Guid.Empty)
+        {
+            return Result.Failure(IamErrors.InvalidIdentifier);
+        }
+
+        if (scope is not (AccessScope.Read or AccessScope.ClinicalWrite))
+        {
+            return Result.Failure(IamErrors.InvalidAdvisoryScope);
+        }
+
+        if (expiresAt <= now)
+        {
+            return Result.Failure(IamErrors.ExpirationNotInFuture);
+        }
+
         Status = AdvisoryStatus.Granted;
         Scope = scope;
         GrantedAt = now;
         ExpiresAt = expiresAt;
         DecidedBy = actorId;
         Revision = Guid.NewGuid();
+        return Result.Success();
     }
 
     /// <summary>
-    ///     Rejects a pending advisory or revokes an effective grant.
+    ///     A pending request can be rejected, and only an effective grant can be revoked.
     /// </summary>
-    /// <param name="actorId">
-    ///     The account making the decision.
-    /// </param>
-    /// <param name="reject">
-    ///     <see langword="true"/> to reject a pending request; otherwise revoke a grant.
-    /// </param>
-    /// <param name="now">
-    ///     The instant of the decision.
-    /// </param>
-    /// <exception cref="IamException">
-    ///     The actor is invalid or the advisory cannot make the requested transition.
-    /// </exception>
-    public void End(Guid actorId, bool reject, DateTimeOffset now)
+    public Result End(UserAccountId actorId, bool reject, DateTimeOffset now)
     {
-        if (actorId == Guid.Empty || (reject ? Status != AdvisoryStatus.Pending : !IsValidOn(now)))
+        if (actorId.Value == Guid.Empty || (reject ? Status != AdvisoryStatus.Pending : !IsValidOn(now)))
         {
-            throw new IamException("conflict", "The advisory cannot transition from its current state.");
+            return Result.Failure(IamErrors.AdvisoryTransitionInvalid);
         }
+
         Status = reject ? AdvisoryStatus.Rejected : AdvisoryStatus.Revoked;
         EndedAt = now;
         DecidedBy = actorId;
         Revision = Guid.NewGuid();
+        return Result.Success();
     }
 
     /// <summary>
-    ///     Marks a granted advisory expired when its validity period ends.
+    ///     A grant that has reached its expiration instant becomes expired.
     /// </summary>
-    /// <param name="now">
-    ///     The instant used to determine whether the grant has expired.
-    /// </param>
     public void Expire(DateTimeOffset now)
     {
-        if (Status != AdvisoryStatus.Granted || ExpiresAt > now) return;
+        if (Status != AdvisoryStatus.Granted || ExpiresAt > now)
+        {
+            return;
+        }
+
         Status = AdvisoryStatus.Expired;
         EndedAt = ExpiresAt;
         Revision = Guid.NewGuid();

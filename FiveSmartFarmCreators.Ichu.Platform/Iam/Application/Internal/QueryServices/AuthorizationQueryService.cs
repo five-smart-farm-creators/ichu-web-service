@@ -8,36 +8,58 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.QueryServices;
 
 /// <summary>
-///     Evaluates ranch-access queries using repository data and domain rules.
+///     Evaluates ranch-access queries with the repositories and the authorization rules. Read-only, so nothing is tracked.
 /// </summary>
-public sealed class AuthorizationQueryService(IIamRepository repository, AuthorizationDomainService authorization, TimeProvider clock) : IAuthorizationQueryService
+public sealed class AuthorizationQueryService(
+    IUserAccountRepository accounts,
+    IRanchRegistrationRepository ranches,
+    IHerdAdvisoryRepository advisories,
+    AuthorizationDomainService authorization,
+    TimeProvider clock) : IAuthorizationQueryService
 {
     /// <inheritdoc />
     public async Task<bool> HandleAsync(CheckRanchAccessQuery query, CancellationToken cancellationToken = default)
     {
-        var accountId = query.AccountId;
-        var account = await repository.FindAccountAsync(accountId, cancellationToken);
-        if (account is null) return false;
+        var accountId = new UserAccountId(query.AccountId);
+        var account = await accounts.FindByIdAsNoTrackingAsync(accountId, cancellationToken);
+        if (account is null)
+        {
+            return false;
+        }
+
         return authorization.CanAccessRanch(account, query.RanchId, query.Scope,
-            await repository.FindMembershipsAsync(accountId, cancellationToken),
-            await repository.FindAdvisoriesAsync(query.RanchId, accountId, cancellationToken), clock.GetUtcNow());
+            await ranches.FindMembershipsByAccountAsync(accountId, cancellationToken),
+            await advisories.FindByRanchAsNoTrackingAsync(query.RanchId, accountId, cancellationToken),
+            clock.GetUtcNow());
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<RanchAccess>> HandleAsync(GetAccessibleRanchesQuery query, CancellationToken cancellationToken = default)
     {
-        var accountId = query.AccountId;
-        var account = await repository.FindAccountAsync(accountId, cancellationToken);
+        var accountId = new UserAccountId(query.AccountId);
+        var account = await accounts.FindByIdAsNoTrackingAsync(accountId, cancellationToken);
         var now = clock.GetUtcNow();
-        if (account is null || !account.IsActive(now)) return [];
-        var memberships = await repository.FindMembershipsAsync(accountId, cancellationToken);
-        var result = memberships.Select(m => new RanchAccess(m.RanchId,
-            m.IsOwner && account.Role == UserRole.RanchManager ? AccessScope.Manage : AccessScope.Read, null)).ToList();
+        if (account is null || !account.IsActive(now))
+        {
+            return [];
+        }
+
+        var memberships = await ranches.FindMembershipsByAccountAsync(accountId, cancellationToken);
+        var result = memberships
+            .Select(membership => new RanchAccess(membership.RanchId,
+                membership.IsOwner && account.Role == UserRole.RanchManager ? AccessScope.Manage : AccessScope.Read, null))
+            .ToList();
         if (account.Role == UserRole.Veterinarian && account.Profile is not null)
         {
-            var advisories = await repository.FindVeterinarianAdvisoriesAsync(accountId, cancellationToken);
-            result.AddRange(advisories.Where(a => a.IsValidOn(now)).Select(a => new RanchAccess(a.RanchId, a.Scope, a.ExpiresAt)));
+            var veterinarianAdvisories = await advisories.FindByVeterinarianAsNoTrackingAsync(accountId, cancellationToken);
+            result.AddRange(veterinarianAdvisories
+                .Where(advisory => advisory.IsValidOn(now))
+                .Select(advisory => new RanchAccess(advisory.RanchId, advisory.Scope, advisory.ExpiresAt)));
         }
-        return result.GroupBy(r => r.RanchId).Select(g => g.OrderByDescending(r => r.Scope).First()).ToList();
+
+        return result
+            .GroupBy(access => access.RanchId)
+            .Select(group => group.OrderByDescending(access => access.Scope).First())
+            .ToList();
     }
 }

@@ -8,6 +8,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform
 /// </summary>
 public static class RecordWithdrawalPeriodCommandFromResourceAssembler
 {
-    public static RecordWithdrawalPeriodCommand ToCommandFromResource(RecordWithdrawalPeriodResource resource) =>
-        new(resource.RanchId, resource.CattleId, resource.InterventionId, resource.StartsAt, resource.EndsAt);
+    public static RecordWithdrawalPeriodCommand ToCommandFromResource(Guid ranchId, RecordWithdrawalPeriodResource resource) =>
+        new(ranchId, resource.CattleId, resource.InterventionId, resource.StartsAt, resource.EndsAt);
 }

@@ -31,6 +31,7 @@ public static class SubscriptionPlansActionResultAssembler
         EErrorType.Forbidden => StatusCodes.Status403Forbidden,
         EErrorType.NotFound => StatusCodes.Status404NotFound,
         EErrorType.Conflict => StatusCodes.Status409Conflict,
+        EErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
         _ => StatusCodes.Status500InternalServerError
     };
 }

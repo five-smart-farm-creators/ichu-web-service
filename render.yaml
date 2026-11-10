@@ -1,0 +1,60 @@
+# Render Blueprint for the ICHU API: a Docker web service and a PostgreSQL 17 database, both in Oregon so the
+# service reaches the database over Render's private network. Values marked sync: false are entered in the dashboard.
+databases:
+  - name: ichu-db
+    databaseName: ichu
+    user: ichu
+    postgresMajorVersion: "17"
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: ichu-web-service
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Production follows main only, which receives code through release merges.
+    autoDeployTrigger: commit
+    branch: main
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: OpenApi__Enabled
+        value: "true"
+      - key: PORT
+        value: "8080"
+      # The database host is not a Blueprint property for Postgres, so the owner copies it from the database Info page.
+      - key: DB_HOST
+        sync: false
+      # Render Postgres listens on the default port.
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        fromDatabase:
+          name: ichu-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: ichu-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: ichu-db
+          property: password
+      - key: ConnectionStrings__DefaultConnection
+        value: "Host=%DB_HOST%;Port=%DB_PORT%;Database=%DB_NAME%;Username=%DB_USER%;Password=%DB_PASSWORD%;SSL Mode=Require;Trust Server Certificate=true"
+      - key: Firebase__ProjectId
+        sync: false
+      - key: Firebase__ApiKey
+        sync: false
+      - key: Stripe__SecretKey
+        sync: false
+      - key: Stripe__WebhookSecret
+        sync: false
+      - key: Stripe__SuccessUrl
+        sync: false
+      - key: Stripe__CancelUrl
+        sync: false

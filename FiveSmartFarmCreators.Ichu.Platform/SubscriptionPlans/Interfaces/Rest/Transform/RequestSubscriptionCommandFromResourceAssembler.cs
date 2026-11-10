@@ -6,9 +6,9 @@ namespace FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Rest.
 
 public static class RequestSubscriptionCommandFromResourceAssembler
 {
-    public static RequestSubscriptionCommand ToCommandFromResource(RequestSubscriptionResource resource) =>
+    public static RequestSubscriptionCommand ToCommandFromResource(Guid ranchId, RequestSubscriptionResource resource) =>
         new(
-            resource.RanchId,
+            ranchId,
             new PlanId(resource.PlanId),
             resource.HeadCount,
             resource.ExpectedTotal,

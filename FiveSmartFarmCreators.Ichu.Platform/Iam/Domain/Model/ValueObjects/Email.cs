@@ -1,32 +1,44 @@
 using System.Net.Mail;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 
 /// <summary>
-///     Validates an account email address and stores it in lowercase.
+///     Validated email address, stored in lowercase so that account lookups ignore case.
 /// </summary>
 public sealed record Email
 {
+    private const int MaximumLength = 254;
+
     /// <summary>
-    ///     Trims and lowercases a valid email address.
+    ///     Rebuilds an address that was validated when it was stored. Requests must use <see cref="Create"/>.
     /// </summary>
-    /// <param name="value">
-    ///     The email address to validate.
-    /// </param>
-    /// <exception cref="ArgumentException">
-    ///     <paramref name="value"/> is blank, too long, or not a valid email address.
-    /// </exception>
     public Email(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Length > 254 ||
-            !MailAddress.TryCreate(value.Trim(), out var address) || address.Address != value.Trim())
-        {
-            throw new ArgumentException("A valid email address is required.", nameof(value));
-        }
-
-        Value = address.Address.ToLowerInvariant();
+        Value = Normalize(value) ?? throw new ArgumentException("A valid email address is required.", nameof(value));
     }
 
     public string Value { get; }
 
+    public static Result<Email> Create(string value) =>
+        Normalize(value) is null
+            ? Result<Email>.Failure(IamErrors.InvalidEmail)
+            : Result<Email>.Success(new Email(value));
+
+    private static string? Normalize(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > MaximumLength)
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        if (!MailAddress.TryCreate(trimmed, out var address) || address.Address != trimmed)
+        {
+            return null;
+        }
+
+        return address.Address.ToLowerInvariant();
+    }
 }

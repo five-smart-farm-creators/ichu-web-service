@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Lists the readings of an animal captured within a half-open period, ordered by capture time.
 /// </summary>
-public record GetAnimalTelemetryQuery(Guid AnimalId, TimePeriod Period, int Page, int PageSize);
+public record GetAnimalTelemetryQuery(Guid RanchId, Guid AnimalId, TimePeriod Period, int Page, int PageSize);

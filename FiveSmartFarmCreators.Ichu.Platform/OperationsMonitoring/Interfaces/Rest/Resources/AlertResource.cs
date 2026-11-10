@@ -6,7 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 public record AlertResource(
     Guid AlertId,
     Guid RanchId,
-    Guid AnimalId,
+    Guid CattleId,
     Guid DeviceId,
     string Type,
     string Severity,

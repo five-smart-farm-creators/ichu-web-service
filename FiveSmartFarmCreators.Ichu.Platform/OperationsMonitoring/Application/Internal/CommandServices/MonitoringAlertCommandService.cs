@@ -39,15 +39,16 @@ public class MonitoringAlertCommandService(
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var alert = await alerts.FindByIdAsync(command.AlertId, cancellationToken);
-        if (alert is null)
-        {
-            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound);
-        }
-
-        if (!await accessControl.CanAccessRanchAsync(accountId, alert.RanchId, MonitoringPermission.AttendAlerts, cancellationToken))
+        if (!await accessControl.CanAccessRanchAsync(accountId, command.RanchId, MonitoringPermission.AttendAlerts, cancellationToken))
         {
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        // The ranch is checked before the lookup, and an alert of another ranch is reported as missing, so identifiers cannot be probed.
+        var alert = await alerts.FindByIdAsync(command.AlertId, cancellationToken);
+        if (alert is null || alert.RanchId != command.RanchId)
+        {
+            return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertNotFound);
         }
 
         var now = clock.GetUtcNow();

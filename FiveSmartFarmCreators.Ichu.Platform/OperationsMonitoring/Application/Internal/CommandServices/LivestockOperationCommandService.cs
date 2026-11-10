@@ -91,7 +91,7 @@ public class LivestockOperationCommandService(
         }
 
         var cattle = await cattleLookup.FindAsync(animalId, cancellationToken);
-        if (cattle is null)
+        if (cattle is null || (command.RanchId is { } ranchId && cattle.RanchId != ranchId))
         {
             return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }

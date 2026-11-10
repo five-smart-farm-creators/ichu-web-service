@@ -24,7 +24,7 @@ public class LivestockOperationsController(
     ILivestockOperationQueryService operationQueryService,
     IStringLocalizer<OperationsMonitoringMessages> localizer) : ControllerBase
 {
-    [HttpPost("api/v1/field-events")]
+    [HttpPost("api/v1/ranches/{ranchId:guid}/field-events")]
     [EndpointSummary("Register a field event")]
     [EndpointDescription("Registers a field event observed by an operator. A retry with the same operation returns 200 with the stored record.")]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status201Created)]
@@ -34,9 +34,9 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> RegisterFieldEvent(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> RegisterFieldEvent(Guid ranchId, RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
     {
-        var command = RegisterFieldEventCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = RegisterFieldEventCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -46,7 +46,7 @@ public class LivestockOperationsController(
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer, RegistrationResponse);
     }
 
-    [HttpPost("api/v1/clinical-interventions")]
+    [HttpPost("api/v1/ranches/{ranchId:guid}/clinical-interventions")]
     [EndpointSummary("Register a clinical intervention")]
     [EndpointDescription("Registers a clinical intervention applied by an authorized veterinarian. A retry with the same operation returns 200 with the stored record.")]
     [ProducesResponseType(typeof(LivestockOperationResource), StatusCodes.Status201Created)]
@@ -56,9 +56,9 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> RegisterClinicalIntervention(RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> RegisterClinicalIntervention(Guid ranchId, RegisterLivestockOperationResource resource, CancellationToken cancellationToken)
     {
-        var command = RegisterClinicalInterventionCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var command = RegisterClinicalInterventionCommandFromResourceAssembler.ToCommandFromResource(ranchId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -82,7 +82,7 @@ public class LivestockOperationsController(
             entryResults => Ok(SyncBatchResultResourceFromEntityAssembler.ToResourceFromEntity(entryResults)));
     }
 
-    [HttpGet("api/v1/animals/{animalId:guid}/livestock-operations")]
+    [HttpGet("api/v1/ranches/{ranchId:guid}/cattle/{cattleId:guid}/livestock-operations")]
     [EndpointSummary("List the livestock operations of an animal")]
     [EndpointDescription("Returns the field events and clinical interventions of an authorized animal within the half-open period.")]
     [ProducesResponseType(typeof(IReadOnlyList<LivestockOperationResource>), StatusCodes.Status200OK)]
@@ -91,7 +91,8 @@ public class LivestockOperationsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetHistory(
-        Guid animalId,
+        Guid ranchId,
+        Guid cattleId,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         CancellationToken cancellationToken)
@@ -102,14 +103,14 @@ public class LivestockOperationsController(
             return OperationsMonitoringActionResultAssembler.ToProblem(this, period.DomainError, localizer);
         }
 
-        var result = await operationQueryService.Handle(new GetLivestockOperationsQuery(animalId, period.Value!), cancellationToken);
+        var result = await operationQueryService.Handle(new GetLivestockOperationsQuery(ranchId, cattleId, period.Value!), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
             operations => Ok(operations.Select(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
     }
 
     private IActionResult RegistrationResponse(LivestockOperationRegistration registration) =>
         registration.Created
-            ? Created($"/api/v1/animals/{registration.Operation.CattleId}/livestock-operations",
+            ? Created($"/api/v1/ranches/{registration.Operation.RanchId}/cattle/{registration.Operation.CattleId}/livestock-operations",
                 LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation))
             : Ok(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity(registration.Operation));
 }

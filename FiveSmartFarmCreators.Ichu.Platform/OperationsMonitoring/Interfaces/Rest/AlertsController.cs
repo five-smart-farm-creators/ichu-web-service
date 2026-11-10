@@ -18,7 +18,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 ///     Lists the alerts of ranches and records the attention that authorized users give them.
 /// </summary>
 [ApiController]
-[Route("api/v1/alerts")]
+[Route("api/v1/ranches/{ranchId:guid}/alerts")]
 [Authorize]
 [Produces(MediaTypeNames.Application.Json)]
 [Tags("Alerts")]
@@ -35,14 +35,14 @@ public class AlertsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAlerts(
-        [FromQuery] Guid ranchId,
+        Guid ranchId,
         [FromQuery] string? status,
-        [FromQuery] Guid? animalId,
+        [FromQuery] Guid? cattleId,
         CancellationToken cancellationToken,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 100)
     {
-        var query = GetAlertsQueryFromRequestAssembler.ToQueryFromRequest(ranchId, status, animalId, page, pageSize);
+        var query = GetAlertsQueryFromRequestAssembler.ToQueryFromRequest(ranchId, status, cattleId, page, pageSize);
         if (query.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, query.DomainError, localizer);
@@ -62,9 +62,9 @@ public class AlertsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Acknowledge(Guid alertId, AcknowledgeAlertResource resource, CancellationToken cancellationToken)
+    public async Task<IActionResult> Acknowledge(Guid ranchId, Guid alertId, AcknowledgeAlertResource resource, CancellationToken cancellationToken)
     {
-        var command = AcknowledgeAlertCommandFromResourceAssembler.ToCommandFromResource(alertId, resource);
+        var command = AcknowledgeAlertCommandFromResourceAssembler.ToCommandFromResource(ranchId, alertId, resource);
         if (command.IsFailure)
         {
             return OperationsMonitoringActionResultAssembler.ToProblem(this, command.DomainError, localizer);
@@ -72,15 +72,15 @@ public class AlertsController(
 
         var result = await alertCommandService.Handle(command.Value!, cancellationToken);
         var currentAlert = result.IsFailure && result.DomainError.Code == OperationsMonitoringErrors.AlertConflict.Code
-            ? await FindStoredAlertAsync(alertId, cancellationToken)
+            ? await FindStoredAlertAsync(ranchId, alertId, cancellationToken)
             : null;
         return OperationsMonitoringActionResultAssembler.ToAcknowledgeAlertActionResult(this, result, currentAlert, localizer,
             acknowledgedAlert => Ok(AlertResourceFromEntityAssembler.ToResourceFromEntity(acknowledgedAlert)));
     }
 
-    private async Task<MonitoringAlert?> FindStoredAlertAsync(Guid alertId, CancellationToken cancellationToken)
+    private async Task<MonitoringAlert?> FindStoredAlertAsync(Guid ranchId, Guid alertId, CancellationToken cancellationToken)
     {
-        var found = await alertQueryService.Handle(new GetAlertByIdQuery(new MonitoringAlertId(alertId)), cancellationToken);
+        var found = await alertQueryService.Handle(new GetAlertByIdQuery(ranchId, new MonitoringAlertId(alertId)), cancellationToken);
         return found.IsSuccess ? found.Value : null;
     }
 }

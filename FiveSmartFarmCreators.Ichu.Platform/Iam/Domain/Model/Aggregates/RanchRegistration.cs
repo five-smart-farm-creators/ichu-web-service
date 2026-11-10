@@ -1,48 +1,49 @@
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
+
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates;
 
 /// <summary>
-///     Records the initial registration details for a ranch.
+///     Records the ranch identity that other contexts store, so its identifier stays a plain Guid.
 /// </summary>
-public sealed class RanchRegistration
+public sealed class RanchRegistration : AggregateRoot
 {
-    private RanchRegistration() { }
+    private const int MaximumNameLength = 160;
+    private const int MaximumLocationLength = 120;
 
-    /// <summary>
-    ///     Creates a ranch registration with a nonnegative estimated head count.
-    /// </summary>
-    /// <param name="name">
-    ///     The ranch name.
-    /// </param>
-    /// <param name="region">
-    ///     The region where the ranch is located.
-    /// </param>
-    /// <param name="district">
-    ///     The district where the ranch is located.
-    /// </param>
-    /// <param name="estimatedHeadCount">
-    ///     The estimated number of animals.
-    /// </param>
-    /// <exception cref="ArgumentException">
-    ///     A required value is blank or too long, or the estimated head count is negative.
-    /// </exception>
-    public RanchRegistration(string name, string region, string district, int estimatedHeadCount)
+    // Entity Framework Core materializes ranches without running the factory.
+    private RanchRegistration()
     {
-        if (string.IsNullOrWhiteSpace(name) || name.Length > 160 || string.IsNullOrWhiteSpace(region) ||
-            region.Length > 120 || string.IsNullOrWhiteSpace(district) || district.Length > 120 || estimatedHeadCount < 0)
-        {
-            throw new ArgumentException("Ranch name, region, district and a nonnegative head count are required.");
-        }
-        Id = Guid.NewGuid();
-        Name = name.Trim();
-        Region = region.Trim();
-        District = district.Trim();
-        EstimatedHeadCount = estimatedHeadCount;
     }
 
     public Guid Id { get; private set; }
+
     public string Name { get; private set; } = string.Empty;
+
     public string Region { get; private set; } = string.Empty;
+
     public string District { get; private set; } = string.Empty;
+
     public int EstimatedHeadCount { get; private set; }
 
+    public static Result<RanchRegistration> Create(string name, string region, string district, int estimatedHeadCount)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Length > MaximumNameLength ||
+            string.IsNullOrWhiteSpace(region) || region.Length > MaximumLocationLength ||
+            string.IsNullOrWhiteSpace(district) || district.Length > MaximumLocationLength ||
+            estimatedHeadCount < 0)
+        {
+            return Result<RanchRegistration>.Failure(IamErrors.RanchDetailsRequired);
+        }
+
+        return Result<RanchRegistration>.Success(new RanchRegistration
+        {
+            Id = Guid.NewGuid(),
+            Name = name.Trim(),
+            Region = region.Trim(),
+            District = district.Trim(),
+            EstimatedHeadCount = estimatedHeadCount
+        });
+    }
 }

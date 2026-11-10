@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Cortex.Mediator.Commands;
 using Cortex.Mediator.DependencyInjection;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Configuration.Extensions;
@@ -6,6 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Exten
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Interfaces.AspNetCore.OpenApi;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Interfaces.AspNetCore.OpenApi;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.AspNetCore.OpenApi;
@@ -18,14 +20,19 @@ using Microsoft.EntityFrameworkCore;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
-builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
+builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()))
+    // Enums travel as names in both directions; integers are still accepted in requests for existing clients.
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();
 builder.Services.AddLocalization();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -33,6 +40,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
+    options.AddOperationTransformer<StripeWebhookSecurityTransformer>();
 });
 builder.Services.AddSwaggerGen();
 
@@ -61,6 +69,10 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         options.EnableSensitiveDataLogging();
     }
 });
+
+// The health check fails when the database is unreachable, so a broken connection shows up on /health.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>();
 
 // Modules that depend on the base DbContext type receive the shared application context.
 builder.Services.AddScoped<DbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
@@ -95,13 +107,26 @@ if (app.Environment.IsDevelopment())
 {
     // The seeders run in dependency order, and each one skips the records that already exist.
     using var seedScope = app.Services.CreateScope();
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentIamSeeder>()
+        .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentSubscriptionSeeder>()
         .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentCattleSeeder>()
         .SeedAsync(CancellationToken.None);
     await seedScope.ServiceProvider.GetRequiredService<DevelopmentIoTAssetsSeeder>()
         .SeedAsync(CancellationToken.None);
+    await seedScope.ServiceProvider.GetRequiredService<DevelopmentMonitoringRulesSeeder>()
+        .SeedAsync(CancellationToken.None);
 }
+
+// Render's proxy addresses are not fixed, so forwarded headers are trusted from any address to get the HTTPS scheme.
+var forwardedHeaders = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeaders.KnownIPNetworks.Clear();
+forwardedHeaders.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeaders);
 
 app.UseExceptionHandler();
 
@@ -112,13 +137,17 @@ app.UseRequestLocalization(new RequestLocalizationOptions()
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures));
 
-if (app.Environment.IsDevelopment())
+// Swagger is served outside Development only when OpenApi:Enabled is set, so the API surface stays closed by default.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {
     app.MapOpenApi();
     app.UseSwagger();
+    // The built-in document declares the bearer and gateway key schemes, which the Swashbuckle generator omits.
+    // Try it out is enabled so that a developer can call the API from Swagger UI with the demo token.
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ICHU API v1");
+        options.SwaggerEndpoint("/openapi/v1.json", "ICHU API v1");
+        options.EnableTryItOutByDefault();
     });
 }
 
@@ -127,5 +156,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Render's health probe sends no token, so the endpoint must stay anonymous.
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.Run();

@@ -64,15 +64,16 @@ public class GeofenceCommandService(
             return Result<Geofence>.Failure(OperationsMonitoringErrors.Unauthenticated);
         }
 
-        var geofence = await geofences.FindByIdAsync(command.GeofenceId, cancellationToken);
-        if (geofence is null)
-        {
-            return Result<Geofence>.Failure(OperationsMonitoringErrors.GeofenceNotFound);
-        }
-
-        if (!await accessControl.CanAccessRanchAsync(accountId, geofence.RanchId, MonitoringPermission.ManageRules, cancellationToken))
+        if (!await accessControl.CanAccessRanchAsync(accountId, command.RanchId, MonitoringPermission.ManageRules, cancellationToken))
         {
             return Result<Geofence>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        // The ranch is checked before the lookup, and a geofence of another ranch is reported as missing, so identifiers cannot be probed.
+        var geofence = await geofences.FindByIdAsync(command.GeofenceId, cancellationToken);
+        if (geofence is null || geofence.RanchId != command.RanchId)
+        {
+            return Result<Geofence>.Failure(OperationsMonitoringErrors.GeofenceNotFound);
         }
 
         var revision = await ruleRevisionService.AdvanceAsync(geofence.RanchId, cancellationToken);

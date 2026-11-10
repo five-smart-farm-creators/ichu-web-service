@@ -5,4 +5,4 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 /// <summary>
 ///     Lists the livestock operations of an animal within a half-open period.
 /// </summary>
-public record GetLivestockOperationsQuery(Guid AnimalId, TimePeriod Period);
+public record GetLivestockOperationsQuery(Guid RanchId, Guid AnimalId, TimePeriod Period);

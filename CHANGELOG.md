@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-10
+
+### Added
+
+- Subscription Plans: a ranch manager can start the payment of a pending subscription with a Stripe Checkout page that charges the total in soles (PEN) by card; the subscription stays pending until the payment is confirmed.
+- Subscription Plans: a verified Stripe webhook activates the subscription once the paid amount and currency match its total; repeated, unpaid and unrelated events change nothing and are acknowledged.
+- Operations and Monitoring: Development seeds body temperature and activity thresholds for the seeded life stages and a geofence for the seeded lot, so that the edge raises alerts in demos. The values are placeholders, not validated clinical ranges.
+- Shared: added HTTP integration tests that run the API against a PostgreSQL database created for each test run and dropped afterwards, covering every bounded context.
+- Operations and Monitoring, Subscription Plans: added Gherkin acceptance scenarios, run against the API, for the monitoring, edge synchronization and subscription stories that the backend implements.
+- Shared: added a test job to the Git Flow checks workflow that runs the unit and integration tests against PostgreSQL 17.
+- Development: a Firebase user with a verified email can own the seeded ranch as a demo account, and `scripts/firebase-dev-session.ps1` signs that user in with a one-hour ID token for Swagger UI.
+- Shared: the API is packaged as a Docker image that runs the published application as a non-root user on port 8080; the image contains neither the SDK nor the tests.
+- Shared: a Render Blueprint deploys the API as a Docker web service and a PostgreSQL 17 database in Oregon, with `/health` as the health check and automatic deployment of each commit to `main`.
+- Shared: `GET /health` answers without a token and reports whether the API can reach its database.
+- Shared: forwarded headers from the hosting proxy are trusted, so requests that Render forwards over HTTPS are seen as HTTPS by the API.
+- Shared: the OpenAPI document and Swagger UI are served outside Development when `OpenApi:Enabled` is `true`; they stay off by default.
+- Shared: added a Docker build job to the Git Flow checks workflow that builds the image on every pull request without pushing it.
+
+### Changed
+
+- Identity and Access: failures are returned as results with stable codes (`Iam.<Name>`) and localized messages in English and Spanish, so problem responses carry the code and the title in the request language.
+- Identity and Access: the repositories are split per aggregate, and the account and advisory identifiers are strongly typed, without any schema change.
+- Breaking: resources that belong to a ranch are served under `api/v1/ranches/{ranchId}/...` and the flat routes are removed. Planning: `planning-campaigns` → `ranches/{ranchId}/planning-campaigns`, `planned-activities` → `ranches/{ranchId}/planned-activities`, `calendar` → `ranches/{ranchId}/calendar`, `withdrawal-periods` → `ranches/{ranchId}/withdrawal-periods`. Operations and Monitoring: `alerts` → `ranches/{ranchId}/alerts`, `geofences` → `ranches/{ranchId}/geofences`, `monitoring-thresholds` → `ranches/{ranchId}/monitoring-thresholds`, `field-events` → `ranches/{ranchId}/field-events`, `clinical-interventions` → `ranches/{ranchId}/clinical-interventions`, `animals/{animalId}/livestock-operations` → `ranches/{ranchId}/cattle/{cattleId}/livestock-operations`, `animals/{animalId}/telemetry` and `animals/{animalId}/telemetry/latest` → `ranches/{ranchId}/cattle/{cattleId}/telemetry` and `ranches/{ranchId}/cattle/{cattleId}/telemetry/latest`. Dashboard Analytics: `animals/{animalId}/comparison` → `ranches/{ranchId}/trends/cattle/{cattleId}/comparison`. Identity and Access: `herd-advisories` and its `grants` → `ranches/{ranchId}/herd-advisories` and `ranches/{ranchId}/herd-advisories/grants`. Subscription Plans: `subscriptions` → `ranches/{ranchId}/subscriptions`. Plans, accounts, profiles, analytics portfolio, the Edge Gateway routes and the mobile batch keep their paths. A ranch moves from the query string or the body into the route, and a resource of another ranch answers 404.
+- Breaking: enum values are written as names in responses and accepted as names in requests, while integers are still accepted in requests; for example, the `kind` of a planning campaign is `Sanitary` or `Reproductive`.
+- Breaking: the `animalId` of routes, query parameters, request fields and responses became `cattleId`, in alerts, livestock operations, telemetry, trend points and cattle comparisons.
+
+### Removed
+
+- Identity and Access: removed the identity exception and its exception filter, since failures are returned as results.
+
+### Fixed
+
+- IoT Assets: registering a device or an edge gateway, releasing a device and registering a water trough answered 500, because their request records declared validation attributes on properties; the attributes now sit on the constructor parameters, which ASP.NET Core validates.
+- Shared: Swagger UI at `/swagger` reads the built-in OpenAPI document in Development, so the bearer and `X-Gateway-Key` inputs appear and Try it out is enabled.
+
 ## [0.3.0] - 2026-11-08
 
 ### Added

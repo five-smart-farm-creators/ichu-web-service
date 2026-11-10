@@ -8,6 +8,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform
 /// </summary>
 public static class CreatePlanningCampaignCommandFromResourceAssembler
 {
-    public static CreatePlanningCampaignCommand ToCommandFromResource(CreatePlanningCampaignResource resource) =>
-        new(resource.RanchId, resource.Name, resource.Kind, resource.StartsOn, resource.EndsOn);
+    public static CreatePlanningCampaignCommand ToCommandFromResource(Guid ranchId, CreatePlanningCampaignResource resource) =>
+        new(ranchId, resource.Name, resource.Kind, resource.StartsOn, resource.EndsOn);
 }

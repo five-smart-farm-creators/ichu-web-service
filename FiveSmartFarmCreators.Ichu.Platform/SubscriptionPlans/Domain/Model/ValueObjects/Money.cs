@@ -42,4 +42,9 @@ public record Money
     }
 
     public Money Multiply(int units) => new(Amount * units, Currency);
+
+    /// <summary>
+    ///     Converts the amount to minor currency units, such as cents, which payment providers expect as integers.
+    /// </summary>
+    public long ToMinorUnits() => (long)decimal.Round(Amount * 100m, 0, MidpointRounding.AwayFromZero);
 }

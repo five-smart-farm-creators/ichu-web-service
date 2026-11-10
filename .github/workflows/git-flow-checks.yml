@@ -58,3 +58,38 @@ jobs:
             sh .githooks/commit-msg "$RUNNER_TEMP/commit-message" || status=1
           done
           exit $status
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        # The password exists only inside this throwaway service container; the env context is not available here.
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      ICHU_TEST_CONNECTION: Host=localhost;Port=5432;Username=postgres;Password=postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run unit and integration tests
+        run: dotnet test --configuration Release
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the container image
+        run: docker build --tag ichu-web-service:ci .

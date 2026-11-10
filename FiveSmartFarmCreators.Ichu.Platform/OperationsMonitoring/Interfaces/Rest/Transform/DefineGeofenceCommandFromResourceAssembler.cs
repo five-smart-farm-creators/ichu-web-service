@@ -8,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class DefineGeofenceCommandFromResourceAssembler
 {
-    public static Result<DefineGeofenceCommand> ToCommandFromResource(DefineGeofenceResource resource)
+    public static Result<DefineGeofenceCommand> ToCommandFromResource(Guid ranchId, DefineGeofenceResource resource)
     {
         if (resource.ToleranceMeters is not { } tolerance)
         {
@@ -24,6 +24,6 @@ public static class DefineGeofenceCommandFromResourceAssembler
         return boundary.IsFailure
             ? Result<DefineGeofenceCommand>.Failure(boundary.DomainError)
             : Result<DefineGeofenceCommand>.Success(new DefineGeofenceCommand(
-                resource.RanchId, resource.LotId, resource.Name ?? string.Empty, tolerance, severity, boundary.Value!));
+                ranchId, resource.LotId, resource.Name ?? string.Empty, tolerance, severity, boundary.Value!));
     }
 }

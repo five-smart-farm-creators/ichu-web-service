@@ -13,7 +13,14 @@ using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Application.QuerySe
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.DashboardAnalytics.Interfaces.Rest;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.EventHandlers;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.Internal.OutboundServices;
@@ -30,6 +37,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Query
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
@@ -43,7 +51,10 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Mediator.Cortex.
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.CommandServices;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -98,9 +109,11 @@ public class DependencyInjectionCompositionTests
         using var scope = provider.CreateScope();
         var services = scope.ServiceProvider;
 
+        Assert.NotNull(services.GetRequiredService<DevelopmentIamSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentSubscriptionSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentCattleSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentIoTAssetsSeeder>());
+        Assert.NotNull(services.GetRequiredService<DevelopmentMonitoringRulesSeeder>());
     }
 
     [Fact]
@@ -232,6 +245,53 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<TrendsController>(services));
     }
 
+    [Fact]
+    public void EveryIamServiceResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IUserAccountRepository>());
+        Assert.NotNull(services.GetRequiredService<IRanchRegistrationRepository>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryRepository>());
+        Assert.NotNull(services.GetRequiredService<IIdentityProvider>());
+        Assert.NotNull(services.GetRequiredService<ICurrentAccount>());
+        Assert.NotNull(services.GetRequiredService<IAccountCommandService>());
+        Assert.NotNull(services.GetRequiredService<IProfessionalProfileCommandService>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryCommandService>());
+        Assert.NotNull(services.GetRequiredService<IAccountQueryService>());
+        Assert.NotNull(services.GetRequiredService<IHerdAdvisoryQueryService>());
+        Assert.NotNull(services.GetRequiredService<IAuthorizationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IIamContextFacade>());
+    }
+
+    [Fact]
+    public void EveryIamControllerReceivesItsDependencies()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(ActivatorUtilities.CreateInstance<AccountsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<HerdAdvisoriesController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<ProfilesController>(services));
+    }
+
+    [Fact]
+    public void EverySubscriptionPlansServiceAndControllerResolvesInTheHostComposition()
+    {
+        using var provider = BuildHost();
+        using var scope = provider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        Assert.NotNull(services.GetRequiredService<IPaymentGateway>());
+        Assert.NotNull(services.GetRequiredService<ISubscriptionCommandService>());
+        Assert.NotNull(ActivatorUtilities.CreateInstance<PlansController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<SubscriptionsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<StripeWebhooksController>(services));
+    }
+
     private static ServiceProvider BuildHost()
     {
         var configuration = new ConfigurationBuilder()
@@ -247,6 +307,8 @@ public class DependencyInjectionCompositionTests
         services.AddLogging();
         services.AddLocalization();
         services.AddHttpContextAccessor();
+        // The host registers IConfiguration itself, as WebApplicationBuilder does for Program.cs.
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
             .UseNpgsql("Host=localhost;Port=5433;Database=ichu_composition;Username=composition;Password=composition")
             .AddInterceptors(serviceProvider.GetRequiredService<DispatchDomainEventsInterceptor>()));

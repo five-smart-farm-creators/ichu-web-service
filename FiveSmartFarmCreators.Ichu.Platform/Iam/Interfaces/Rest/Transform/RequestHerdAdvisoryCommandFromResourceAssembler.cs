@@ -5,6 +5,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Transform;
 
 public static class RequestHerdAdvisoryCommandFromResourceAssembler
 {
-    public static RequestHerdAdvisoryCommand ToCommandFromResource(RequestAdvisoryResource resource) =>
-        new(resource.RanchId, resource.Reason);
+    public static RequestHerdAdvisoryCommand ToCommandFromResource(Guid ranchId, RequestAdvisoryResource resource) =>
+        new(ranchId, resource.Reason);
 }

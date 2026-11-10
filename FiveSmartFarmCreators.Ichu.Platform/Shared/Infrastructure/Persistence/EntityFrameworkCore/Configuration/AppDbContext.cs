@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
@@ -26,9 +27,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(builder);
 
-        builder.ApplyConfigurationsFromAssembly(
-            typeof(AppDbContext).Assembly,
-            type => type.Namespace is not null && type.Namespace.StartsWith("FiveSmartFarmCreators.Ichu.Platform.Iam.", StringComparison.Ordinal));
+        builder.ApplyIamConfiguration();
         builder.ApplyOperationsMonitoringConfiguration();
         builder.ApplySubscriptionPlansConfiguration();
         builder.ApplyCattleInformationConfiguration();

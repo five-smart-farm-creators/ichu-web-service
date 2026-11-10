@@ -9,7 +9,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.QueryServices;
 
 /// <summary>
-/// Reads campaigns for accounts that may read their ranch. A campaign is located before its ranch can be checked.
+/// Reads campaigns for accounts that may read their ranch. A campaign of another ranch is reported as not found.
 /// </summary>
 public sealed class PlanningCampaignQueryService(
     IPlanningCampaignRepository campaigns,
@@ -18,16 +18,20 @@ public sealed class PlanningCampaignQueryService(
     /// <inheritdoc />
     public async Task<Result<PlanningCampaign>> HandleAsync(GetPlanningCampaignByIdQuery query, CancellationToken cancellationToken)
     {
+        var access = await guard.EnsureRanchAccessAsync(query.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<PlanningCampaign>.Failure(access.DomainError);
+        }
+
+        // The ranch is checked before the lookup, and a campaign of another ranch is reported as missing, so identifiers cannot be probed.
         var campaign = await campaigns.FindByIdAsNoTrackingAsync(query.CampaignId, cancellationToken);
-        if (campaign is null)
+        if (campaign is null || campaign.RanchId != query.RanchId)
         {
             return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignNotFound);
         }
 
-        var access = await guard.EnsureRanchAccessAsync(campaign.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
-        return access.IsFailure
-            ? Result<PlanningCampaign>.Failure(access.DomainError)
-            : Result<PlanningCampaign>.Success(campaign);
+        return Result<PlanningCampaign>.Success(campaign);
     }
 
     /// <inheritdoc />

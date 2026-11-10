@@ -5,7 +5,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.SubscriptionPlans.Interfaces.Rest.
 ///     identifier makes a retry safe.
 /// </summary>
 public sealed record RequestSubscriptionResource(
-    Guid RanchId,
     Guid PlanId,
     int HeadCount,
     decimal ExpectedTotal,

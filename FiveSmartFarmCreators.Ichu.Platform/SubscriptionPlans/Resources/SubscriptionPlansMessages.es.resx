@@ -45,4 +45,22 @@
   <data name="SubscriptionPlans.Unauthenticated" xml:space="preserve">
     <value>Se requiere una cuenta verificada.</value>
   </data>
+  <data name="SubscriptionPlans.PaymentProviderNotConfigured" xml:space="preserve">
+    <value>El proveedor de pagos no está configurado.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentProviderUnavailable" xml:space="preserve">
+    <value>El proveedor de pagos no puede completar la solicitud en este momento. Inténtelo más tarde.</value>
+  </data>
+  <data name="SubscriptionPlans.SubscriptionNotPending" xml:space="preserve">
+    <value>Solo una suscripción pendiente puede pagarse.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentSignatureInvalid" xml:space="preserve">
+    <value>La firma del evento de pago no es válida.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentAmountMismatch" xml:space="preserve">
+    <value>El importe o la moneda pagados no coinciden con el total de la suscripción.</value>
+  </data>
+  <data name="SubscriptionPlans.PaymentEventIgnored" xml:space="preserve">
+    <value>El evento de pago no modifica ninguna suscripción.</value>
+  </data>
 </root>
