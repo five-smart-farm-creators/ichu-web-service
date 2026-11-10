@@ -18,6 +18,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServi
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Application.CommandServices;
@@ -105,6 +106,7 @@ public class DependencyInjectionCompositionTests
         using var scope = provider.CreateScope();
         var services = scope.ServiceProvider;
 
+        Assert.NotNull(services.GetRequiredService<DevelopmentIamSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentSubscriptionSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentCattleSeeder>());
         Assert.NotNull(services.GetRequiredService<DevelopmentIoTAssetsSeeder>());
@@ -288,6 +290,8 @@ public class DependencyInjectionCompositionTests
         services.AddLogging();
         services.AddLocalization();
         services.AddHttpContextAccessor();
+        // The host registers IConfiguration itself, as WebApplicationBuilder does for Program.cs.
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
             .UseNpgsql("Host=localhost;Port=5433;Database=ichu_composition;Username=composition;Password=composition")
             .AddInterceptors(serviceProvider.GetRequiredService<DispatchDomainEventsInterceptor>()));

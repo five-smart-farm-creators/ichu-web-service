@@ -39,10 +39,23 @@ The service needs a local PostgreSQL 17 database named `ichu` and applies pendin
 
 Development seeds one ranch into the database when its records are missing: a lot, two cattle, three collars, one Edge Gateway and demonstration monitoring rules. The rules are body temperature 37.8–39.5 °C (Critical) and activity index 15–85 (Warning) for the `MilkingCow` and `Heifer` stages, and a geofence of about 1.1 km around latitude -16.5, longitude -68.1 with a 25 m tolerance (Warning). They are placeholders for demos, not validated clinical ranges. The ranch identifier is `11111111-1111-4111-8111-111111111111`, and the development gateway key is `c07d8c6e-6d9b-4cb7-9add-7b8c9daebfc6.development-gateway-key`. These fixed values match the Edge Gateway development seed and are never used outside Development.
 
-IAM generates ranch identifiers when a ranch is registered, so the seeded ranch is visible to a user only through an IAM ranch with that identifier. An Edge Gateway sends its key in the `X-Gateway-Key` header, for example `POST /api/v1/telemetry/batch`; a request without a known, unrevoked key returns 401. Gateways are registered at `POST /api/v1/ranches/{ranchId}/edge-gateways`, which returns the key once in the form `{gatewayId}.{secret}`. In Swagger UI at `/swagger`, the telemetry batch and Edge Gateway monitoring rules operations show a required `X-Gateway-Key` input for that key.
+IAM generates ranch identifiers when a ranch is registered, so the seeded ranch is visible to a user only through an IAM ranch with that identifier, which the demo account below owns. An Edge Gateway sends its key in the `X-Gateway-Key` header, for example `POST /api/v1/telemetry/batch`; a request without a known, unrevoked key returns 401. Gateways are registered at `POST /api/v1/ranches/{ranchId}/edge-gateways`, which returns the key once in the form `{gatewayId}.{secret}`. In Swagger UI at `/swagger`, the telemetry batch and Edge Gateway monitoring rules operations show a required `X-Gateway-Key` input for that key.
 
 Create a new migration after changing a mapping with `dotnet tool restore` and `dotnet ef migrations add <Name> --project FiveSmartFarmCreators.Ichu.Platform --output-dir Migrations`.
 
+
+### Demo account
+
+A real Firebase user can see the seeded ranch in Swagger UI. Set it up once, in this order:
+
+1. In the Firebase console, open Authentication, then Users, and add a user with an email and a password.
+2. From a PowerShell 7 prompt, run `./scripts/firebase-dev-session.ps1 -Email <email>` and enter the password. The script reads `Firebase__ApiKey` from the user environment variables, as listed above. The first run sends a verification email and exits with code 1.
+3. Open the verification link in that email, then run the script again. It saves the user identifier and the email as user environment variables, and copies an ID token to the clipboard. The token expires after one hour, so run the script again when it does.
+4. Restart the API in Development with `dotnet run --project FiveSmartFarmCreators.Ichu.Platform --launch-profile http`, so that it seeds the ranch and the demo account.
+5. Open `http://localhost:5099/swagger`, click **Authorize**, paste the token without the `Bearer` prefix, click **Authorize**, and close the dialog.
+6. Call `GET api/v1/accounts/me/ranches`. The response lists ranch `11111111-1111-4111-8111-111111111111` with the scope `Manage`.
+
+Without both `DevelopmentSeed__Manager__ExternalUid` and `DevelopmentSeed__Manager__Email`, the API skips the demo account and logs that it did.
 
 ### Analytics configuration
 

@@ -9,6 +9,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Components;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Services;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
@@ -45,6 +46,7 @@ public static class IamServiceCollectionExtensions
         services.AddScoped<IAccountQueryService, AccountQueryService>();
         services.AddScoped<IHerdAdvisoryQueryService, HerdAdvisoryQueryService>();
         services.AddScoped<IAuthorizationQueryService, AuthorizationQueryService>();
+        services.AddScoped<DevelopmentIamSeeder>();
         return services;
     }
 }
