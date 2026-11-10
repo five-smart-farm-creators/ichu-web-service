@@ -56,6 +56,8 @@ Host=localhost;Port=5432;Username=postgres;Password=%ICHU_DB_PASSWORD%
 
 Define `ICHU_DB_PASSWORD` as a user environment variable too, so that the password stays out of the repository and of the test output. Each run creates a database named `ichu_it_<8 hex characters>`, migrates it on startup, and drops it when the run ends. The integration tests host the API in the Testing environment and cover routing, the Firebase authentication handler with a fake identity provider, IAM access checks, controllers, EF Core persistence, and localized problem responses for every bounded context. They never reach Firebase. A test that documents a reported bug is skipped with a `Bug:` reason until the bug is fixed.
 
+The BDD acceptance scenarios are Gherkin features under `tests/FiveSmartFarmCreators.Ichu.Platform.IntegrationTests/Features/<BoundedContext>/`, one per user or technical story, bound to reusable steps under `Steps/` with Reqnroll 3.3.4. Each feature carries its story identifier as a tag, such as `@US-15`, which becomes the `Category` trait, so `dotnet test --filter Category=US-15` runs only that story. The integration assembly runs one test at a time because the scenarios share a single API and database.
+
 
 ## Repository structure
 
