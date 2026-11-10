@@ -12,29 +12,17 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
-using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 
 /// <summary>
-///     Provides dependency-injection registration for the IAM bounded context.
+///     Registers the IAM module, its per-aggregate repositories and the Firebase identity adapter. The host must also
+///     register the shared database context and unit of work.
 /// </summary>
 public static class IamServiceCollectionExtensions
 {
-    /// <summary>
-    ///     Registers IAM application contracts, persistence adapters and Firebase authentication.
-    /// </summary>
-    /// <param name="services">
-    ///     The dependency-injection collection to configure.
-    /// </param>
-    /// <param name="configuration">
-    ///     The application settings containing Firebase options.
-    /// </param>
-    /// <returns>
-    ///     The configured service collection.
-    /// </returns>
     public static IServiceCollection AddIam(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<FirebaseOptions>(configuration.GetSection("Firebase"));
@@ -45,7 +33,9 @@ public static class IamServiceCollectionExtensions
         services.AddAuthentication(FirebaseAuthenticationHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, FirebaseAuthenticationHandler>(FirebaseAuthenticationHandler.SchemeName, _ => { });
         services.AddAuthorization();
-        services.AddScoped<IIamRepository, IdentityRepository>();
+        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+        services.AddScoped<IRanchRegistrationRepository, RanchRegistrationRepository>();
+        services.AddScoped<IHerdAdvisoryRepository, HerdAdvisoryRepository>();
         services.AddScoped<ICurrentAccount, HttpCurrentAccount>();
         services.AddScoped<IIamContextFacade, IamContextFacade>();
         services.AddScoped<AuthorizationDomainService>();
@@ -55,7 +45,6 @@ public static class IamServiceCollectionExtensions
         services.AddScoped<IAccountQueryService, AccountQueryService>();
         services.AddScoped<IHerdAdvisoryQueryService, HerdAdvisoryQueryService>();
         services.AddScoped<IAuthorizationQueryService, AuthorizationQueryService>();
-        services.AddScoped<IamExceptionFilter>();
         return services;
     }
 }

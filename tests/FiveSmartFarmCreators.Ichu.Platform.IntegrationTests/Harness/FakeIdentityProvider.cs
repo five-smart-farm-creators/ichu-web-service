@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.Harness;
 
@@ -24,37 +25,27 @@ public sealed class FakeIdentityProvider : IIdentityProvider
         _usersByEmail[address.Value] = new ExternalIdentity(uid, address, EmailVerified: true);
     }
 
-    public Task<ExternalIdentity> VerifyIdTokenAsync(string idToken, CancellationToken cancellationToken)
+    public Task<Result<ExternalIdentity>> VerifyIdTokenAsync(string idToken, CancellationToken cancellationToken)
     {
         var parts = idToken.Split('|');
-        if (parts is not [TokenPrefix, var uid, var email, var verified] || string.IsNullOrWhiteSpace(uid) ||
-            TryCreateEmail(email) is not { } address)
+        if (parts is not [TokenPrefix, var uid, var email, var verified] || string.IsNullOrWhiteSpace(uid))
         {
-            throw new IamException("invalid_credentials", "The identity token is invalid.");
+            return Task.FromResult(Result<ExternalIdentity>.Failure(IamErrors.InvalidCredentials));
         }
 
-        return Task.FromResult(new ExternalIdentity(uid, address, verified == "true"));
+        var address = Email.Create(email);
+        return Task.FromResult(address.IsSuccess
+            ? Result<ExternalIdentity>.Success(new ExternalIdentity(uid, address.Value!, verified == "true"))
+            : Result<ExternalIdentity>.Failure(IamErrors.InvalidCredentials));
     }
 
-    public Task<string> SignInAsync(Email email, string password, CancellationToken cancellationToken)
+    public Task<Result<string>> SignInAsync(Email email, string password, CancellationToken cancellationToken)
     {
         if (password != CorrectPassword || !_usersByEmail.TryGetValue(email.Value, out var user))
         {
-            throw new IamException("invalid_credentials", "Access could not be granted.");
+            return Task.FromResult(Result<string>.Failure(IamErrors.InvalidCredentials));
         }
 
-        return Task.FromResult(string.Join('|', TokenPrefix, user.Uid, user.Email.Value, "true"));
-    }
-
-    private static Email? TryCreateEmail(string value)
-    {
-        try
-        {
-            return new Email(value);
-        }
-        catch (ArgumentException)
-        {
-            return null;
-        }
+        return Task.FromResult(Result<string>.Success(string.Join('|', TokenPrefix, user.Uid, user.Email.Value, "true")));
     }
 }

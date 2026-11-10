@@ -6,71 +6,156 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandServices;
 
 /// <summary>
-///     Coordinates registration and credential authentication.
+///     Coordinates registration and credential authentication. A rejected password is recorded before its failure is
+///     returned, so that repeated attempts lock the account.
 /// </summary>
-public sealed class AccountCommandService(IIamRepository repository, IIdentityProvider identityProvider,
-    ICurrentAccount currentAccount, TimeProvider clock) : IAccountCommandService
+public sealed class AccountCommandService(
+    IUserAccountRepository accounts,
+    IRanchRegistrationRepository ranches,
+    IIdentityProvider identityProvider,
+    ICurrentAccount currentAccount,
+    IUnitOfWork unitOfWork,
+    TimeProvider clock) : IAccountCommandService
 {
     /// <inheritdoc />
-    public async Task<RegisteredAccount> HandleAsync(RegisterAccountCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<RegisteredAccount>> HandleAsync(RegisterAccountCommand command, CancellationToken cancellationToken = default)
     {
         var role = command.Role;
-        RanchRegistration? ranch = role == UserRole.RanchManager
-            ? new RanchRegistration(command.RanchName ?? "", command.Region ?? "", command.District ?? "",
-                command.EstimatedHeadCount ?? throw new ArgumentException("An estimated head count is required.")) : null;
+        RanchRegistration? ranch = null;
+        if (role == UserRole.RanchManager)
+        {
+            var registration = CreateRanch(command);
+            if (registration.IsFailure)
+            {
+                return Result<RegisteredAccount>.Failure(registration.DomainError);
+            }
+
+            ranch = registration.Value;
+        }
 
         var identity = currentAccount.GetExternalIdentity();
-        if (role is not (UserRole.RanchManager or UserRole.Veterinarian) ||
-            (role == UserRole.RanchManager) != (ranch is not null))
-            throw new ArgumentException("Register a manager with a ranch or a veterinarian without a ranch.");
-        if (await repository.FindByEmailAsync(identity.Email.Value, cancellationToken) is not null ||
-            await repository.FindByExternalUidAsync(identity.Uid, cancellationToken) is not null)
-            throw new IamException("conflict", "An account already exists for this identity.");
-        var account = new UserAccount(identity.Uid, identity.Email, role, clock.GetUtcNow());
-        repository.AddAccount(account);
+        if (identity.IsFailure)
+        {
+            return Result<RegisteredAccount>.Failure(identity.DomainError);
+        }
+
+        if (role is not (UserRole.RanchManager or UserRole.Veterinarian) || (role == UserRole.RanchManager) != (ranch is not null))
+        {
+            return Result<RegisteredAccount>.Failure(IamErrors.InvalidRegistration);
+        }
+
+        var verified = identity.Value!;
+        if (await accounts.FindByEmailAsync(verified.Email, cancellationToken) is not null ||
+            await accounts.FindByExternalUidAsync(verified.Uid, cancellationToken) is not null)
+        {
+            return Result<RegisteredAccount>.Failure(IamErrors.AccountAlreadyExists);
+        }
+
+        var creation = UserAccount.Create(verified.Uid, verified.Email, role, clock.GetUtcNow());
+        if (creation.IsFailure)
+        {
+            return Result<RegisteredAccount>.Failure(creation.DomainError);
+        }
+
+        var account = creation.Value!;
+        await accounts.AddAsync(account, cancellationToken);
         if (ranch is not null)
         {
-            repository.AddRanch(ranch);
-            repository.AddMembership(new RanchMembership(account.Id, ranch.Id, true));
+            var ownership = RanchMembership.Create(account.Id, ranch.Id, isOwner: true);
+            if (ownership.IsFailure)
+            {
+                return Result<RegisteredAccount>.Failure(ownership.DomainError);
+            }
+
+            await ranches.AddAsync(ranch, cancellationToken);
+            await ranches.AddMembershipAsync(ownership.Value!, cancellationToken);
         }
-        await repository.SaveAsync(cancellationToken);
-        return new RegisteredAccount(account, ranch?.Id);
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<RegisteredAccount>.Success(new RegisteredAccount(account, ranch?.Id));
     }
 
     /// <inheritdoc />
-    public async Task<string> HandleAsync(SignInCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result<string>> HandleAsync(SignInCommand command, CancellationToken cancellationToken = default)
     {
-        var address = new Email(command.Email);
-        if (string.IsNullOrWhiteSpace(command.Password)) throw new ArgumentException("A password is required.");
-        var account = await repository.FindByEmailAsync(address.Value, cancellationToken);
-        var now = clock.GetUtcNow();
-        if (account?.IsBlocked(now) == true) throw new IamException("invalid_credentials", "Access could not be granted.");
-        string token;
-        try
+        var address = Email.Create(command.Email);
+        if (address.IsFailure)
         {
-            token = await identityProvider.SignInAsync(address, command.Password, cancellationToken);
+            return Result<string>.Failure(address.DomainError);
         }
-        catch (IamException error) when (error.Code == "invalid_credentials")
+
+        if (string.IsNullOrWhiteSpace(command.Password))
         {
-            if (account is not null)
+            return Result<string>.Failure(IamErrors.PasswordRequired);
+        }
+
+        var email = address.Value!;
+        var account = await accounts.FindByEmailAsync(email, cancellationToken);
+        var now = clock.GetUtcNow();
+        if (account?.IsBlocked(now) == true)
+        {
+            return Result<string>.Failure(IamErrors.InvalidCredentials);
+        }
+
+        var signIn = await identityProvider.SignInAsync(email, command.Password, cancellationToken);
+        if (signIn.IsFailure)
+        {
+            if (signIn.DomainError == IamErrors.InvalidCredentials && account is not null)
             {
                 account.RecordFailedAttempt(now);
-                repository.AddAccessAttempt(new AccessAttempt(account.Id, now, false));
-                await repository.SaveAsync(cancellationToken);
+                var failedAttempt = AccessAttempt.Create(account.Id, now, succeeded: false);
+                if (failedAttempt.IsFailure)
+                {
+                    return Result<string>.Failure(failedAttempt.DomainError);
+                }
+
+                await accounts.AddAccessAttemptAsync(failedAttempt.Value!, cancellationToken);
+                await unitOfWork.CompleteAsync(cancellationToken);
             }
-            throw;
+
+            return Result<string>.Failure(signIn.DomainError);
         }
+
+        var token = signIn.Value!;
         var identity = await identityProvider.VerifyIdTokenAsync(token, cancellationToken);
-        if (account is null || account.ExternalUid != identity.Uid || !identity.EmailVerified)
-            throw new IamException("invalid_credentials", "Access could not be granted.");
+        if (identity.IsFailure)
+        {
+            return Result<string>.Failure(identity.DomainError);
+        }
+
+        var verified = identity.Value!;
+        if (account is null || account.ExternalUid != verified.Uid || !verified.EmailVerified)
+        {
+            return Result<string>.Failure(IamErrors.InvalidCredentials);
+        }
+
         account.Verify();
-        account.RecordSuccessfulAccess(now);
-        repository.AddAccessAttempt(new AccessAttempt(account.Id, now, true));
-        await repository.SaveAsync(cancellationToken);
-        return token;
+        var access = account.RecordSuccessfulAccess(now);
+        if (access.IsFailure)
+        {
+            return Result<string>.Failure(access.DomainError);
+        }
+
+        var successfulAttempt = AccessAttempt.Create(account.Id, now, succeeded: true);
+        if (successfulAttempt.IsFailure)
+        {
+            return Result<string>.Failure(successfulAttempt.DomainError);
+        }
+
+        await accounts.AddAccessAttemptAsync(successfulAttempt.Value!, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<string>.Success(token);
     }
+
+    private static Result<RanchRegistration> CreateRanch(RegisterAccountCommand command) =>
+        command.EstimatedHeadCount is { } headCount
+            ? RanchRegistration.Create(command.RanchName ?? string.Empty, command.Region ?? string.Empty,
+                command.District ?? string.Empty, headCount)
+            : Result<RanchRegistration>.Failure(IamErrors.RanchDetailsRequired);
 }

@@ -120,6 +120,38 @@ public sealed class IamApiTests(IchuApiFactory factory)
         await response.ReadBodyAsync(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task RegisterAccount_TwiceForSameIdentity_ReturnsStableCodeAndSpanishTitle()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        await client.RegisterManagerAsync();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("es");
+
+        using var response = await client.PostJsonAsync("api/v1/accounts", ManagerRequest());
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Conflict);
+        Assert.Equal("Iam.AccountAlreadyExists", problem.GetProperty("code").GetString());
+        Assert.Equal("Ya existe una cuenta para esta identidad.", problem.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task SignIn_WithWrongPassword_ReturnsInvalidCredentialsCode()
+    {
+        var identity = TestIdentity.Create();
+        factory.Identity.Register(identity.Uid, identity.Email);
+        using (var registered = factory.CreateClient(identity))
+        {
+            await registered.RegisterManagerAsync();
+        }
+        using var anonymous = factory.CreateClient();
+
+        using var response = await anonymous.PostJsonAsync("api/v1/accounts/sessions",
+            new { email = identity.Email, password = "wrong-password" });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Unauthorized);
+        Assert.Equal("Iam.InvalidCredentials", problem.GetProperty("code").GetString());
+    }
+
     private static object ManagerRequest() => new
     {
         role = "RanchManager",
