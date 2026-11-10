@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-10
+
 ### Added
 
 - Subscription Plans: a ranch manager can start the payment of a pending subscription with a Stripe Checkout page that charges the total in soles (PEN) by card; the subscription stays pending until the payment is confirmed.
