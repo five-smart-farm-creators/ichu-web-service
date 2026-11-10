@@ -1,0 +1,9 @@
+**/bin
+**/obj
+tests/
+.git
+.github
+scripts/
+*.md
+.vs
+.idea
