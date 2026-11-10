@@ -85,3 +85,11 @@ jobs:
 
       - name: Run unit and integration tests
         run: dotnet test --configuration Release
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the container image
+        run: docker build --tag ichu-web-service:ci .

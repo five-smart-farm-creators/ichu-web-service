@@ -90,6 +90,22 @@ Define `ICHU_DB_PASSWORD` as a user environment variable too, so that the passwo
 The BDD acceptance scenarios are Gherkin features under `tests/FiveSmartFarmCreators.Ichu.Platform.IntegrationTests/Features/<BoundedContext>/`, one per user or technical story, bound to reusable steps under `Steps/` with Reqnroll 3.3.4. Each feature carries its story identifier as a tag, such as `@US-15`, which becomes the `Category` trait, so `dotnet test --filter Category=US-15` runs only that story. The integration assembly runs one test at a time because the scenarios share a single API and database.
 
 
+## Deployment
+
+[render.yaml](render.yaml) is a Render Blueprint. It creates the `ichu-web-service` Docker web service, built from the [Dockerfile](Dockerfile) on each push to `main`, and the `ichu-db` PostgreSQL 17 database. Both run in Oregon, because a free web service reaches a database over Render's private network only within the same region. The API applies pending migrations when it starts, and Production does not create the Development seed data.
+
+Render asks for these values when the Blueprint is applied. Enter them in the Render dashboard; the repository never contains their values:
+
+| Variable | Value |
+| --- | --- |
+| `DB_HOST` | Internal hostname of `ichu-db`, shown on the database's Info page. The Blueprint cannot provide it, and the API cannot connect until it is set. |
+| `Firebase__ProjectId` and `Firebase__ApiKey` | As in [Run locally](#run-locally). |
+| `Stripe__SecretKey`, `Stripe__WebhookSecret`, `Stripe__SuccessUrl` and `Stripe__CancelUrl` | As in [Payments](#payments). |
+
+Render's free web service spins down after 15 minutes without traffic, and its first request after that takes about a minute. The free database expires 30 days after creation. Render deletes it, with its data, 14 days after expiry unless it is upgraded, and free databases have no backups.
+
+Render sets `OpenApi__Enabled` to `true`, so Swagger UI is served at `https://<service>.onrender.com/swagger`, and `https://<service>.onrender.com/health` reports whether the database answers. For Stripe, add `https://<service>.onrender.com/api/v1/payments/stripe/webhooks` as an endpoint in the Stripe dashboard for the `checkout.session.completed` event, then copy its signing secret into `Stripe__WebhookSecret`.
+
 ## Repository structure
 
 ```text

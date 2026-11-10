@@ -24,6 +24,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.IoTAssets.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Infrastructure.Seeding;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -68,6 +69,10 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         options.EnableSensitiveDataLogging();
     }
 });
+
+// The health check fails when the database is unreachable, so a broken connection shows up on /health.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>();
 
 // Modules that depend on the base DbContext type receive the shared application context.
 builder.Services.AddScoped<DbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
@@ -114,6 +119,15 @@ if (app.Environment.IsDevelopment())
         .SeedAsync(CancellationToken.None);
 }
 
+// Render's proxy addresses are not fixed, so forwarded headers are trusted from any address to get the HTTPS scheme.
+var forwardedHeaders = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeaders.KnownIPNetworks.Clear();
+forwardedHeaders.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeaders);
+
 app.UseExceptionHandler();
 
 // English is the default; Spanish is served when the request asks for it through Accept-Language.
@@ -123,7 +137,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions()
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures));
 
-if (app.Environment.IsDevelopment())
+// Swagger is served outside Development only when OpenApi:Enabled is set, so the API surface stays closed by default.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {
     app.MapOpenApi();
     app.UseSwagger();
@@ -141,5 +156,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Render's health probe sends no token, so the endpoint must stay anonymous.
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.Run();

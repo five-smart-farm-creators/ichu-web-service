@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operations and Monitoring, Subscription Plans: added Gherkin acceptance scenarios, run against the API, for the monitoring, edge synchronization and subscription stories that the backend implements.
 - Shared: added a test job to the Git Flow checks workflow that runs the unit and integration tests against PostgreSQL 17.
 - Development: a Firebase user with a verified email can own the seeded ranch as a demo account, and `scripts/firebase-dev-session.ps1` signs that user in with a one-hour ID token for Swagger UI.
+- Shared: the API is packaged as a Docker image that runs the published application as a non-root user on port 8080; the image contains neither the SDK nor the tests.
+- Shared: a Render Blueprint deploys the API as a Docker web service and a PostgreSQL 17 database in Oregon, with `/health` as the health check and automatic deployment of each commit to `main`.
+- Shared: `GET /health` answers without a token and reports whether the API can reach its database.
+- Shared: forwarded headers from the hosting proxy are trusted, so requests that Render forwards over HTTPS are seen as HTTPS by the API.
+- Shared: the OpenAPI document and Swagger UI are served outside Development when `OpenApi:Enabled` is `true`; they stay off by default.
+- Shared: added a Docker build job to the Git Flow checks workflow that builds the image on every pull request without pushing it.
 
 ### Changed
 
