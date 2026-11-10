@@ -105,6 +105,79 @@ public static class Arrange
     }
 
     /// <summary>
+    ///     Releases a collar from its animal and returns the device, whose new version the next assignment must send.
+    /// </summary>
+    public static async Task<JsonElement> ReleaseCollarAsync(HttpClient client, Guid ranchId, Guid deviceId, Guid deviceVersion)
+    {
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/devices/{deviceId}/releases", new
+        {
+            reason = "Moved to another pasture",
+            expectedVersion = deviceVersion
+        });
+        return await response.ReadJsonAsync(HttpStatusCode.OK);
+    }
+
+    /// <summary>
+    ///     Registers a veterinarian account, which has no ranch until the ranch owner grants access.
+    /// </summary>
+    public static async Task RegisterVeterinarianAsync(HttpClient client)
+    {
+        using var response = await client.PostJsonAsync("api/v1/accounts", new { role = "Veterinarian" });
+        await response.ReadBodyAsync(HttpStatusCode.Created);
+    }
+
+    /// <summary>
+    ///     Completes the professional profile that a veterinarian needs before requesting ranch access.
+    /// </summary>
+    public static async Task CompleteVeterinarianProfileAsync(HttpClient client)
+    {
+        using var response = await client.PutJsonAsync("api/v1/profiles/me", new
+        {
+            specialty = "Bovine health",
+            licenseNumber = $"CMVP-{Guid.NewGuid():N}",
+            yearsOfExperience = 5
+        });
+        await response.ReadBodyAsync(HttpStatusCode.OK);
+    }
+
+    /// <summary>
+    ///     Requests ranch access as the veterinarian and returns the advisory identifier the owner decides on.
+    /// </summary>
+    public static async Task<Guid> RequestHerdAdvisoryAsync(HttpClient veterinarian, Guid ranchId)
+    {
+        using var response = await veterinarian.PostJsonAsync("api/v1/herd-advisories", new
+        {
+            ranchId,
+            reason = "Herd health review"
+        });
+        var advisory = await response.ReadJsonAsync(HttpStatusCode.Created);
+        return advisory.GetProperty("id").GetGuid();
+    }
+
+    /// <summary>
+    ///     Grants read access on a requested advisory as the ranch owner.
+    /// </summary>
+    public static async Task GrantReadAdvisoryAsync(HttpClient owner, Guid advisoryId, DateTimeOffset expiresAt)
+    {
+        using var response = await owner.PatchJsonAsync($"api/v1/herd-advisories/{advisoryId}", new
+        {
+            decision = "grant",
+            scope = "Read",
+            expiresAt
+        });
+        await response.ReadBodyAsync(HttpStatusCode.OK);
+    }
+
+    /// <summary>
+    ///     Revokes an effective advisory as the ranch owner, which ends the veterinarian's access immediately.
+    /// </summary>
+    public static async Task RevokeAdvisoryAsync(HttpClient owner, Guid advisoryId)
+    {
+        using var response = await owner.PatchJsonAsync($"api/v1/herd-advisories/{advisoryId}", new { decision = "revoke" });
+        await response.ReadBodyAsync(HttpStatusCode.OK);
+    }
+
+    /// <summary>
     ///     Configures the body-temperature threshold of a ranch used by the fever alert scenarios.
     /// </summary>
     public static async Task<JsonElement> ConfigureFeverThresholdAsync(HttpClient client, Guid ranchId)
