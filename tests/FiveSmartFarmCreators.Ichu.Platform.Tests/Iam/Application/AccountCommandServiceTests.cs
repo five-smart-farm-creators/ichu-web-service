@@ -18,6 +18,7 @@ public class AccountCommandServiceTests
     private readonly FakeRanches _ranches = new();
     private readonly FakeIdentityProvider _identityProvider = new();
     private readonly FakeCurrentAccount _currentAccount = new();
+    private FakeRanchAccessCodeGenerator _accessCodes = new("ABCDEFGH");
 
     [Fact]
     public async Task Register_ManagerWithoutHeadCount_ReturnsRanchDetailsRequired()
@@ -67,6 +68,37 @@ public class AccountCommandServiceTests
         var membership = Assert.Single(_ranches.Memberships);
         Assert.True(membership.IsOwner);
         Assert.Equal(1, unitOfWork.CompletedCount);
+    }
+
+    [Fact]
+    public async Task Register_Manager_DrawsAgainWhenTheDrawnCodeIsTaken()
+    {
+        _currentAccount.Identity = VerifiedIdentity();
+        _ranches.Ranches.Add(RanchWithCode("AAAAAAAA"));
+        _accessCodes = new FakeRanchAccessCodeGenerator("AAAAAAAA", "BBBBBBBB");
+
+        var result = await Service().HandleAsync(
+            new RegisterAccountCommand(UserRole.RanchManager, "Los Andes", "Cusco", "Urubamba", 120));
+
+        var ranch = _ranches.Ranches.Single(registered => registered.Id == result.Value!.RanchId);
+        Assert.Equal("BBBBBBBB", ranch.AccessCode.Value);
+        Assert.Equal(2, _accessCodes.Calls);
+    }
+
+    [Fact]
+    public async Task Register_Manager_FailsWhenFiveDrawnCodesAreAllTaken()
+    {
+        _currentAccount.Identity = VerifiedIdentity();
+        _ranches.Ranches.Add(RanchWithCode("AAAAAAAA"));
+        _accessCodes = new FakeRanchAccessCodeGenerator("AAAAAAAA");
+
+        var result = await Service().HandleAsync(
+            new RegisterAccountCommand(UserRole.RanchManager, "Los Andes", "Cusco", "Urubamba", 120));
+
+        Assert.Equal(IamErrors.RanchAccessCodeUnavailable, result.DomainError);
+        Assert.Equal(5, _accessCodes.Calls);
+        Assert.Empty(_accounts.Accounts);
+        Assert.Single(_ranches.Ranches);
     }
 
     [Fact]
@@ -130,8 +162,11 @@ public class AccountCommandServiceTests
     }
 
     private AccountCommandService Service(CountingUnitOfWork? unitOfWork = null) =>
-        new(_accounts, _ranches, _identityProvider, _currentAccount, unitOfWork ?? new CountingUnitOfWork(),
+        new(_accounts, _ranches, _accessCodes, _identityProvider, _currentAccount, unitOfWork ?? new CountingUnitOfWork(),
             new FakeTimeProvider(Now));
+
+    private static RanchRegistration RanchWithCode(string code) =>
+        RanchRegistration.Create("Other ranch", "Cusco", "Urubamba", 10, new RanchAccessCode(code)).Value!;
 
     private static Result<ExternalIdentity> VerifiedIdentity() =>
         Result<ExternalIdentity>.Success(new ExternalIdentity("uid-manager", new Email(ManagerEmail), true));

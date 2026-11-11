@@ -17,6 +17,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
@@ -263,6 +264,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IAccountQueryService>());
         Assert.NotNull(services.GetRequiredService<IHerdAdvisoryQueryService>());
         Assert.NotNull(services.GetRequiredService<IAuthorizationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IRanchAccessCodeGenerator>());
         Assert.NotNull(services.GetRequiredService<IIamContextFacade>());
     }
 

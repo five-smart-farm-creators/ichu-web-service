@@ -59,7 +59,8 @@ public sealed class DevelopmentIamSeeder(
 
     private async Task AddRanchAsync(CancellationToken cancellationToken)
     {
-        var ranch = Unwrap(RanchRegistration.Create("Development ranch", "Development region", "Development district", 2));
+        var accessCode = Unwrap(RanchAccessCode.Create(DevelopmentSeed.RanchAccessCode));
+        var ranch = Unwrap(RanchRegistration.Create("Development ranch", "Development region", "Development district", 2, accessCode));
         // Development-only: the other seeders and the edge's seed reference the ranch by this fixed identifier.
         context.Entry(ranch).Property(entry => entry.Id).CurrentValue = DevelopmentSeed.RanchId;
         await ranches.AddAsync(ranch, cancellationToken);

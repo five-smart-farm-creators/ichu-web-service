@@ -9,6 +9,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Components;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Services;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Security;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Configuration;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Tokens.Firebase.Services;
@@ -38,6 +39,7 @@ public static class IamServiceCollectionExtensions
         services.AddScoped<IRanchRegistrationRepository, RanchRegistrationRepository>();
         services.AddScoped<IHerdAdvisoryRepository, HerdAdvisoryRepository>();
         services.AddScoped<ICurrentAccount, HttpCurrentAccount>();
+        services.AddSingleton<IRanchAccessCodeGenerator, RandomRanchAccessCodeGenerator>();
         services.AddScoped<IIamContextFacade, IamContextFacade>();
         services.AddScoped<AuthorizationDomainService>();
         services.AddScoped<IAccountCommandService, AccountCommandService>();

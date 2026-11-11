@@ -188,7 +188,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.HerdAdvisory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("DecidedBy")
@@ -248,6 +247,11 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccessCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("District")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -268,13 +272,16 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccessCode")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RanchRegistrations_AccessCode");
+
                     b.ToTable("RanchRegistrations", "iam");
                 });
 
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.UserAccount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("BlockedUntil")

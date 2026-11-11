@@ -6,6 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Entities;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
@@ -18,11 +19,15 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.CommandSe
 public sealed class AccountCommandService(
     IUserAccountRepository accounts,
     IRanchRegistrationRepository ranches,
+    IRanchAccessCodeGenerator accessCodes,
     IIdentityProvider identityProvider,
     ICurrentAccount currentAccount,
     IUnitOfWork unitOfWork,
     TimeProvider clock) : IAccountCommandService
 {
+    // Among 32^8 codes a collision is rare, so several colliding draws in a row point to a fault rather than bad luck.
+    private const int MaximumAccessCodeAttempts = 5;
+
     /// <inheritdoc />
     public async Task<Result<RegisteredAccount>> HandleAsync(RegisterAccountCommand command, CancellationToken cancellationToken = default)
     {
@@ -30,7 +35,13 @@ public sealed class AccountCommandService(
         RanchRegistration? ranch = null;
         if (role == UserRole.RanchManager)
         {
-            var registration = CreateRanch(command);
+            var accessCode = await NextUniqueAccessCodeAsync(cancellationToken);
+            if (accessCode.IsFailure)
+            {
+                return Result<RegisteredAccount>.Failure(accessCode.DomainError);
+            }
+
+            var registration = CreateRanch(command, accessCode.Value!);
             if (registration.IsFailure)
             {
                 return Result<RegisteredAccount>.Failure(registration.DomainError);
@@ -153,9 +164,23 @@ public sealed class AccountCommandService(
         return Result<string>.Success(token);
     }
 
-    private static Result<RanchRegistration> CreateRanch(RegisterAccountCommand command) =>
+    private async Task<Result<RanchAccessCode>> NextUniqueAccessCodeAsync(CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; attempt < MaximumAccessCodeAttempts; attempt++)
+        {
+            var candidate = accessCodes.Next();
+            if (!await ranches.ExistsByAccessCodeAsync(candidate, cancellationToken))
+            {
+                return Result<RanchAccessCode>.Success(candidate);
+            }
+        }
+
+        return Result<RanchAccessCode>.Failure(IamErrors.RanchAccessCodeUnavailable);
+    }
+
+    private static Result<RanchRegistration> CreateRanch(RegisterAccountCommand command, RanchAccessCode accessCode) =>
         command.EstimatedHeadCount is { } headCount
             ? RanchRegistration.Create(command.RanchName ?? string.Empty, command.Region ?? string.Empty,
-                command.District ?? string.Empty, headCount)
+                command.District ?? string.Empty, headCount, accessCode)
             : Result<RanchRegistration>.Failure(IamErrors.RanchDetailsRequired);
 }

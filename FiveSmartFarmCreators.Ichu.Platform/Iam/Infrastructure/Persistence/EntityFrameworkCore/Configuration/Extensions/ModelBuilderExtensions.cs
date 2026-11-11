@@ -57,6 +57,9 @@ public static class ModelBuilderExtensions
         ranch.Property(r => r.Name).HasMaxLength(160).IsRequired();
         ranch.Property(r => r.Region).HasMaxLength(120).IsRequired();
         ranch.Property(r => r.District).HasMaxLength(120).IsRequired();
+        ranch.Property(r => r.AccessCode).HasConversion(code => code.Value, value => new RanchAccessCode(value))
+            .HasMaxLength(RanchAccessCode.Length).IsRequired();
+        ranch.HasIndex(r => r.AccessCode).IsUnique().HasDatabaseName("IX_RanchRegistrations_AccessCode");
     }
 
     private static void ConfigureRanchMembership(EntityTypeBuilder<RanchMembership> membership)
