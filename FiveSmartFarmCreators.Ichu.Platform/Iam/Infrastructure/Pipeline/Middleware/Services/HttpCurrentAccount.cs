@@ -6,6 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Pipeline.Middleware.Services;
 
@@ -55,13 +56,30 @@ public sealed class HttpCurrentAccount(
             return Result<UserAccount>.Failure(IamErrors.AccountNotActive);
         }
 
-        account.Verify();
-        if (!account.IsActive(now))
+        if (account.Status == AccountStatus.PendingVerification)
         {
-            return Result<UserAccount>.Failure(IamErrors.AccountNotActive);
+            await ActivateAsync(account, cancellationToken);
         }
 
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return Result<UserAccount>.Success(account);
+        return account.IsActive(now)
+            ? Result<UserAccount>.Success(account)
+            : Result<UserAccount>.Failure(IamErrors.AccountNotActive);
+    }
+
+    // Parallel first requests all try to activate the same account; the stored state of the winner is the outcome.
+    private async Task ActivateAsync(UserAccount account, CancellationToken cancellationToken)
+    {
+        account.Verify();
+        try
+        {
+            await unitOfWork.CompleteAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            foreach (var entry in exception.Entries)
+            {
+                await entry.ReloadAsync(cancellationToken);
+            }
+        }
     }
 }
