@@ -41,6 +41,27 @@ public sealed class IamApiTests(IchuApiFactory factory)
     }
 
     [Fact]
+    public async Task ParallelFirstRequests_OfPendingAccount_AllSucceed()
+    {
+        // The activation race is narrow, so several fresh accounts each fire a burst of first requests.
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            using var client = factory.CreateClient(TestIdentity.Create());
+            await client.RegisterManagerAsync();
+
+            var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(index =>
+                client.GetAsync(index % 2 == 0 ? "api/v1/accounts/me" : "api/v1/accounts/me/ranches")));
+            var statuses = responses.Select(response => response.StatusCode).ToArray();
+            foreach (var response in responses)
+            {
+                response.Dispose();
+            }
+
+            Assert.All(statuses, status => Assert.Equal(HttpStatusCode.OK, status));
+        }
+    }
+
+    [Fact]
     public async Task GetCurrentRanches_ListsRegisteredRanchWithManageScope()
     {
         using var client = factory.CreateClient(TestIdentity.Create());

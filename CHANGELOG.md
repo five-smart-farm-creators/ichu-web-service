@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Identity and Access: the migration that adds the access code applies on start, including Render on resume, and gives each existing ranch its own code. Regenerating an access code is not included yet.
 - Development: the seeded ranch uses the access code `DEVRANCH`.
 
+### Fixed
+
+- Identity and Access: parallel first requests of a newly verified account no longer answer 409; the requests that lose the activation race read the account that the winner activated.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added
