@@ -262,6 +262,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IProfessionalProfileCommandService>());
         Assert.NotNull(services.GetRequiredService<IHerdAdvisoryCommandService>());
         Assert.NotNull(services.GetRequiredService<IAccountQueryService>());
+        Assert.NotNull(services.GetRequiredService<IRanchQueryService>());
         Assert.NotNull(services.GetRequiredService<IHerdAdvisoryQueryService>());
         Assert.NotNull(services.GetRequiredService<IAuthorizationQueryService>());
         Assert.NotNull(services.GetRequiredService<IRanchAccessCodeGenerator>());
@@ -276,6 +277,7 @@ public class DependencyInjectionCompositionTests
         var services = scope.ServiceProvider;
 
         Assert.NotNull(ActivatorUtilities.CreateInstance<AccountsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<RanchesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<HerdAdvisoriesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<ProfilesController>(services));
     }

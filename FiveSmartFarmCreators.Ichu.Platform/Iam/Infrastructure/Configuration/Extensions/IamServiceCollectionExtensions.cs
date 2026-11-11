@@ -46,6 +46,7 @@ public static class IamServiceCollectionExtensions
         services.AddScoped<IProfessionalProfileCommandService, ProfessionalProfileCommandService>();
         services.AddScoped<IHerdAdvisoryCommandService, HerdAdvisoryCommandService>();
         services.AddScoped<IAccountQueryService, AccountQueryService>();
+        services.AddScoped<IRanchQueryService, RanchQueryService>();
         services.AddScoped<IHerdAdvisoryQueryService, HerdAdvisoryQueryService>();
         services.AddScoped<IAuthorizationQueryService, AuthorizationQueryService>();
         services.AddScoped<DevelopmentIamSeeder>();
