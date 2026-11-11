@@ -1,4 +1,5 @@
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Internal;
 
@@ -27,7 +28,13 @@ public sealed class RanchRegistration : AggregateRoot
 
     public int EstimatedHeadCount { get; private set; }
 
-    public static Result<RanchRegistration> Create(string name, string region, string district, int estimatedHeadCount)
+    public RanchAccessCode AccessCode { get; private set; } = null!;
+
+    /// <summary>
+    ///     The caller draws the code, so registration stays deterministic and the uniqueness check stays with the repository.
+    /// </summary>
+    public static Result<RanchRegistration> Create(string name, string region, string district, int estimatedHeadCount,
+        RanchAccessCode accessCode)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > MaximumNameLength ||
             string.IsNullOrWhiteSpace(region) || region.Length > MaximumLocationLength ||
@@ -43,7 +50,8 @@ public sealed class RanchRegistration : AggregateRoot
             Name = name.Trim(),
             Region = region.Trim(),
             District = district.Trim(),
-            EstimatedHeadCount = estimatedHeadCount
+            EstimatedHeadCount = estimatedHeadCount,
+            AccessCode = accessCode
         });
     }
 }

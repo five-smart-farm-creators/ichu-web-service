@@ -45,6 +45,9 @@
   <data name="Iam.InvalidDecision" xml:space="preserve">
     <value>Decision must be grant, reject or revoke.</value>
   </data>
+  <data name="Iam.InvalidRanchAccessCode" xml:space="preserve">
+    <value>The ranch access code must have 8 characters, without I, O, 0 or 1.</value>
+  </data>
   <data name="Iam.ProfileOnlyForVeterinarians" xml:space="preserve">
     <value>Only veterinarians have professional profiles.</value>
   </data>
@@ -56,6 +59,9 @@
   </data>
   <data name="Iam.RanchAccessDenied" xml:space="preserve">
     <value>The account is not authorized for this ranch.</value>
+  </data>
+  <data name="Iam.RanchLookupOnlyForVeterinarians" xml:space="preserve">
+    <value>Only veterinarians can find a ranch by its access code.</value>
   </data>
   <data name="Iam.Unauthenticated" xml:space="preserve">
     <value>A verified identity is required.</value>
@@ -92,6 +98,9 @@
   </data>
   <data name="Iam.VeterinarianNotEligible" xml:space="preserve">
     <value>An active veterinarian with a complete profile is required.</value>
+  </data>
+  <data name="Iam.RanchAccessCodeUnavailable" xml:space="preserve">
+    <value>A ranch access code could not be assigned. Try the registration again.</value>
   </data>
   <data name="Iam.IdentityProviderUnavailable" xml:space="preserve">
     <value>The identity provider is temporarily unavailable.</value>

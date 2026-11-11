@@ -12,4 +12,5 @@ public static class DevelopmentSeed
     public static readonly Guid HeiferId = Guid.Parse("8c3f4e2a-2f5d-4e73-9c99-3d4e5f6a7b82");
     public static readonly Guid GatewayId = Guid.Parse("c07d8c6e-6d9b-4cb7-9add-7b8c9daebfc6");
     public const string GatewaySecret = "development-gateway-key";
+    public const string RanchAccessCode = "DEVRANCH";
 }

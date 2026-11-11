@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Identity and Access: `accounts/me/ranches` returns the name, region and district of each ranch, so that clients show the ranch instead of its identifier.
+- Identity and Access: each ranch has an 8-character access code, which its manager sees in `accounts/me/ranches`; a veterinarian finds the ranch with `GET api/v1/ranches?accessCode=` to request advisory access without knowing the ranch identifier.
+- Identity and Access: the migration that adds the access code applies on start, including Render on resume, and gives each existing ranch its own code. Regenerating an access code is not included yet.
+- Development: the seeded ranch uses the access code `DEVRANCH`.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added

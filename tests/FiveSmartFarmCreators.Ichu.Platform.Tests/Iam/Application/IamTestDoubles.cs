@@ -6,6 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
@@ -51,6 +52,16 @@ internal sealed class FakeRanches : IRanchRegistrationRepository
 
     public Task<bool> ExistsAsync(Guid ranchId, CancellationToken cancellationToken) =>
         Task.FromResult(Ranches.Any(ranch => ranch.Id == ranchId));
+
+    public Task<bool> ExistsByAccessCodeAsync(RanchAccessCode accessCode, CancellationToken cancellationToken) =>
+        Task.FromResult(Ranches.Any(ranch => ranch.AccessCode == accessCode));
+
+    public Task<RanchRegistration?> FindByAccessCodeAsNoTrackingAsync(RanchAccessCode accessCode, CancellationToken cancellationToken) =>
+        Task.FromResult(Ranches.SingleOrDefault(ranch => ranch.AccessCode == accessCode));
+
+    public Task<IReadOnlyList<RanchRegistration>> FindByIdsAsNoTrackingAsync(IReadOnlyCollection<Guid> ranchIds,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<RanchRegistration>>(Ranches.Where(ranch => ranchIds.Contains(ranch.Id)).ToList());
 
     public Task AddAsync(RanchRegistration ranch, CancellationToken cancellationToken)
     {
@@ -116,4 +127,29 @@ internal sealed class NoAuthorization : IAuthorizationQueryService
 
     public Task<IReadOnlyList<RanchAccess>> HandleAsync(GetAccessibleRanchesQuery query, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<RanchAccess>>([]);
+}
+
+internal sealed class FixedAuthorization(params RanchAccess[] accesses) : IAuthorizationQueryService
+{
+    public Task<bool> HandleAsync(CheckRanchAccessQuery query, CancellationToken cancellationToken = default) =>
+        Task.FromResult(false);
+
+    public Task<IReadOnlyList<RanchAccess>> HandleAsync(GetAccessibleRanchesQuery query, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<RanchAccess>>(accesses);
+}
+
+/// <summary>
+///     Returns the scripted codes in order and then keeps returning the last one, so that a test can force collisions.
+/// </summary>
+internal sealed class FakeRanchAccessCodeGenerator(params string[] codes) : IRanchAccessCodeGenerator
+{
+    private readonly Queue<string> _codes = new(codes);
+
+    public int Calls { get; private set; }
+
+    public RanchAccessCode Next()
+    {
+        Calls++;
+        return new RanchAccessCode(_codes.Count > 1 ? _codes.Dequeue() : _codes.Peek());
+    }
 }
