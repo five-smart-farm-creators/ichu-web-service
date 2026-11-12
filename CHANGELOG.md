@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
 ### Added
 
 - Identity and Access: `accounts/me/ranches` returns the name, region and district of each ranch, so that clients show the ranch instead of its identifier.
