@@ -10,6 +10,7 @@ public sealed record SubscriptionResource(
     string Status,
     int HeadCount,
     MoneyResource AnnualFee,
+    MoneyResource DeviceUnitPrice,
     MoneyResource DevicesCost,
     MoneyResource Total,
     string TermsVersion,

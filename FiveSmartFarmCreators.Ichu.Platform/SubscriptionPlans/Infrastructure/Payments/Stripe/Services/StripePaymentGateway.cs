@@ -116,22 +116,7 @@ public sealed class StripePaymentGateway(
         {
             Mode = "payment",
             AllowedPaymentMethodTypes = ["card"],
-            LineItems =
-            [
-                new SessionLineItemOptions
-                {
-                    Quantity = 1,
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        Currency = StripeSolesCurrency,
-                        UnitAmount = subscription.Total.ToMinorUnits(),
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = $"ICHU {planName} plan — annual subscription"
-                        }
-                    }
-                }
-            ],
+            LineItems = LineItemsFor(subscription, planName),
             ClientReferenceId = subscriptionId,
             Metadata = new Dictionary<string, string>
             {
@@ -143,6 +128,37 @@ public sealed class StripePaymentGateway(
             ExpiresAt = clock.GetUtcNow().Add(SessionLifetime).UtcDateTime
         };
     }
+
+    /// <summary>
+    ///     Itemizes the charge as one collar per head plus the plan's annual fee, so the receipt shows both and the lines
+    ///     add up to the total that the webhook checks. Zero-priced lines are left out.
+    /// </summary>
+    public static List<SessionLineItemOptions> LineItemsFor(Subscription subscription, string planName)
+    {
+        var items = new List<SessionLineItemOptions>();
+        if (subscription.DevicesCost.Amount > 0)
+        {
+            items.Add(LineItem("ICHU smart collar", subscription.HeadCount.Value, subscription.DeviceUnitPrice));
+        }
+
+        if (subscription.AnnualFee.Amount > 0)
+        {
+            items.Add(LineItem($"ICHU {planName} plan — annual fee", 1, subscription.AnnualFee));
+        }
+
+        return items;
+    }
+
+    private static SessionLineItemOptions LineItem(string name, int quantity, Money unitPrice) => new()
+    {
+        Quantity = quantity,
+        PriceData = new SessionLineItemPriceDataOptions
+        {
+            Currency = StripeSolesCurrency,
+            UnitAmount = unitPrice.ToMinorUnits(),
+            ProductData = new SessionLineItemPriceDataProductDataOptions { Name = name }
+        }
+    };
 
     // Stripe replaces the placeholder with the session identifier when it sends the customer back to the application.
     private static string AppendSessionIdPlaceholder(string successUrl) =>
