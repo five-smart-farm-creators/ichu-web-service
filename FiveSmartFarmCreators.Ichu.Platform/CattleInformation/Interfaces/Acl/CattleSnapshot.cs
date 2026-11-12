@@ -8,6 +8,7 @@ public sealed record CattleSnapshot(
     Guid RanchId,
     string EarTag,
     string Status,
+    string Sex,
     string LifeStage,
     DateOnly BirthDate,
     string? ExitReason,

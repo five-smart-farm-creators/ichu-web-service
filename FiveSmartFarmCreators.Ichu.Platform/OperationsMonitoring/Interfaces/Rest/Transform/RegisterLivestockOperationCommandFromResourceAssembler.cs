@@ -19,5 +19,8 @@ public static class RegisterLivestockOperationCommandFromResourceAssembler
             resource.OccurredAt,
             resource.Observation,
             resource.Product,
-            resource.Dose);
+            resource.Dose,
+            resource.SireReference,
+            resource.PregnancyResult,
+            resource.ExpectedCalvingDate);
 }

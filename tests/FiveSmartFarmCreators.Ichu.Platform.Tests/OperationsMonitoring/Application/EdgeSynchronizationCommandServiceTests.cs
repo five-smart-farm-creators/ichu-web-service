@@ -188,6 +188,9 @@ public class EdgeSynchronizationCommandServiceTests
         public Task<CattleSnapshot?> FindAsync(Guid cattleId, CancellationToken cancellationToken) =>
             Task.FromResult(Animals.SingleOrDefault(animal => animal.CattleId == cattleId));
 
+        public Task<CattleProfileSnapshot?> FindProfileAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Edge batches of readings never read reproductive profiles.");
+
         public Task<bool> LotBelongsToRanchAsync(Guid lotId, Guid ranchId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Edge batches of readings never check lots.");
     }

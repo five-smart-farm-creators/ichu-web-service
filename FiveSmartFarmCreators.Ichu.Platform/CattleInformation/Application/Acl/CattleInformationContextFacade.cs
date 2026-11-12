@@ -109,6 +109,6 @@ public sealed class CattleInformationContextFacade(
     }
 
     private static CattleSnapshot ToSnapshot(Cattle cattle) => new(
-        cattle.Id.Value, cattle.RanchId, cattle.EarTag.Value, cattle.Status.ToString(), cattle.CurrentStage.ToString(),
-        cattle.BirthDate, cattle.ExitReason?.ToString(), cattle.ExitDate, cattle.Version);
+        cattle.Id.Value, cattle.RanchId, cattle.EarTag.Value, cattle.Status.ToString(), cattle.Sex.ToString(),
+        cattle.CurrentStage.ToString(), cattle.BirthDate, cattle.ExitReason?.ToString(), cattle.ExitDate, cattle.Version);
 }

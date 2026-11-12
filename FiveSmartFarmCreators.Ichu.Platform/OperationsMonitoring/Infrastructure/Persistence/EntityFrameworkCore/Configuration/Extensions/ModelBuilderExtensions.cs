@@ -15,6 +15,7 @@ public static class ModelBuilderExtensions
 {
     private const string Schema = "monitoring";
     private const int EnumLength = 32;
+    private const int PregnancyResultLength = 20;
 
     /// <summary>
     ///     Applies the mappings of the monitoring aggregates. The shared database context calls it from OnModelCreating.
@@ -152,6 +153,14 @@ public static class ModelBuilderExtensions
         operation.Property(o => o.Product).HasMaxLength(LivestockOperation.MaximumProductLength);
         operation.Property(o => o.Dose).HasMaxLength(LivestockOperation.MaximumDoseLength);
         operation.HasIndex(o => new { o.CattleId, o.OccurredAt });
+        // Every operation stores its reproductive facts, empty when it has none, so the three nullable columns need no discriminator.
+        operation.ComplexProperty(o => o.Reproductive, reproductive =>
+        {
+            reproductive.IsRequired();
+            reproductive.Property(r => r.SireReference).HasMaxLength(ReproductiveDetails.MaximumSireReferenceLength);
+            reproductive.Property(r => r.PregnancyResult).HasConversion<string>().HasMaxLength(PregnancyResultLength);
+            reproductive.Property(r => r.ExpectedCalvingDate).HasColumnType("date");
+        });
     }
 
     private static StronglyTypedIdConverter<TelemetryReadingId, Guid> TelemetryReadingIdConverter() =>

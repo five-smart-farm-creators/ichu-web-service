@@ -324,4 +324,22 @@
   <data name="OperationsMonitoring.EdgeAttentionVersionRequired" xml:space="preserve">
     <value>Edge attention requires the expected alert version.</value>
   </data>
+  <data name="OperationsMonitoring.SireReferenceTooLong" xml:space="preserve">
+    <value>The sire reference must not exceed 80 characters.</value>
+  </data>
+  <data name="OperationsMonitoring.PregnancyResultUnknown" xml:space="preserve">
+    <value>The pregnancy result must be Pregnant or Open.</value>
+  </data>
+  <data name="OperationsMonitoring.PregnancyResultRequired" xml:space="preserve">
+    <value>A pregnancy diagnosis requires its result, Pregnant or Open.</value>
+  </data>
+  <data name="OperationsMonitoring.ReproductiveDetailsNotAllowed" xml:space="preserve">
+    <value>This operation type does not accept these reproductive details.</value>
+  </data>
+  <data name="OperationsMonitoring.ExpectedCalvingDateInvalid" xml:space="preserve">
+    <value>The expected calving date applies only to a pregnant diagnosis and must fall after the diagnosis, within 300 days of it.</value>
+  </data>
+  <data name="OperationsMonitoring.ReproductiveEventRequiresFemale" xml:space="preserve">
+    <value>Reproductive events can only be recorded for female animals.</value>
+  </data>
 </root>

@@ -72,6 +72,12 @@ public static class OperationsMonitoringErrors
     public static readonly Error ObservationTooLong = Define("ObservationTooLong", EErrorType.Validation);
     public static readonly Error ProductTooLong = Define("ProductTooLong", EErrorType.Validation);
     public static readonly Error DoseTooLong = Define("DoseTooLong", EErrorType.Validation);
+    public static readonly Error SireReferenceTooLong = Define("SireReferenceTooLong", EErrorType.Validation);
+    public static readonly Error PregnancyResultUnknown = Define("PregnancyResultUnknown", EErrorType.Validation);
+    public static readonly Error PregnancyResultRequired = Define("PregnancyResultRequired", EErrorType.Validation);
+    public static readonly Error ReproductiveDetailsNotAllowed = Define("ReproductiveDetailsNotAllowed", EErrorType.Validation);
+    public static readonly Error ExpectedCalvingDateInvalid = Define("ExpectedCalvingDateInvalid", EErrorType.Validation);
+    public static readonly Error ReproductiveEventRequiresFemale = Define("ReproductiveEventRequiresFemale", EErrorType.Validation);
     public static readonly Error CaptureTimeRequired = Define("CaptureTimeRequired", EErrorType.Validation);
     public static readonly Error CaptureTimeAhead = Define("CaptureTimeAhead", EErrorType.Validation);
     public static readonly Error EventTimeRequired = Define("EventTimeRequired", EErrorType.Validation);
