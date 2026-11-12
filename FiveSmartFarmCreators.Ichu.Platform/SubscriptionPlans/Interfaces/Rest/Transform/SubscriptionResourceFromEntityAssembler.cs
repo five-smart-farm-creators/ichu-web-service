@@ -17,6 +17,7 @@ public static class SubscriptionResourceFromEntityAssembler
             subscription.Status.ToString(),
             subscription.HeadCount.Value,
             new MoneyResource(subscription.AnnualFee.Amount, subscription.AnnualFee.Currency),
+            new MoneyResource(subscription.DeviceUnitPrice.Amount, subscription.DeviceUnitPrice.Currency),
             new MoneyResource(subscription.DevicesCost.Amount, subscription.DevicesCost.Currency),
             new MoneyResource(subscription.Total.Amount, subscription.Total.Currency),
             subscription.TermsVersion,

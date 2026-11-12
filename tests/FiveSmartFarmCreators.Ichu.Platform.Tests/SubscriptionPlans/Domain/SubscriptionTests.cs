@@ -25,6 +25,14 @@ public class SubscriptionTests
     }
 
     [Fact]
+    public void DeviceUnitPrice_IsTheQuotedPricePerCollar()
+    {
+        var subscription = RequestPending();
+
+        Assert.Equal(new Money(120m, "PEN"), subscription.DeviceUnitPrice);
+    }
+
+    [Fact]
     public void Request_TrimsAcquisitionSourceAndDropsBlankValues()
     {
         Assert.Equal("Dashboard", RequestPending(acquisitionSource: "  Dashboard ").AcquisitionSource);

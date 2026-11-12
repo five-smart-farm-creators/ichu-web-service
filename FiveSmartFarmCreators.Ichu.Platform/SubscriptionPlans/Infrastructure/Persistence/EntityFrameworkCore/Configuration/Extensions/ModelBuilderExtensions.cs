@@ -108,6 +108,7 @@ public static class ModelBuilderExtensions
             .HasColumnName("head_count");
         subscription.OwnsOne(s => s.AnnualFee, money => ConfigureMoney(money, "annual_fee"));
         subscription.OwnsOne(s => s.DevicesCost, money => ConfigureMoney(money, "devices_cost"));
+        subscription.Ignore(s => s.DeviceUnitPrice);
         subscription.OwnsOne(s => s.Total, money => ConfigureMoney(money, "total"));
         subscription.Property(s => s.Status).HasConversion<string>().HasMaxLength(EnumLength).HasColumnName("status");
         subscription.Property(s => s.TermsVersion)

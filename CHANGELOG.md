@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Identity and Access: each ranch has an 8-character access code, which its manager sees in `accounts/me/ranches`; a veterinarian finds the ranch with `GET api/v1/ranches?accessCode=` to request advisory access without knowing the ranch identifier.
 - Identity and Access: the migration that adds the access code applies on start, including Render on resume, and gives each existing ranch its own code. Regenerating an access code is not included yet.
 - Development: the seeded ranch uses the access code `DEVRANCH`.
+- Subscription Plans: the Stripe Checkout page and receipt itemize the charge as one smart collar per head at the unit price plus the plan's annual fee; the total is unchanged.
+- Subscription Plans: subscriptions include `deviceUnitPrice`, so clients show the per-collar price without dividing the devices cost.
 
 ### Fixed
 
