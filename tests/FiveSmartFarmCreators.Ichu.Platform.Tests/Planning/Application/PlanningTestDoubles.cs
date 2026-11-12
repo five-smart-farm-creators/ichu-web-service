@@ -2,6 +2,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.Outbound
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Tests.Planning.Application;
@@ -100,4 +101,49 @@ internal sealed class CountingUnitOfWork : IUnitOfWork
         CompletedCount++;
         return Task.CompletedTask;
     }
+}
+
+internal sealed class FakeLotLookup : IPlanningLotLookup
+{
+    public HashSet<(Guid RanchId, Guid LotId)> Lots { get; } = [];
+
+    public Task<bool> LotBelongsToRanchAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
+        Task.FromResult(Lots.Contains((ranchId, lotId)));
+}
+
+internal sealed class FakeNutritionPlans : INutritionPlanRepository
+{
+    public List<NutritionPlan> Items { get; } = [];
+
+    public Task AddAsync(NutritionPlan plan, CancellationToken cancellationToken)
+    {
+        Items.Add(plan);
+        return Task.CompletedTask;
+    }
+
+    // Mirrors the database filter: the overlapping plans of the lot and its open-ended plan.
+    public Task<IReadOnlyList<NutritionPlan>> FindOverlappingByLotAsync(Guid lotId, DateOnly validFrom, DateOnly? validTo, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<NutritionPlan>>(Items
+            .Where(plan => plan.LotId == lotId
+                && (plan.ValidTo is null || plan.ValidTo >= validFrom)
+                && (validTo is null || plan.ValidFrom <= validTo))
+            .ToList());
+
+    public Task<IReadOnlyList<NutritionPlan>> FindByLotAsNoTrackingAsync(Guid lotId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<NutritionPlan>>(Items
+            .Where(plan => plan.LotId == lotId)
+            .OrderByDescending(plan => plan.ValidFrom)
+            .ToList());
+
+    public Task<NutritionPlan?> FindCurrentByLotAsNoTrackingAsync(Guid lotId, DateOnly on, CancellationToken cancellationToken) =>
+        Task.FromResult(Items
+            .Where(plan => plan.LotId == lotId && plan.ValidFrom <= on && (plan.ValidTo is null || plan.ValidTo >= on))
+            .OrderByDescending(plan => plan.ValidFrom)
+            .FirstOrDefault());
+}
+
+internal sealed class ImmediateTransaction : IPlanningTransaction
+{
+    public Task<Result<T>> ExecuteAsync<T>(Func<CancellationToken, Task<Result<T>>> operation, CancellationToken cancellationToken) =>
+        operation(cancellationToken);
 }
