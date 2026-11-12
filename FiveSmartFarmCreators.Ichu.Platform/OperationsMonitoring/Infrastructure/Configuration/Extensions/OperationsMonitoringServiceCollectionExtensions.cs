@@ -38,6 +38,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IOperationsMonitoringUnitOfWork, OperationsMonitoringUnitOfWork>();
 
         services.AddScoped<IMonitoringRuleRevisionService, MonitoringRuleRevisionService>();
+        services.AddScoped<ReproductiveHistoryCalculator>();
         services.AddScoped<IMonitoringAccessControl, IamOperationsMonitoringAccessControl>();
 
         services.AddScoped<ITelemetryReadingCommandService, TelemetryReadingCommandService>();
@@ -53,6 +54,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IGeofenceQueryService, GeofenceQueryService>();
         services.AddScoped<IMonitoringRuleSetQueryService, MonitoringRuleSetQueryService>();
         services.AddScoped<ILivestockOperationQueryService, LivestockOperationQueryService>();
+        services.AddScoped<IReproductiveHistoryQueryService, ReproductiveHistoryQueryService>();
 
         services.AddScoped<ICattleLookup, CattleInformationCattleLookup>();
         services.AddScoped<IDeviceAttributionLookup, IoTAssetsDeviceAttributionLookup>();

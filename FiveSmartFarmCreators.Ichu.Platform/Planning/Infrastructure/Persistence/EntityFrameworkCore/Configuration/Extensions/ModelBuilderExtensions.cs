@@ -9,15 +9,16 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 /// <summary>
-///     Entity Framework Core mappings of the Planning context. The database also enforces the campaign and withdrawal date ranges, and application records and follow-ups are owned by their activity.
+///     Entity Framework Core mappings of the Planning context. The database also enforces the campaign, withdrawal and nutrition date ranges, and application records, follow-ups and ration items are owned by their parent.
 /// </summary>
 public static class ModelBuilderExtensions
 {
     private const string Schema = "planning";
     private const int CampaignKindLength = 20;
+    private const int RationKindLength = 20;
 
     /// <summary>
-    ///     Maps campaigns, activities with their records, and withdrawal periods under the planning schema.
+    ///     Maps campaigns, activities with their records, withdrawal periods and nutrition plans under the planning schema.
     /// </summary>
     public static void ApplyPlanningConfiguration(this ModelBuilder builder)
     {
@@ -26,6 +27,35 @@ public static class ModelBuilderExtensions
         ConfigureApplicationRecord(builder.Entity<ApplicationRecord>());
         ConfigureFollowUp(builder.Entity<FollowUp>());
         ConfigureWithdrawalPeriod(builder.Entity<WithdrawalPeriod>());
+        ConfigureNutritionPlan(builder.Entity<NutritionPlan>());
+    }
+
+    private static void ConfigureNutritionPlan(EntityTypeBuilder<NutritionPlan> plan)
+    {
+        plan.ToTable("nutrition_plans", Schema, table =>
+            table.HasCheckConstraint("ck_nutrition_plans_validity", "valid_to IS NULL OR valid_to >= valid_from"));
+        plan.HasKey(p => p.Id);
+        plan.Property(p => p.Id).HasConversion(NutritionPlanIdConverter()).HasColumnName("id").ValueGeneratedNever();
+        plan.Property(p => p.RanchId).HasColumnName("ranch_id").IsRequired();
+        plan.Property(p => p.LotId).HasColumnName("lot_id").IsRequired();
+        plan.Property(p => p.Name).HasColumnName("name").HasMaxLength(NutritionPlan.MaximumNameLength).IsRequired();
+        plan.Property(p => p.ValidFrom).HasColumnName("valid_from").HasColumnType("date").IsRequired();
+        plan.Property(p => p.ValidTo).HasColumnName("valid_to").HasColumnType("date");
+        plan.Property(p => p.TargetDailyGainKilograms).HasColumnName("target_daily_gain_kilograms").HasColumnType("numeric(5,3)");
+        plan.Property(p => p.Notes).HasColumnName("notes").HasMaxLength(NutritionPlan.MaximumNotesLength);
+        plan.HasIndex(p => new { p.LotId, p.ValidFrom }).HasDatabaseName("ix_nutrition_plans_lot_id_valid_from");
+        plan.OwnsMany(p => p.Items, item =>
+        {
+            item.ToTable("nutrition_plan_items", Schema);
+            item.Property<NutritionPlanId>("NutritionPlanId").HasConversion(NutritionPlanIdConverter()).HasColumnName("nutrition_plan_id");
+            item.WithOwner().HasForeignKey("NutritionPlanId");
+            item.Property<long>("Id").HasColumnName("id").ValueGeneratedOnAdd();
+            item.HasKey("Id");
+            item.Property(i => i.Feed).HasColumnName("feed").HasMaxLength(RationItem.MaximumFeedLength).IsRequired();
+            item.Property(i => i.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(RationKindLength).IsRequired();
+            item.Property(i => i.KilogramsPerHeadPerDay).HasColumnName("kilograms_per_head_per_day").HasColumnType("numeric(7,3)");
+        });
+        plan.Navigation(p => p.Items).HasField("_items").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 
     private static void ConfigurePlanningCampaign(EntityTypeBuilder<PlanningCampaign> campaign)
@@ -124,6 +154,9 @@ public static class ModelBuilderExtensions
 
     private static StronglyTypedIdConverter<WithdrawalPeriodId, Guid> WithdrawalPeriodIdConverter() =>
         new(id => id.Value, value => new WithdrawalPeriodId(value));
+
+    private static StronglyTypedIdConverter<NutritionPlanId, Guid> NutritionPlanIdConverter() =>
+        new(id => id.Value, value => new NutritionPlanId(value));
 
     private static ValueConverter<PlanningCampaignId?, Guid?> NullablePlanningCampaignIdConverter() =>
         new(id => id.HasValue ? id.Value.Value : (Guid?)null, value => value.HasValue ? new PlanningCampaignId(value.Value) : (PlanningCampaignId?)null);

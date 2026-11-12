@@ -1,5 +1,6 @@
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Application.Internal.OutboundServices;
+using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
 using CattleInformationSnapshot = FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl.CattleSnapshot;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Tests.OperationsMonitoring.Application;
@@ -43,6 +44,25 @@ public class CattleInformationCattleLookupTests
     }
 
     [Fact]
+    public async Task FindProfileAsync_MapsTheSexStageAndBirthDateOfTheAnimal()
+    {
+        _facade.Animal = new CattleInformationSnapshot(CattleId, RanchId, "PE-0100", "Active", "Female", "MilkingCow",
+            new DateOnly(2024, 3, 1), null, null, Guid.NewGuid());
+
+        var profile = await new CattleInformationCattleLookup(_facade).FindProfileAsync(RanchId, CattleId, CancellationToken.None);
+
+        Assert.Equal(new CattleProfileSnapshot(CattleId, RanchId, AnimalSex.Female, "MilkingCow", new DateOnly(2024, 3, 1)), profile);
+    }
+
+    [Fact]
+    public async Task FindProfileAsync_ReturnsNullForAnAnimalTheCallerCannotSee()
+    {
+        var profile = await new CattleInformationCattleLookup(_facade).FindProfileAsync(RanchId, CattleId, CancellationToken.None);
+
+        Assert.Null(profile);
+    }
+
+    [Fact]
     public async Task LotBelongsToRanchAsync_AsksTheFacadeForTheLotOfTheRanch()
     {
         _facade.LotExists = true;
@@ -57,12 +77,14 @@ public class CattleInformationCattleLookupTests
     {
         public CattleLifecycleSnapshot? Lifecycle { get; set; }
 
+        public CattleInformationSnapshot? Animal { get; set; }
+
         public bool LotExists { get; set; }
 
         public (Guid RanchId, Guid LotId)? LastLotQuery { get; private set; }
 
         public Task<CattleInformationSnapshot?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken) =>
-            Task.FromResult<CattleInformationSnapshot?>(null);
+            Task.FromResult(Animal);
 
         public Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
         {

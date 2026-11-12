@@ -9,7 +9,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.Outb
 public sealed class PlanningGuard(
     IPlanningAccessControl accessControl,
     IPlanningCattleLookup cattleLookup,
-    IClinicalInterventionLookup interventionLookup)
+    IClinicalInterventionLookup interventionLookup,
+    IPlanningLotLookup lotLookup)
 {
     public async Task<Result> EnsureRanchAccessAsync(Guid ranchId, PlanningPermission permission, CancellationToken cancellationToken)
     {
@@ -39,6 +40,18 @@ public sealed class PlanningGuard(
         return await cattleLookup.CattleBelongsToRanchAsync(ranchId, cattleId, cancellationToken)
             ? Result.Success()
             : Result.Failure(PlanningErrors.CattleNotFound);
+    }
+
+    public async Task<Result> EnsureLotBelongsToRanchAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
+    {
+        if (lotId == Guid.Empty)
+        {
+            return Result.Failure(PlanningErrors.InvalidIdentifier);
+        }
+
+        return await lotLookup.LotBelongsToRanchAsync(ranchId, lotId, cancellationToken)
+            ? Result.Success()
+            : Result.Failure(PlanningErrors.LotNotFound);
     }
 
     public async Task<Result> EnsureInterventionMatchesAsync(

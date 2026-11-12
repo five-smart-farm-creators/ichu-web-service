@@ -27,7 +27,7 @@ public class PlannedActivityCommandServiceTests
 
     public PlannedActivityCommandServiceTests()
     {
-        var guard = new PlanningGuard(_access, _cattle, _interventions);
+        var guard = new PlanningGuard(_access, _cattle, _interventions, new FakeLotLookup());
         _service = new PlannedActivityCommandService(_activities, _campaigns, _unitOfWork, guard);
     }
 

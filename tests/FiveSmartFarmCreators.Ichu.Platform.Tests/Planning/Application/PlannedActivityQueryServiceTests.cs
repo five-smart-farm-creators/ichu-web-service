@@ -20,7 +20,7 @@ public class PlannedActivityQueryServiceTests
 
     public PlannedActivityQueryServiceTests()
     {
-        var guard = new PlanningGuard(_access, new FakeCattleLookup(), new FakeInterventionLookup());
+        var guard = new PlanningGuard(_access, new FakeCattleLookup(), new FakeInterventionLookup(), new FakeLotLookup());
         _service = new PlannedActivityQueryService(_activities, guard);
     }
 

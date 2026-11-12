@@ -61,6 +61,10 @@ Without both `DevelopmentSeed__Manager__ExternalUid` and `DevelopmentSeed__Manag
 
 Epidemiological curves compare the observation window with the incubation period of each health condition, set in the `DashboardAnalytics:ConditionIncubationDays` section of `appsettings.json`. The shipped values (`temperature` and `activity`, 7 days each) are placeholders that the team must validate before the curves inform any decision. A condition without a configured value returns its curve with the reason that no incubation period is set.
 
+### Nutrition plan dates
+
+`GET api/v1/ranches/{ranchId}/lots/{lotId}/nutrition-plans/current` without the `on` parameter uses the UTC date of the server, a known limitation until ranches have a time zone. From 19:00 in Lima the UTC date is already the next day, so clients pass `on` with the local date.
+
 ### Payments
 
 Ranch managers pay a pending subscription through a Stripe Checkout page in soles (PEN), with card payments only. Development runs in Stripe test mode, so use the test card `4242 4242 4242 4242` with any future expiry date and any CVC.

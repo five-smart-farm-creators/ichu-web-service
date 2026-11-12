@@ -13,7 +13,7 @@ using Microsoft.Extensions.Localization;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 
 /// <summary>
-///     Registers field events and clinical interventions, synchronizes offline mobile batches and lists the operations of animals.
+///     Registers field events and clinical interventions, synchronizes offline mobile batches, lists the operations of animals and exposes their reproductive history.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -22,6 +22,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 public class LivestockOperationsController(
     ILivestockOperationCommandService operationCommandService,
     ILivestockOperationQueryService operationQueryService,
+    IReproductiveHistoryQueryService reproductiveHistoryQueryService,
     IStringLocalizer<OperationsMonitoringMessages> localizer) : ControllerBase
 {
     [HttpPost("api/v1/ranches/{ranchId:guid}/field-events")]
@@ -106,6 +107,20 @@ public class LivestockOperationsController(
         var result = await operationQueryService.Handle(new GetLivestockOperationsQuery(ranchId, cattleId, period.Value!), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
             operations => Ok(operations.Select(LivestockOperationResourceFromEntityAssembler.ToResourceFromEntity).ToList()));
+    }
+
+    [HttpGet("api/v1/ranches/{ranchId:guid}/cattle/{cattleId:guid}/reproductive-history")]
+    [EndpointSummary("Get the reproductive history of an animal")]
+    [EndpointDescription("Returns the breeding services, pregnancy diagnoses, calvings, abortions and heats of an authorized animal, with the days open after each calving. A male returns no history, with its sex, stage and age. The age counts whole months from the UTC date.")]
+    [ProducesResponseType(typeof(ReproductiveHistoryResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReproductiveHistory(Guid ranchId, Guid cattleId, CancellationToken cancellationToken)
+    {
+        var result = await reproductiveHistoryQueryService.Handle(new GetReproductiveHistoryQuery(ranchId, cattleId), cancellationToken);
+        return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
+            report => Ok(ReproductiveHistoryResourceFromEntityAssembler.ToResourceFromEntity(report)));
     }
 
     private IActionResult RegistrationResponse(LivestockOperationRegistration registration) =>
