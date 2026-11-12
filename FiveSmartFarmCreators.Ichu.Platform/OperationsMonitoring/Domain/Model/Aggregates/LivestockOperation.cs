@@ -17,6 +17,9 @@ public sealed class LivestockOperation : AggregateRoot
 
     public const int MaximumDoseLength = 60;
 
+    // Keeps a mistyped expected calving date from placing the birth years after the diagnosis.
+    private const int MaximumDaysToCalving = 300;
+
     // Entity Framework Core materializes operations without running the factory.
     private LivestockOperation()
     {
@@ -42,6 +45,8 @@ public sealed class LivestockOperation : AggregateRoot
 
     public string? Dose { get; private set; }
 
+    public ReproductiveDetails Reproductive { get; private set; } = null!;
+
     public static Result<LivestockOperation> Create(
         Guid operationId,
         Guid ranchId,
@@ -52,7 +57,8 @@ public sealed class LivestockOperation : AggregateRoot
         string? observation,
         string? product,
         string? dose,
-        DateTimeOffset receivedAt)
+        DateTimeOffset receivedAt,
+        ReproductiveDetails reproductive)
     {
         if (operationId == Guid.Empty || ranchId == Guid.Empty || cattleId == Guid.Empty || authorId == Guid.Empty)
         {
@@ -82,23 +88,35 @@ public sealed class LivestockOperation : AggregateRoot
             return Result<LivestockOperation>.Failure(normalizedObservation.DomainError);
         }
 
+        var normalizedOccurredAt = MonitoringTime.Normalize(occurredAt);
+        var reproductiveRules = ValidateReproductiveDetails(type, normalizedOccurredAt, reproductive);
+        if (reproductiveRules.IsFailure)
+        {
+            return Result<LivestockOperation>.Failure(reproductiveRules.DomainError);
+        }
+
         return Result<LivestockOperation>.Success(new LivestockOperation
         {
             Id = new LivestockOperationId(operationId),
             RanchId = ranchId,
             CattleId = cattleId,
             Type = type,
-            OccurredAt = MonitoringTime.Normalize(occurredAt),
+            OccurredAt = normalizedOccurredAt,
             ReceivedAt = MonitoringTime.Normalize(receivedAt),
             AuthorId = authorId,
             Observation = normalizedObservation.Value,
             Product = normalizedProduct.Value,
-            Dose = normalizedDose.Value
+            Dose = normalizedDose.Value,
+            Reproductive = reproductive
         });
     }
 
     public static bool IsClinical(OperationType type) =>
-        type is OperationType.Vaccination or OperationType.Treatment or OperationType.Insemination;
+        type is OperationType.Vaccination or OperationType.Treatment or OperationType.Insemination or OperationType.PregnancyDiagnosis;
+
+    public static bool IsReproductive(OperationType type) =>
+        type is OperationType.Insemination or OperationType.NaturalMating or OperationType.PregnancyDiagnosis
+            or OperationType.Abortion or OperationType.HeatObserved or OperationType.Birth;
 
     // A retry repeats the same content; the stored record is returned instead of a second one.
     public bool HasSameContentAs(LivestockOperation other) =>
@@ -109,7 +127,51 @@ public sealed class LivestockOperation : AggregateRoot
         AuthorId == other.AuthorId &&
         Observation == other.Observation &&
         Product == other.Product &&
-        Dose == other.Dose;
+        Dose == other.Dose &&
+        Reproductive == other.Reproductive;
+
+    // Each type accepts only its own reproductive facts, so a sire cannot be attached to a diagnosis or a result to a birth.
+    private static Result ValidateReproductiveDetails(OperationType type, DateTimeOffset occurredAt, ReproductiveDetails details)
+    {
+        switch (type)
+        {
+            case OperationType.Insemination or OperationType.NaturalMating:
+                return details.PregnancyResult is null && details.ExpectedCalvingDate is null
+                    ? Result.Success()
+                    : Result.Failure(OperationsMonitoringErrors.ReproductiveDetailsNotAllowed);
+            case OperationType.PregnancyDiagnosis:
+                return ValidateDiagnosis(occurredAt, details);
+            default:
+                return details.IsEmpty
+                    ? Result.Success()
+                    : Result.Failure(OperationsMonitoringErrors.ReproductiveDetailsNotAllowed);
+        }
+    }
+
+    private static Result ValidateDiagnosis(DateTimeOffset occurredAt, ReproductiveDetails details)
+    {
+        if (details.PregnancyResult is not { } result)
+        {
+            return Result.Failure(OperationsMonitoringErrors.PregnancyResultRequired);
+        }
+
+        if (details.SireReference is not null)
+        {
+            return Result.Failure(OperationsMonitoringErrors.ReproductiveDetailsNotAllowed);
+        }
+
+        if (details.ExpectedCalvingDate is not { } expectedCalvingDate)
+        {
+            return Result.Success();
+        }
+
+        // Only a pregnant diagnosis has a calving date, which must fall within the gestation window after the diagnosis day.
+        var diagnosisDay = DateOnly.FromDateTime(occurredAt.UtcDateTime);
+        var withinGestation = expectedCalvingDate > diagnosisDay && expectedCalvingDate <= diagnosisDay.AddDays(MaximumDaysToCalving);
+        return result == PregnancyResult.Pregnant && withinGestation
+            ? Result.Success()
+            : Result.Failure(OperationsMonitoringErrors.ExpectedCalvingDateInvalid);
+    }
 
     private static Result<string?> NormalizeOptional(string? value, int maximumLength, Error tooLong)
     {

@@ -96,8 +96,14 @@ public class LivestockOperationCommandService(
             return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.AnimalNotFound);
         }
 
+        var reproductive = ReproductiveDetails.Create(command.SireReference, command.PregnancyResult, command.ExpectedCalvingDate);
+        if (reproductive.IsFailure)
+        {
+            return Result<LivestockOperationRegistration>.Failure(reproductive.DomainError);
+        }
+
         var candidate = LivestockOperation.Create(command.OperationId, cattle.RanchId, cattle.CattleId, type, occurredAt,
-            accountId, command.Observation, command.Product, command.Dose, now);
+            accountId, command.Observation, command.Product, command.Dose, now, reproductive.Value!);
         if (candidate.IsFailure)
         {
             return Result<LivestockOperationRegistration>.Failure(candidate.DomainError);
@@ -117,6 +123,21 @@ public class LivestockOperationCommandService(
         if (!await accessControl.CanAccessRanchAsync(accountId, cattle.RanchId, permission, cancellationToken))
         {
             return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.Forbidden);
+        }
+
+        // Read after the permission check, so that an unauthorized caller learns nothing about the animal's sex.
+        if (LivestockOperation.IsReproductive(type))
+        {
+            var profile = await cattleLookup.FindProfileAsync(cattle.RanchId, cattle.CattleId, cancellationToken);
+            if (profile is null)
+            {
+                return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.AnimalNotFound);
+            }
+
+            if (profile.Sex != AnimalSex.Female)
+            {
+                return Result<LivestockOperationRegistration>.Failure(OperationsMonitoringErrors.ReproductiveEventRequiresFemale);
+            }
         }
 
         if (!cattle.WasActiveAt(occurredAt))

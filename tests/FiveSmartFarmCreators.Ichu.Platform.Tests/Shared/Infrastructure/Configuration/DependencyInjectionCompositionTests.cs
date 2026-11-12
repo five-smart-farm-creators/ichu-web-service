@@ -17,6 +17,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Infrastructure.Seeding;
 using FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Acl;
@@ -44,6 +45,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.QueryServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Services;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Infrastructure.Configuration.Extensions;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Repositories;
@@ -147,6 +149,8 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IGeofenceQueryService>());
         Assert.NotNull(services.GetRequiredService<IMonitoringRuleSetQueryService>());
         Assert.NotNull(services.GetRequiredService<ILivestockOperationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IReproductiveHistoryQueryService>());
+        Assert.NotNull(services.GetRequiredService<ReproductiveHistoryCalculator>());
         Assert.NotNull(services.GetRequiredService<IOperationsMonitoringContextFacade>());
     }
 
@@ -191,16 +195,22 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IPlanningCampaignRepository>());
         Assert.NotNull(services.GetRequiredService<IPlannedActivityRepository>());
         Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodRepository>());
+        Assert.NotNull(services.GetRequiredService<INutritionPlanRepository>());
         Assert.NotNull(services.GetRequiredService<IPlanningAccessControl>());
         Assert.NotNull(services.GetRequiredService<IPlanningCattleLookup>());
+        Assert.NotNull(services.GetRequiredService<IPlanningLotLookup>());
         Assert.NotNull(services.GetRequiredService<IClinicalInterventionLookup>());
+        Assert.NotNull(services.GetRequiredService<IPlanningTransaction>());
+        Assert.NotNull(services.GetRequiredService<NutritionPlanScheduler>());
         Assert.NotNull(services.GetRequiredService<PlanningGuard>());
         Assert.NotNull(services.GetRequiredService<IPlanningCampaignCommandService>());
         Assert.NotNull(services.GetRequiredService<IPlannedActivityCommandService>());
         Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodCommandService>());
+        Assert.NotNull(services.GetRequiredService<INutritionPlanCommandService>());
         Assert.NotNull(services.GetRequiredService<IPlanningCampaignQueryService>());
         Assert.NotNull(services.GetRequiredService<IPlannedActivityQueryService>());
         Assert.NotNull(services.GetRequiredService<IWithdrawalPeriodQueryService>());
+        Assert.NotNull(services.GetRequiredService<INutritionPlanQueryService>());
     }
 
     [Fact]
@@ -214,6 +224,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(ActivatorUtilities.CreateInstance<PlanningActivitiesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<PlanningCalendarController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<WithdrawalPeriodsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<NutritionPlansController>(services));
     }
 
     [Fact]
@@ -261,8 +272,10 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IProfessionalProfileCommandService>());
         Assert.NotNull(services.GetRequiredService<IHerdAdvisoryCommandService>());
         Assert.NotNull(services.GetRequiredService<IAccountQueryService>());
+        Assert.NotNull(services.GetRequiredService<IRanchQueryService>());
         Assert.NotNull(services.GetRequiredService<IHerdAdvisoryQueryService>());
         Assert.NotNull(services.GetRequiredService<IAuthorizationQueryService>());
+        Assert.NotNull(services.GetRequiredService<IRanchAccessCodeGenerator>());
         Assert.NotNull(services.GetRequiredService<IIamContextFacade>());
     }
 
@@ -274,6 +287,7 @@ public class DependencyInjectionCompositionTests
         var services = scope.ServiceProvider;
 
         Assert.NotNull(ActivatorUtilities.CreateInstance<AccountsController>(services));
+        Assert.NotNull(ActivatorUtilities.CreateInstance<RanchesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<HerdAdvisoriesController>(services));
         Assert.NotNull(ActivatorUtilities.CreateInstance<ProfilesController>(services));
     }

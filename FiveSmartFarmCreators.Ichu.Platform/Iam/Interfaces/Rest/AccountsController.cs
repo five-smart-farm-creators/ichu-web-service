@@ -83,7 +83,7 @@ public sealed class AccountsController(
 
     [HttpGet("me/ranches")]
     [EndpointSummary("List the ranches the account may access")]
-    [EndpointDescription("Returns the effective scope and optional expiration of each ranch of the authenticated account.")]
+    [EndpointDescription("Returns the name, region, district, effective scope and optional expiration of each ranch of the authenticated account. The access code is returned only for the ranches it manages.")]
     [ProducesResponseType<IReadOnlyList<RanchAccessResource>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetRanchesAsync(CancellationToken cancellationToken)

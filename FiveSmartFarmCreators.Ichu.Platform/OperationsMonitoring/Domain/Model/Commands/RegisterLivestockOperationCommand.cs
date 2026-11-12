@@ -4,7 +4,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.
 
 /// <summary>
 ///     Registers a field event or a clinical intervention. Required values are null when the client omitted them or sent an unknown operation type, so that every missing field can be reported together.
-///     The ranch is set for route-scoped registrations and null for mobile batch entries.
+///     The ranch is set for route-scoped registrations and null for mobile batch entries. The reproductive fields are kept as sent, because their validation depends on the operation type.
 /// </summary>
 public record RegisterLivestockOperationCommand(
     Guid? RanchId,
@@ -14,4 +14,7 @@ public record RegisterLivestockOperationCommand(
     DateTimeOffset? OccurredAt,
     string? Observation,
     string? Product,
-    string? Dose);
+    string? Dose,
+    string? SireReference,
+    string? PregnancyResult,
+    DateOnly? ExpectedCalvingDate);

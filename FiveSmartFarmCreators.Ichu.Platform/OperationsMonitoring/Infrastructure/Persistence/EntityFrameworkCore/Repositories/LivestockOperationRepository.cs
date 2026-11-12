@@ -24,6 +24,15 @@ public class LivestockOperationRepository(AppDbContext context) : ILivestockOper
         Operations.AsNoTracking().SingleOrDefaultAsync(o => o.Id == operationId, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<LivestockOperation>> FindAllByCattleAsync(Guid cattleId, CancellationToken cancellationToken = default) =>
+        await Operations
+            .Where(o => o.CattleId == cattleId)
+            .OrderBy(o => o.OccurredAt)
+            .ThenBy(o => o.Id)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<LivestockOperation>> FindByCattleAsync(Guid cattleId, TimePeriod period, CancellationToken cancellationToken = default) =>
         await Operations
             .Where(o => o.CattleId == cattleId && o.OccurredAt >= period.From && o.OccurredAt < period.To)

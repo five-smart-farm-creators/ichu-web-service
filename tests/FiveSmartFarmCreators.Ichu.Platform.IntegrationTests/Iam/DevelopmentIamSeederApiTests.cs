@@ -28,6 +28,7 @@ public sealed class DevelopmentIamSeederApiTests(IchuApiFactory factory)
         var ranch = Assert.Single(ranches.EnumerateArray(),
             access => access.GetProperty("ranchId").GetGuid() == DevelopmentSeed.RanchId);
         Assert.Equal("Manage", ranch.GetProperty("scope").GetString());
+        Assert.Equal(DevelopmentSeed.RanchAccessCode, ranch.GetProperty("accessCode").GetString());
     }
 
     [Fact]

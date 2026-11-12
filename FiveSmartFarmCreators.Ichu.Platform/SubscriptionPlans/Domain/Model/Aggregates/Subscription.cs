@@ -32,6 +32,9 @@ public sealed class Subscription : AggregateRoot
 
     public Money DevicesCost { get; private set; } = null!;
 
+    // Each head carries one collar, so the agreed devices cost divides exactly into the quoted unit price.
+    public Money DeviceUnitPrice => new(DevicesCost.Amount / HeadCount.Value, DevicesCost.Currency);
+
     public Money Total { get; private set; } = null!;
 
     public SubscriptionStatus Status { get; private set; }

@@ -11,4 +11,7 @@ public record LivestockOperationResource(
     Guid AuthorId,
     string? Observation,
     string? Product,
-    string? Dose);
+    string? Dose,
+    string? SireReference,
+    string? PregnancyResult,
+    DateOnly? ExpectedCalvingDate);

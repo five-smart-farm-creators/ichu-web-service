@@ -21,15 +21,30 @@ public static class PlanningErrors
     public static readonly Error UtcTimestampRequired = Define("UtcTimestampRequired", EErrorType.Validation);
     public static readonly Error CalendarRangeInvalid = Define("CalendarRangeInvalid", EErrorType.Validation);
     public static readonly Error WithdrawalDateRangeInvalid = Define("WithdrawalDateRangeInvalid", EErrorType.Validation);
+    public static readonly Error NutritionPlanNameRequired = Define("NutritionPlanNameRequired", EErrorType.Validation);
+    public static readonly Error NutritionPlanNameTooLong = Define("NutritionPlanNameTooLong", EErrorType.Validation);
+    public static readonly Error NutritionPlanValidFromRequired = Define("NutritionPlanValidFromRequired", EErrorType.Validation);
+    public static readonly Error NutritionPlanValidityInvalid = Define("NutritionPlanValidityInvalid", EErrorType.Validation);
+    public static readonly Error NutritionPlanItemsRequired = Define("NutritionPlanItemsRequired", EErrorType.Validation);
+    public static readonly Error NutritionNotesTooLong = Define("NutritionNotesTooLong", EErrorType.Validation);
+    public static readonly Error TargetDailyGainInvalid = Define("TargetDailyGainInvalid", EErrorType.Validation);
+    public static readonly Error RationFeedRequired = Define("RationFeedRequired", EErrorType.Validation);
+    public static readonly Error RationFeedTooLong = Define("RationFeedTooLong", EErrorType.Validation);
+    public static readonly Error RationKindInvalid = Define("RationKindInvalid", EErrorType.Validation);
+    public static readonly Error RationQuantityInvalid = Define("RationQuantityInvalid", EErrorType.Validation);
 
     public static readonly Error CampaignNotFound = Define("CampaignNotFound", EErrorType.NotFound);
     public static readonly Error ActivityNotFound = Define("ActivityNotFound", EErrorType.NotFound);
     public static readonly Error CattleNotFound = Define("CattleNotFound", EErrorType.NotFound);
     public static readonly Error InterventionNotFound = Define("InterventionNotFound", EErrorType.NotFound);
+    public static readonly Error LotNotFound = Define("LotNotFound", EErrorType.NotFound);
+    public static readonly Error NoCurrentNutritionPlan = Define("NoCurrentNutritionPlan", EErrorType.NotFound);
 
     public static readonly Error CampaignRanchMismatch = Define("CampaignRanchMismatch", EErrorType.Conflict);
     public static readonly Error ActivityCattleMismatch = Define("ActivityCattleMismatch", EErrorType.Conflict);
     public static readonly Error InterventionCattleMismatch = Define("InterventionCattleMismatch", EErrorType.Conflict);
+    public static readonly Error NutritionPlanOverlap = Define("NutritionPlanOverlap", EErrorType.Conflict);
+    public static readonly Error ConcurrentModification = Define("ConcurrentModification", EErrorType.Conflict);
 
     public static readonly Error RanchAccessDenied = Define("RanchAccessDenied", EErrorType.Forbidden);
 

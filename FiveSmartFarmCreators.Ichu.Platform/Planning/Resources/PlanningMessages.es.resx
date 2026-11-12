@@ -54,4 +54,49 @@
   <data name="Planning.RanchAccessDenied" xml:space="preserve">
     <value>La cuenta no está autorizada para este rancho.</value>
   </data>
+  <data name="Planning.NutritionPlanNameRequired" xml:space="preserve">
+    <value>Se requiere un nombre para el plan nutricional.</value>
+  </data>
+  <data name="Planning.NutritionPlanNameTooLong" xml:space="preserve">
+    <value>El nombre del plan nutricional no debe superar los 80 caracteres.</value>
+  </data>
+  <data name="Planning.NutritionPlanValidFromRequired" xml:space="preserve">
+    <value>Se requiere la fecha de inicio del plan nutricional.</value>
+  </data>
+  <data name="Planning.NutritionPlanValidityInvalid" xml:space="preserve">
+    <value>La fecha de fin del plan nutricional debe ser igual o posterior a su fecha de inicio.</value>
+  </data>
+  <data name="Planning.NutritionPlanItemsRequired" xml:space="preserve">
+    <value>Un plan nutricional necesita al menos un ítem de ración.</value>
+  </data>
+  <data name="Planning.NutritionNotesTooLong" xml:space="preserve">
+    <value>Las notas del plan nutricional no deben superar los 500 caracteres.</value>
+  </data>
+  <data name="Planning.TargetDailyGainInvalid" xml:space="preserve">
+    <value>La ganancia diaria objetivo debe ser mayor que 0 y como máximo 3 kilogramos.</value>
+  </data>
+  <data name="Planning.RationFeedRequired" xml:space="preserve">
+    <value>Cada ítem de ración necesita el nombre del alimento.</value>
+  </data>
+  <data name="Planning.RationFeedTooLong" xml:space="preserve">
+    <value>El nombre del alimento no debe superar los 80 caracteres.</value>
+  </data>
+  <data name="Planning.RationKindInvalid" xml:space="preserve">
+    <value>Cada ítem de ración necesita un tipo: Forage, Concentrate, Supplement o Mineral.</value>
+  </data>
+  <data name="Planning.RationQuantityInvalid" xml:space="preserve">
+    <value>La cantidad de ración debe ser mayor que 0 y como máximo 100 kilogramos por cabeza al día.</value>
+  </data>
+  <data name="Planning.LotNotFound" xml:space="preserve">
+    <value>El lote no se encontró en este rancho.</value>
+  </data>
+  <data name="Planning.NoCurrentNutritionPlan" xml:space="preserve">
+    <value>El lote no tiene un plan nutricional en la fecha solicitada.</value>
+  </data>
+  <data name="Planning.NutritionPlanOverlap" xml:space="preserve">
+    <value>El plan nutricional se superpone con otro plan del lote.</value>
+  </data>
+  <data name="Planning.ConcurrentModification" xml:space="preserve">
+    <value>Los datos de planificación cambiaron mientras se procesaba la solicitud; envíela de nuevo.</value>
+  </data>
 </root>

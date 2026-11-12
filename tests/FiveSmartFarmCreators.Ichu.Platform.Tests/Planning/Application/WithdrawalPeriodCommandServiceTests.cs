@@ -20,7 +20,7 @@ public class WithdrawalPeriodCommandServiceTests
 
     public WithdrawalPeriodCommandServiceTests()
     {
-        var guard = new PlanningGuard(_access, _cattle, new FakeInterventionLookup());
+        var guard = new PlanningGuard(_access, _cattle, new FakeInterventionLookup(), new FakeLotLookup());
         _service = new WithdrawalPeriodCommandService(_periods, _unitOfWork, guard);
     }
 

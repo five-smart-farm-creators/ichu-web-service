@@ -41,6 +41,27 @@ public sealed class IamApiTests(IchuApiFactory factory)
     }
 
     [Fact]
+    public async Task ParallelFirstRequests_OfPendingAccount_AllSucceed()
+    {
+        // The activation race is narrow, so several fresh accounts each fire a burst of first requests.
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            using var client = factory.CreateClient(TestIdentity.Create());
+            await client.RegisterManagerAsync();
+
+            var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(index =>
+                client.GetAsync(index % 2 == 0 ? "api/v1/accounts/me" : "api/v1/accounts/me/ranches")));
+            var statuses = responses.Select(response => response.StatusCode).ToArray();
+            foreach (var response in responses)
+            {
+                response.Dispose();
+            }
+
+            Assert.All(statuses, status => Assert.Equal(HttpStatusCode.OK, status));
+        }
+    }
+
+    [Fact]
     public async Task GetCurrentRanches_ListsRegisteredRanchWithManageScope()
     {
         using var client = factory.CreateClient(TestIdentity.Create());
@@ -171,6 +192,118 @@ public sealed class IamApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("Iam.AdvisoryNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task GetCurrentRanches_ForOwner_ShowsNameRegionDistrictAndAccessCode()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+
+        using var response = await client.GetAsync("api/v1/accounts/me/ranches");
+
+        var ranches = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var ranch = Assert.Single(ranches.EnumerateArray());
+        Assert.Equal(ranchId, ranch.GetProperty("ranchId").GetGuid());
+        Assert.Equal("Los Andes", ranch.GetProperty("name").GetString());
+        Assert.Equal("Cusco", ranch.GetProperty("region").GetString());
+        Assert.Equal("Urubamba", ranch.GetProperty("district").GetString());
+        Assert.Matches("^[A-HJ-NP-Z2-9]{8}$", ranch.GetProperty("accessCode").GetString()!);
+    }
+
+    [Fact]
+    public async Task GetCurrentRanches_ForVeterinarianWithGrantedAdvisory_ShowsNameWithoutAccessCode()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        using var veterinarian = factory.CreateClient(TestIdentity.Create());
+        await Arrange.RegisterVeterinarianAsync(veterinarian);
+        await Arrange.CompleteVeterinarianProfileAsync(veterinarian);
+        var advisoryId = await Arrange.RequestHerdAdvisoryAsync(veterinarian, ranchId);
+        await Arrange.GrantReadAdvisoryAsync(owner, ranchId, advisoryId, DateTimeOffset.UtcNow.AddDays(1));
+
+        using var response = await veterinarian.GetAsync("api/v1/accounts/me/ranches");
+
+        var ranches = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var ranch = Assert.Single(ranches.EnumerateArray());
+        Assert.Equal("Read", ranch.GetProperty("scope").GetString());
+        Assert.Equal("Los Andes", ranch.GetProperty("name").GetString());
+        Assert.Equal(JsonValueKind.Null, ranch.GetProperty("accessCode").ValueKind);
+    }
+
+    [Fact]
+    public async Task FindRanchByAccessCode_WithTheCodeInLowerCase_ReturnsTheRanchToAVeterinarian()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var accessCode = await ReadAccessCodeAsync(owner, ranchId);
+        using var veterinarian = factory.CreateClient(TestIdentity.Create());
+        await Arrange.RegisterVeterinarianAsync(veterinarian);
+
+        using var response = await veterinarian.GetAsync($"api/v1/ranches?accessCode={accessCode.ToLowerInvariant()}");
+
+        var ranch = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(ranchId, ranch.GetProperty("ranchId").GetGuid());
+        Assert.Equal("Los Andes", ranch.GetProperty("name").GetString());
+        Assert.Equal("Cusco", ranch.GetProperty("region").GetString());
+        Assert.Equal("Urubamba", ranch.GetProperty("district").GetString());
+    }
+
+    [Fact]
+    public async Task FindRanchByAccessCode_WithAnUnknownCode_IsNotFound()
+    {
+        using var veterinarian = factory.CreateClient(TestIdentity.Create());
+        await Arrange.RegisterVeterinarianAsync(veterinarian);
+
+        using var response = await veterinarian.GetAsync("api/v1/ranches?accessCode=ZZZZZZZZ");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("Iam.RanchNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("ABC")]
+    [InlineData("0OIL1111")]
+    public async Task FindRanchByAccessCode_WithAMalformedCode_IsNotFound(string accessCode)
+    {
+        using var veterinarian = factory.CreateClient(TestIdentity.Create());
+        await Arrange.RegisterVeterinarianAsync(veterinarian);
+
+        using var response = await veterinarian.GetAsync($"api/v1/ranches?accessCode={accessCode}");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("Iam.RanchNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task FindRanchByAccessCode_ByARanchManager_IsForbidden()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var accessCode = await ReadAccessCodeAsync(owner, ranchId);
+
+        using var response = await owner.GetAsync($"api/v1/ranches?accessCode={accessCode}");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
+        Assert.Equal("Iam.RanchLookupOnlyForVeterinarians", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task FindRanchByAccessCode_Anonymously_IsUnauthorized()
+    {
+        using var anonymous = factory.CreateClient();
+
+        using var response = await anonymous.GetAsync("api/v1/ranches?accessCode=ABCDEFGH");
+
+        await response.ReadBodyAsync(HttpStatusCode.Unauthorized);
+    }
+
+    private static async Task<string> ReadAccessCodeAsync(HttpClient owner, Guid ranchId)
+    {
+        using var response = await owner.GetAsync("api/v1/accounts/me/ranches");
+        var ranches = await response.ReadJsonAsync(HttpStatusCode.OK);
+        return ranches.EnumerateArray().Single(ranch => ranch.GetProperty("ranchId").GetGuid() == ranchId)
+            .GetProperty("accessCode").GetString()!;
     }
 
     private static object ManagerRequest() => new

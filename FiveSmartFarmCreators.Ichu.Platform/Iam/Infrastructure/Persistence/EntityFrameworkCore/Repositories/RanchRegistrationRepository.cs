@@ -18,6 +18,24 @@ public sealed class RanchRegistrationRepository(AppDbContext context) : BaseRepo
         Context.Set<RanchRegistration>().AnyAsync(ranch => ranch.Id == ranchId, cancellationToken);
 
     /// <inheritdoc />
+    public Task<bool> ExistsByAccessCodeAsync(RanchAccessCode accessCode, CancellationToken cancellationToken) =>
+        Context.Set<RanchRegistration>().AnyAsync(ranch => ranch.AccessCode == accessCode, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<RanchRegistration?> FindByAccessCodeAsNoTrackingAsync(RanchAccessCode accessCode, CancellationToken cancellationToken) =>
+        Context.Set<RanchRegistration>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ranch => ranch.AccessCode == accessCode, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<RanchRegistration>> FindByIdsAsNoTrackingAsync(IReadOnlyCollection<Guid> ranchIds,
+        CancellationToken cancellationToken) =>
+        await Context.Set<RanchRegistration>()
+            .AsNoTracking()
+            .Where(ranch => ranchIds.Contains(ranch.Id))
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
     public async Task AddMembershipAsync(RanchMembership membership, CancellationToken cancellationToken)
     {
         await Context.Set<RanchMembership>().AddAsync(membership, cancellationToken);

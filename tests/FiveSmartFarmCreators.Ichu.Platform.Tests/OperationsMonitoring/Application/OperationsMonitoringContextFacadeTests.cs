@@ -89,7 +89,8 @@ public class OperationsMonitoringContextFacadeTests
     private static LivestockOperation Operation(Guid operationId, OperationType type, DateTimeOffset? occurredAt = null)
     {
         var at = occurredAt ?? OccurredAt;
-        return LivestockOperation.Create(operationId, RanchId, CattleId, type, at, AuthorId, null, null, null, at).Value!;
+        return LivestockOperation.Create(operationId, RanchId, CattleId, type, at, AuthorId, null, null, null, at,
+            ReproductiveDetails.Create(null, null, null).Value!).Value!;
     }
 
     private sealed class FakeLivestockOperations : ILivestockOperationRepository
@@ -104,6 +105,9 @@ public class OperationsMonitoringContextFacadeTests
 
         public Task<LivestockOperation?> FindByIdAsync(LivestockOperationId operationId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Stored.SingleOrDefault(operation => operation.Id == operationId));
+
+        public Task<IReadOnlyList<LivestockOperation>> FindAllByCattleAsync(Guid cattleId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The ranch reads do not list operations by animal.");
 
         public Task<IReadOnlyList<LivestockOperation>> FindByCattleAsync(Guid cattleId, TimePeriod period, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("The ranch reads do not list operations by animal.");

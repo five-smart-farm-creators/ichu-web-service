@@ -188,7 +188,6 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.HerdAdvisory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("DecidedBy")
@@ -248,6 +247,11 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccessCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("District")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -268,13 +272,16 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccessCode")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RanchRegistrations_AccessCode");
+
                     b.ToTable("RanchRegistrations", "iam");
                 });
 
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Iam.Domain.Model.Aggregates.UserAccount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("BlockedUntil")
@@ -665,6 +672,22 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Reproductive", "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.LivestockOperation.Reproductive#ReproductiveDetails", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<DateOnly?>("ExpectedCalvingDate")
+                                .HasColumnType("date");
+
+                            b1.Property<string>("PregnancyResult")
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)");
+
+                            b1.Property<string>("SireReference")
+                                .HasMaxLength(80)
+                                .HasColumnType("character varying(80)");
+                        });
+
                     b.HasKey("Id");
 
                     b.HasIndex("CattleId", "OccurredAt");
@@ -928,6 +951,54 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.HasIndex("RanchId", "RecordedAt");
 
                     b.ToTable("TelemetryReadings", "monitoring");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.NutritionPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ranch_id");
+
+                    b.Property<decimal?>("TargetDailyGainKilograms")
+                        .HasColumnType("numeric(5,3)")
+                        .HasColumnName("target_daily_gain_kilograms");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_from");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_to");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LotId", "ValidFrom")
+                        .HasDatabaseName("ix_nutrition_plans_lot_id_valid_from");
+
+                    b.ToTable("nutrition_plans", "planning", t =>
+                        {
+                            t.HasCheckConstraint("ck_nutrition_plans_validity", "valid_to IS NULL OR valid_to >= valid_from");
+                        });
                 });
 
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", b =>
@@ -1509,6 +1580,50 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.Navigation("Changes");
 
                     b.Navigation("Evidence");
+                });
+
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.NutritionPlan", b =>
+                {
+                    b.OwnsMany("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.ValueObjects.RationItem", "Items", b1 =>
+                        {
+                            b1.Property<long>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("bigint")
+                                .HasColumnName("id");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<long>("Id"));
+
+                            b1.Property<string>("Feed")
+                                .IsRequired()
+                                .HasMaxLength(80)
+                                .HasColumnType("character varying(80)")
+                                .HasColumnName("feed");
+
+                            b1.Property<decimal>("KilogramsPerHeadPerDay")
+                                .HasColumnType("numeric(7,3)")
+                                .HasColumnName("kilograms_per_head_per_day");
+
+                            b1.Property<string>("Kind")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("kind");
+
+                            b1.Property<Guid>("NutritionPlanId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("nutrition_plan_id");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("NutritionPlanId");
+
+                            b1.ToTable("nutrition_plan_items", "planning");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NutritionPlanId");
+                        });
+
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.PlannedActivity", b =>

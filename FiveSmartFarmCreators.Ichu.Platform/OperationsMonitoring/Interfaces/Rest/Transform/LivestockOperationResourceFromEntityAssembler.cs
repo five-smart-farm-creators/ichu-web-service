@@ -17,5 +17,8 @@ public static class LivestockOperationResourceFromEntityAssembler
             entity.AuthorId,
             entity.Observation,
             entity.Product,
-            entity.Dose);
+            entity.Dose,
+            entity.Reproductive.SireReference,
+            entity.Reproductive.PregnancyResult?.ToString(),
+            entity.Reproductive.ExpectedCalvingDate);
 }

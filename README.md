@@ -37,7 +37,7 @@ The service needs a local PostgreSQL 17 database named `ichu` and applies pendin
 
 ### Development data
 
-Development seeds one ranch into the database when its records are missing: a lot, two cattle, three collars, one Edge Gateway and demonstration monitoring rules. The rules are body temperature 37.8–39.5 °C (Critical) and activity index 15–85 (Warning) for the `MilkingCow` and `Heifer` stages, and a geofence of about 1.1 km around latitude -16.5, longitude -68.1 with a 25 m tolerance (Warning). They are placeholders for demos, not validated clinical ranges. The ranch identifier is `11111111-1111-4111-8111-111111111111`, and the development gateway key is `c07d8c6e-6d9b-4cb7-9add-7b8c9daebfc6.development-gateway-key`. These fixed values match the Edge Gateway development seed and are never used outside Development.
+Development seeds one ranch into the database when its records are missing: a lot, two cattle, three collars, one Edge Gateway and demonstration monitoring rules. The rules are body temperature 37.8–39.5 °C (Critical) and activity index 15–85 (Warning) for the `MilkingCow` and `Heifer` stages, and a geofence of about 1.1 km around latitude -16.5, longitude -68.1 with a 25 m tolerance (Warning). They are placeholders for demos, not validated clinical ranges. The ranch identifier is `11111111-1111-4111-8111-111111111111`, and the development gateway key is `c07d8c6e-6d9b-4cb7-9add-7b8c9daebfc6.development-gateway-key`. These fixed values match the Edge Gateway development seed and are never used outside Development. The ranch access code is `DEVRANCH`, which a veterinarian enters to find the ranch; a database seeded before the code existed keeps the code that its migration assigned.
 
 IAM generates ranch identifiers when a ranch is registered, so the seeded ranch is visible to a user only through an IAM ranch with that identifier, which the demo account below owns. An Edge Gateway sends its key in the `X-Gateway-Key` header, for example `POST /api/v1/telemetry/batch`; a request without a known, unrevoked key returns 401. Gateways are registered at `POST /api/v1/ranches/{ranchId}/edge-gateways`, which returns the key once in the form `{gatewayId}.{secret}`. In Swagger UI at `/swagger`, the telemetry batch and Edge Gateway monitoring rules operations show a required `X-Gateway-Key` input for that key.
 
@@ -60,6 +60,10 @@ Without both `DevelopmentSeed__Manager__ExternalUid` and `DevelopmentSeed__Manag
 ### Analytics configuration
 
 Epidemiological curves compare the observation window with the incubation period of each health condition, set in the `DashboardAnalytics:ConditionIncubationDays` section of `appsettings.json`. The shipped values (`temperature` and `activity`, 7 days each) are placeholders that the team must validate before the curves inform any decision. A condition without a configured value returns its curve with the reason that no incubation period is set.
+
+### Nutrition plan dates
+
+`GET api/v1/ranches/{ranchId}/lots/{lotId}/nutrition-plans/current` without the `on` parameter uses the UTC date of the server, a known limitation until ranches have a time zone. From 19:00 in Lima the UTC date is already the next day, so clients pass `on` with the local date.
 
 ### Payments
 

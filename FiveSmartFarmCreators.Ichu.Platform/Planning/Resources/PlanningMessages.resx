@@ -54,4 +54,49 @@
   <data name="Planning.RanchAccessDenied" xml:space="preserve">
     <value>The account is not authorized for this ranch.</value>
   </data>
+  <data name="Planning.NutritionPlanNameRequired" xml:space="preserve">
+    <value>A nutrition plan name is required.</value>
+  </data>
+  <data name="Planning.NutritionPlanNameTooLong" xml:space="preserve">
+    <value>The nutrition plan name must not exceed 80 characters.</value>
+  </data>
+  <data name="Planning.NutritionPlanValidFromRequired" xml:space="preserve">
+    <value>The nutrition plan start date is required.</value>
+  </data>
+  <data name="Planning.NutritionPlanValidityInvalid" xml:space="preserve">
+    <value>The nutrition plan end date must be on or after its start date.</value>
+  </data>
+  <data name="Planning.NutritionPlanItemsRequired" xml:space="preserve">
+    <value>A nutrition plan needs at least one ration item.</value>
+  </data>
+  <data name="Planning.NutritionNotesTooLong" xml:space="preserve">
+    <value>The nutrition plan notes must not exceed 500 characters.</value>
+  </data>
+  <data name="Planning.TargetDailyGainInvalid" xml:space="preserve">
+    <value>The target daily gain must be above 0 and at most 3 kilograms.</value>
+  </data>
+  <data name="Planning.RationFeedRequired" xml:space="preserve">
+    <value>Each ration item needs a feed name.</value>
+  </data>
+  <data name="Planning.RationFeedTooLong" xml:space="preserve">
+    <value>The feed name must not exceed 80 characters.</value>
+  </data>
+  <data name="Planning.RationKindInvalid" xml:space="preserve">
+    <value>Each ration item needs a kind: Forage, Concentrate, Supplement or Mineral.</value>
+  </data>
+  <data name="Planning.RationQuantityInvalid" xml:space="preserve">
+    <value>The ration quantity must be above 0 and at most 100 kilograms per head per day.</value>
+  </data>
+  <data name="Planning.LotNotFound" xml:space="preserve">
+    <value>The lot was not found in this ranch.</value>
+  </data>
+  <data name="Planning.NoCurrentNutritionPlan" xml:space="preserve">
+    <value>The lot has no nutrition plan on the requested date.</value>
+  </data>
+  <data name="Planning.NutritionPlanOverlap" xml:space="preserve">
+    <value>The nutrition plan overlaps another plan of the lot.</value>
+  </data>
+  <data name="Planning.ConcurrentModification" xml:space="preserve">
+    <value>The planning data changed while the request was processed; send the request again.</value>
+  </data>
 </root>

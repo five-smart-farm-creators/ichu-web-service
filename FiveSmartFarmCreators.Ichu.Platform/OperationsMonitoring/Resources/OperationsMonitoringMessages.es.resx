@@ -324,4 +324,22 @@
   <data name="OperationsMonitoring.EdgeAttentionVersionRequired" xml:space="preserve">
     <value>La atención desde el Edge requiere la versión esperada de la alerta.</value>
   </data>
+  <data name="OperationsMonitoring.SireReferenceTooLong" xml:space="preserve">
+    <value>La referencia del semental no debe superar los 80 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.PregnancyResultUnknown" xml:space="preserve">
+    <value>El resultado del diagnóstico debe ser Pregnant u Open.</value>
+  </data>
+  <data name="OperationsMonitoring.PregnancyResultRequired" xml:space="preserve">
+    <value>Un diagnóstico de gestación requiere su resultado, Pregnant u Open.</value>
+  </data>
+  <data name="OperationsMonitoring.ReproductiveDetailsNotAllowed" xml:space="preserve">
+    <value>Este tipo de operación no admite estos datos reproductivos.</value>
+  </data>
+  <data name="OperationsMonitoring.ExpectedCalvingDateInvalid" xml:space="preserve">
+    <value>La fecha prevista de parto solo aplica a un diagnóstico Pregnant y debe ser posterior al diagnóstico, dentro de los 300 días siguientes a él.</value>
+  </data>
+  <data name="OperationsMonitoring.ReproductiveEventRequiresFemale" xml:space="preserve">
+    <value>Los eventos reproductivos solo pueden registrarse en animales hembra.</value>
+  </data>
 </root>

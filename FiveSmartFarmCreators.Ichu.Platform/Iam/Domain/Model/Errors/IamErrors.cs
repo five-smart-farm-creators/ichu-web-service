@@ -27,11 +27,13 @@ public static class IamErrors
     public static readonly Error ExpirationRequired = Define("ExpirationRequired", EErrorType.Validation);
     public static readonly Error ExpirationNotInFuture = Define("ExpirationNotInFuture", EErrorType.Validation);
     public static readonly Error InvalidDecision = Define("InvalidDecision", EErrorType.Validation);
+    public static readonly Error InvalidRanchAccessCode = Define("InvalidRanchAccessCode", EErrorType.Validation);
 
     public static readonly Error ProfileOnlyForVeterinarians = Define("ProfileOnlyForVeterinarians", EErrorType.Forbidden);
     public static readonly Error VeterinarianProfileRequired = Define("VeterinarianProfileRequired", EErrorType.Forbidden);
     public static readonly Error OwnerRequired = Define("OwnerRequired", EErrorType.Forbidden);
     public static readonly Error RanchAccessDenied = Define("RanchAccessDenied", EErrorType.Forbidden);
+    public static readonly Error RanchLookupOnlyForVeterinarians = Define("RanchLookupOnlyForVeterinarians", EErrorType.Forbidden);
 
     public static readonly Error Unauthenticated = Define("Unauthenticated", EErrorType.Unauthorized);
     public static readonly Error AccountNotActive = Define("AccountNotActive", EErrorType.Unauthorized);
@@ -47,6 +49,7 @@ public static class IamErrors
     public static readonly Error AdvisoryNotPending = Define("AdvisoryNotPending", EErrorType.Conflict);
     public static readonly Error AdvisoryTransitionInvalid = Define("AdvisoryTransitionInvalid", EErrorType.Conflict);
     public static readonly Error VeterinarianNotEligible = Define("VeterinarianNotEligible", EErrorType.Conflict);
+    public static readonly Error RanchAccessCodeUnavailable = Define("RanchAccessCodeUnavailable", EErrorType.Conflict);
 
     public static readonly Error IdentityProviderUnavailable = Define("IdentityProviderUnavailable", EErrorType.Unavailable);
     public static readonly Error IdentityProviderNotConfigured = Define("IdentityProviderNotConfigured", EErrorType.Unavailable);

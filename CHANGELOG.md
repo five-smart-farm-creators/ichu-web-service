@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
+### Added
+
+- Identity and Access: `accounts/me/ranches` returns the name, region and district of each ranch, so that clients show the ranch instead of its identifier.
+- Identity and Access: each ranch has an 8-character access code, which its manager sees in `accounts/me/ranches`; a veterinarian finds the ranch with `GET api/v1/ranches?accessCode=` to request advisory access without knowing the ranch identifier.
+- Identity and Access: the migration that adds the access code applies on start, including Render on resume, and gives each existing ranch its own code. Regenerating an access code is not included yet.
+- Development: the seeded ranch uses the access code `DEVRANCH`.
+- Subscription Plans: the Stripe Checkout page and receipt itemize the charge as one smart collar per head at the unit price plus the plan's annual fee; the total is unchanged.
+- Subscription Plans: subscriptions include `deviceUnitPrice`, so clients show the per-collar price without dividing the devices cost.
+- Operations and Monitoring: field events and clinical interventions record NaturalMating, PregnancyDiagnosis, Abortion and HeatObserved; breeding services take an optional sire reference, and a pregnancy diagnosis takes its result and an optional expected calving date. Responses carry these fields, which are null when absent.
+- Operations and Monitoring: `GET api/v1/ranches/{ranchId}/cattle/{cattleId}/reproductive-history` returns the breeding services, diagnoses, calvings, abortions and heats of a female, with the confirmed pregnancies, the days open after each calving and the services per pregnancy; a male returns no history, with its sex, stage and age.
+- Planning: each lot has a nutrition plan with its feed ration. `GET` and `POST api/v1/ranches/{ranchId}/lots/{lotId}/nutrition-plans` list and register the plans, and `GET .../nutrition-plans/current?on=` returns the plan in force on a day. A ration change ends the open-ended plan the day before the new one starts.
+
+### Fixed
+
+- Identity and Access: parallel first requests of a newly verified account no longer answer 409; the requests that lose the activation race read the account that the winner activated.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added

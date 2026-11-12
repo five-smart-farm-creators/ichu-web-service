@@ -13,7 +13,7 @@ public class CattleInformationPlanningCattleLookupTests
     {
         var facade = new FakeCattleInformationFacade
         {
-            Animal = new CattleSnapshot(CattleId, RanchId, "A-1", "Active", "Calf", new DateOnly(2026, 1, 1), null, null, Guid.NewGuid())
+            Animal = new CattleSnapshot(CattleId, RanchId, "A-1", "Active", "Female", "Calf", new DateOnly(2026, 1, 1), null, null, Guid.NewGuid())
         };
 
         var belongs = await new CattleInformationPlanningCattleLookup(facade).CattleBelongsToRanchAsync(RanchId, CattleId, CancellationToken.None);
