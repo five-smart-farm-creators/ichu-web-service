@@ -16,7 +16,7 @@ public sealed class SubscriptionSteps(ApiScenarioContext context)
     [When("a visitor requests a quote for the {string} plan with the head count {string}")]
     public async Task WhenVisitorRequestsQuote(string planName, string headCount) =>
         await context.RecordAsync(context.Anonymous()
-            .GetAsync($"api/v1/plans/{context.Id(planName)}/quote?headCount={Uri.EscapeDataString(headCount)}"));
+            .GetAsync($"api/v1/quotes?planId={context.Id(planName)}&headCount={Uri.EscapeDataString(headCount)}"));
 
     [When("the ranch manager requests a subscription to the {string} plan for the head count {string} with terms {string} and an expected total of {float}")]
     public async Task WhenManagerRequestsSubscription(string planName, string headCount, string terms, double expectedTotal) =>
