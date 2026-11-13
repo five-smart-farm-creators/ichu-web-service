@@ -39,6 +39,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<DeprecatedOperationTransformer>();
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
     options.AddOperationTransformer<StripeWebhookSecurityTransformer>();
     options.AddSchemaTransformer<QuoteHeadCountSchemaTransformer>();
