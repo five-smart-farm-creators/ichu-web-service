@@ -50,15 +50,16 @@ public sealed class AccountSteps(ApiScenarioContext context)
     public async Task WhenVeterinarianRequestsAdvisoryAccess()
     {
         var ranchId = context.RequireBody().GetProperty("ranchId").GetGuid();
-        await context.RecordAsync(context.Actor("veterinarian").PostJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories", new
+        await context.RecordAsync(context.Actor("veterinarian").PostJsonAsync("api/v1/veterinary-access-requests", new
         {
+            ranchId,
             reason = "Herd health review"
         }));
     }
 
     [When("the ranch manager lists the herd advisories of the ranch")]
     public async Task WhenManagerListsHerdAdvisories() =>
-        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/ranches/{context.Id("ranch")}/herd-advisories"));
+        await context.RecordAsync(context.Actor("manager").GetAsync($"api/v1/veterinary-access-requests?ranchId={context.Id("ranch")}"));
 
     [Then("the herd advisory of the veterinarian has:")]
     public void ThenHerdAdvisoryOfVeterinarianHas(DataTable table) =>
