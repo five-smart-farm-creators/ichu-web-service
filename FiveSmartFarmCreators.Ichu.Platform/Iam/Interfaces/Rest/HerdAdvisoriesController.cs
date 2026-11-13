@@ -15,6 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 [Route("api/v1/ranches/{ranchId:guid}/herd-advisories")]
 [Authorize(AuthenticationSchemes = "Firebase")]
 [Produces(MediaTypeNames.Application.Json)]
+[Tags("Veterinary Access Requests")]
 public sealed class HerdAdvisoriesController(
     IHerdAdvisoryCommandService commands,
     IHerdAdvisoryQueryService queries,
@@ -22,7 +23,7 @@ public sealed class HerdAdvisoriesController(
 {
     [HttpPost]
     [EndpointSummary("Request ranch access as a veterinarian")]
-    [EndpointDescription("Creates a pending request for a ranch, when the veterinarian has a complete profile and no open request or active advisory for it.")]
+    [EndpointDescription("Compatibility route for POST /api/v1/veterinary-access-requests. Only an authenticated veterinarian with a complete profile can request access. The request starts as Pending, grants no access and returns 409 when a pending request or active authorization already exists.")]
     [ProducesResponseType<AdvisoryResource>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
@@ -43,8 +44,8 @@ public sealed class HerdAdvisoriesController(
     }
 
     [HttpGet]
-    [EndpointSummary("List the advisories of a ranch")]
-    [EndpointDescription("Returns the advisory history of the ranch that the authenticated account may see.")]
+    [EndpointSummary("List veterinary access requests through the ranch route")]
+    [EndpointDescription("Compatibility route for GET /api/v1/veterinary-access-requests?ranchId=.... The authenticated ranch owner sees every request and authorization for the ranch, with the professional profile. Veterinarians see only their own requests and authorizations, including pending, rejected, revoked and expired entries.")]
     [ProducesResponseType<IReadOnlyList<AdvisoryResource>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
@@ -60,8 +61,8 @@ public sealed class HerdAdvisoriesController(
     }
 
     [HttpPatch("{advisoryId:guid}")]
-    [EndpointSummary("Decide a ranch advisory as the owner")]
-    [EndpointDescription("Grants, rejects or revokes an advisory of a ranch that the authenticated account manages.")]
+    [EndpointSummary("Decide veterinary access through the ranch route")]
+    [EndpointDescription("Compatibility route for PATCH /api/v1/veterinary-access-requests/{requestId}. Only the authenticated ranch owner may grant or reject a pending request, or revoke active access. Granting requires a future expiresAt and scope Read or ClinicalWrite; an omitted scope defaults to Read.")]
     [ProducesResponseType<AdvisoryResource>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
@@ -86,7 +87,7 @@ public sealed class HerdAdvisoriesController(
 
     [HttpPost("grants")]
     [EndpointSummary("Grant ranch access directly as the owner")]
-    [EndpointDescription("Authorizes an eligible veterinarian over a ranch that the authenticated account manages, without a prior request.")]
+    [EndpointDescription("Separate owner-initiated authorization flow retained for US-04. Only the authenticated ranch owner may authorize an active veterinarian with a complete profile, a future expiresAt and scope Read or ClinicalWrite, without a prior request. An existing pending request is granted instead of creating another one; active access returns 409. To decide a veterinarian's request from US-39, use PATCH /api/v1/veterinary-access-requests/{requestId}.")]
     [ProducesResponseType<AdvisoryResource>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
