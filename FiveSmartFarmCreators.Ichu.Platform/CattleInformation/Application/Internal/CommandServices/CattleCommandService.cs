@@ -85,6 +85,57 @@ public sealed class CattleCommandService(
     }
 
     /// <inheritdoc />
+    public async Task<Result<Cattle>> HandleAsync(PatchCattleCommand command, CancellationToken cancellationToken)
+    {
+        if (command.CattleId.Value == Guid.Empty)
+        {
+            return Result<Cattle>.Failure(CattleInformationErrors.CattleIdentifierRequired);
+        }
+
+        var animal = await cattles.FindByIdAsNoTrackingAsync(command.CattleId, cancellationToken);
+        if (animal is null)
+        {
+            return Result<Cattle>.Failure(CattleInformationErrors.CattleNotFound);
+        }
+
+        var access = await accessService.EnsureManageAccessAsync(animal.RanchId, cancellationToken);
+        if (access.IsFailure)
+        {
+            return Result<Cattle>.Failure(access.DomainError);
+        }
+
+        var found = await FindAsync(animal.RanchId, command.CattleId, cancellationToken);
+        if (found.IsFailure)
+        {
+            return found;
+        }
+
+        if (command.EarTag is { } proposedEarTag)
+        {
+            var earTag = EarTag.Create(proposedEarTag);
+            if (earTag.IsFailure)
+            {
+                return Result<Cattle>.Failure(earTag.DomainError);
+            }
+
+            var duplicate = await FindDuplicateEarTagAsync(animal.RanchId, earTag.Value!, command.CattleId, cancellationToken);
+            if (duplicate is not null)
+            {
+                return Result<Cattle>.Failure(duplicate);
+            }
+        }
+
+        var patch = found.Value!.Patch(command, Today());
+        if (patch.IsFailure)
+        {
+            return Result<Cattle>.Failure(patch.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return found;
+    }
+
+    /// <inheritdoc />
     public async Task<Result<Cattle>> HandleAsync(ChangeLifeStageCommand command, CancellationToken cancellationToken)
     {
         var access = await accessService.EnsureManageAccessAsync(command.RanchId, cancellationToken);
