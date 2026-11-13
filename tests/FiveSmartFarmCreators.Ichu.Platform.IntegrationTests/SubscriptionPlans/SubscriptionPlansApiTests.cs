@@ -29,13 +29,62 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"api/v1/plans/{Arrange.StandardPlanId}/quote?headCount=10");
+        using var response = await client.GetAsync($"api/v1/quotes?planId={Arrange.StandardPlanId}&headCount=10");
 
         var quote = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(Arrange.StandardPlanId, quote.GetProperty("planId").GetGuid());
+        Assert.Equal(10, quote.GetProperty("headCount").GetInt32());
         Assert.Equal(1800m, quote.GetProperty("annualFee").GetProperty("amount").GetDecimal());
+        Assert.Equal(120m, quote.GetProperty("deviceUnitPrice").GetProperty("amount").GetDecimal());
         Assert.Equal(1200m, quote.GetProperty("devicesCost").GetProperty("amount").GetDecimal());
         Assert.Equal(3000m, quote.GetProperty("total").GetProperty("amount").GetDecimal());
         Assert.Equal("PEN", quote.GetProperty("total").GetProperty("currency").GetString());
+        Assert.Equal("Annual", quote.GetProperty("periodicity").GetString());
+    }
+
+    [Theory]
+    [InlineData("5b1f0d2e-0c11-4a51-9b01-000000000001", 1)]
+    [InlineData("5b1f0d2e-0c11-4a51-9b01-000000000001", 50)]
+    [InlineData("5b1f0d2e-0c11-4a51-9b01-000000000002", 120)]
+    [InlineData("5b1f0d2e-0c11-4a51-9b01-000000000003", 500)]
+    public async Task GetQuote_ReturnsTheSameBreakdownAsTheExistingPlanQuote(string planId, int headCount)
+    {
+        using var client = factory.CreateClient();
+
+        using var existingResponse = await client.GetAsync($"api/v1/plans/{planId}/quote?headCount={headCount}");
+        using var response = await client.GetAsync($"api/v1/quotes?planId={planId}&headCount={headCount}");
+
+        var existing = await existingResponse.ReadJsonAsync(HttpStatusCode.OK);
+        var quote = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(existing.GetRawText(), quote.GetRawText());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(10001)]
+    public async Task GetQuote_WithInvalidHeadCount_ReturnsValidationProblem(int headCount)
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"api/v1/quotes?planId={Arrange.StandardPlanId}&headCount={headCount}");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("SubscriptionPlans.InvalidHeadCount", problem.GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("headCount=10")]
+    [InlineData("planId=5b1f0d2e-0c11-4a51-9b01-000000000002")]
+    [InlineData("planId=invalid&headCount=10")]
+    [InlineData("planId=5b1f0d2e-0c11-4a51-9b01-000000000002&headCount=invalid")]
+    public async Task GetQuote_WithMissingOrMalformedParameters_ReturnsBadRequest(string query)
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"api/v1/quotes?{query}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -43,7 +92,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"api/v1/plans/{Arrange.BasicPlanId}/quote?headCount=51");
+        using var response = await client.GetAsync($"api/v1/quotes?planId={Arrange.BasicPlanId}&headCount=51");
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
         Assert.Equal("SubscriptionPlans.HeadCountExceedsPlan", problem.GetProperty("code").GetString());
@@ -54,7 +103,7 @@ public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"api/v1/plans/{Guid.NewGuid()}/quote?headCount=10");
+        using var response = await client.GetAsync($"api/v1/quotes?planId={Guid.NewGuid()}&headCount=10");
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("SubscriptionPlans.PlanNotFound", problem.GetProperty("code").GetString());
