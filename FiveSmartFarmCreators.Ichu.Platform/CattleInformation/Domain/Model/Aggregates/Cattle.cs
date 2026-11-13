@@ -96,72 +96,91 @@ public sealed class Cattle : AggregateRoot
     /// <summary>
     ///     Corrects an active animal's identity while keeping its birth date consistent with its recorded stages.
     /// </summary>
-    public Result Update(UpdateCattleCommand command, DateOnly today)
+    public Result Update(UpdateCattleCommand command, DateOnly today) =>
+        ApplyPatch(command.RanchId, new PatchCattleCommand(command.CattleId, command.ExpectedVersion,
+            command.EarTag, command.Breed, command.Sex, command.BirthDate), today);
+
+    /// <summary>
+    ///     Changes an active animal's stage and keeps the preceding period, including a change on the same day.
+    /// </summary>
+    public Result ChangeStage(ChangeLifeStageCommand command, DateOnly today) =>
+        ApplyPatch(command.RanchId, new PatchCattleCommand(command.CattleId, command.ExpectedVersion,
+            LifeStage: command.LifeStage, ValidFrom: command.ValidFrom), today);
+
+    /// <summary>
+    ///     Validates every supplied field before changing identity, stage history or version.
+    /// </summary>
+    public Result Patch(PatchCattleCommand command, DateOnly today) => ApplyPatch(RanchId, command, today);
+
+    private Result ApplyPatch(Guid ranchId, PatchCattleCommand command, DateOnly today)
     {
-        var mutation = VerifyMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
+        var mutation = VerifyMutation(ranchId, command.CattleId, command.ExpectedVersion);
         if (mutation.IsFailure)
         {
             return mutation;
         }
 
-        var earTag = EarTag.Create(command.EarTag);
+        var earTag = EarTag.Create(command.EarTag ?? EarTag.Value);
         if (earTag.IsFailure)
         {
             return Result.Failure(earTag.DomainError);
         }
 
-        var details = ValidateDetails(command.Breed, command.Sex, command.BirthDate, today);
+        var breed = command.Breed ?? Breed;
+        var sex = command.Sex ?? Sex;
+        var birthDate = command.BirthDate ?? BirthDate;
+        var details = ValidateDetails(breed, sex, birthDate, today);
         if (details.IsFailure)
         {
             return details;
         }
 
-        if (_stagePeriods.Any(period => period.ValidFrom < command.BirthDate))
+        if (_stagePeriods.Any(period => period.ValidFrom < birthDate))
         {
             return Result.Failure(CattleInformationErrors.BirthDateAfterLifeStage);
         }
 
-        EarTag = earTag.Value!;
-        Breed = command.Breed;
-        Sex = command.Sex;
-        BirthDate = command.BirthDate;
-        Version = Guid.NewGuid();
-        return Result.Success();
-    }
-
-    /// <summary>
-    ///     Changes an active animal's stage and keeps the preceding period, including a change on the same day.
-    /// </summary>
-    public Result ChangeStage(ChangeLifeStageCommand command, DateOnly today)
-    {
-        var mutation = VerifyMutation(command.RanchId, command.CattleId, command.ExpectedVersion);
-        if (mutation.IsFailure)
-        {
-            return mutation;
-        }
-
-        if (!Enum.IsDefined(command.LifeStage))
-        {
-            return Result.Failure(CattleInformationErrors.InvalidLifeStage);
-        }
-
-        if (command.LifeStage == CurrentStage)
-        {
-            return Result.Failure(CattleInformationErrors.LifeStageAlreadyCurrent);
-        }
-
-        var currentPeriod = _stagePeriods.Single(period => period.ValidTo is null);
-        if (command.ValidFrom < BirthDate || command.ValidFrom > today || command.ValidFrom < currentPeriod.ValidFrom)
+        if (command.LifeStage.HasValue != command.ValidFrom.HasValue)
         {
             return Result.Failure(CattleInformationErrors.InvalidLifeStageDate);
         }
 
-        var previousStage = CurrentStage;
-        currentPeriod.Close(command.ValidFrom);
-        CurrentStage = command.LifeStage;
-        _stagePeriods.Add(new StagePeriod(Id, CurrentStage, command.ValidFrom));
+        StagePeriod? currentPeriod = null;
+        if (command.LifeStage is { } lifeStage)
+        {
+            if (!Enum.IsDefined(lifeStage))
+            {
+                return Result.Failure(CattleInformationErrors.InvalidLifeStage);
+            }
+
+            if (lifeStage == CurrentStage)
+            {
+                return Result.Failure(CattleInformationErrors.LifeStageAlreadyCurrent);
+            }
+
+            currentPeriod = _stagePeriods.Single(period => period.ValidTo is null);
+            if (command.ValidFrom!.Value < birthDate || command.ValidFrom.Value > today
+                || command.ValidFrom.Value < currentPeriod.ValidFrom)
+            {
+                return Result.Failure(CattleInformationErrors.InvalidLifeStageDate);
+            }
+        }
+
+        EarTag = earTag.Value!;
+        Breed = breed;
+        Sex = sex;
+        BirthDate = birthDate;
+        if (currentPeriod is not null)
+        {
+            var previousStage = CurrentStage;
+            var validFrom = command.ValidFrom!.Value;
+            currentPeriod.Close(validFrom);
+            CurrentStage = command.LifeStage!.Value;
+            _stagePeriods.Add(new StagePeriod(Id, CurrentStage, validFrom));
+            AddDomainEvent(new CattleLifeStageChangedEvent(RanchId, Id, previousStage, CurrentStage, validFrom));
+        }
+
         Version = Guid.NewGuid();
-        AddDomainEvent(new CattleLifeStageChangedEvent(RanchId, Id, previousStage, CurrentStage, command.ValidFrom));
         return Result.Success();
     }
 
