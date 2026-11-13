@@ -94,9 +94,15 @@ public sealed class CattleController(
     ///     Corrects active animal details using the expected version while preserving stage history.
     /// </summary>
     [HttpPut("{cattleId:guid}")]
+    [Obsolete("Use PATCH /api/v1/cattle/{cattleId} with the fields to change and expectedVersion.")]
     [EndpointSummary("Update cattle identification and productive details")]
     [EndpointDescription("Replaces earTag, breed, sex and birthDate using expectedVersion. For partial updates and combined productive-stage changes, use PATCH /api/v1/cattle/{cattleId}.")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateCattleAsync(Guid ranchId, Guid cattleId, UpdateCattleResource resource,
         CancellationToken cancellationToken)
     {
@@ -136,9 +142,15 @@ public sealed class CattleController(
     ///     Records an effective-dated stage change while retaining the preceding period, including same-day changes.
     /// </summary>
     [HttpPatch("{cattleId:guid}/life-stage")]
+    [Obsolete("Use PATCH /api/v1/cattle/{cattleId} with lifeStage, validFrom and expectedVersion.")]
     [EndpointSummary("Change the productive stage while retaining its history")]
     [EndpointDescription("Records a productive stage such as Calf, Heifer, MilkingCow or FatteningBull with validFrom and expectedVersion. To combine stage and identity changes atomically, use PATCH /api/v1/cattle/{cattleId}. Collars are managed through /api/v1/ranches/{ranchId}/devices/{deviceId}/assignments.")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ChangeLifeStageAsync(Guid ranchId, Guid cattleId, ChangeLifeStageResource resource,
         CancellationToken cancellationToken)
     {
