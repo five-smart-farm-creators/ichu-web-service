@@ -31,7 +31,11 @@ public sealed class LotsController(
     /// </summary>
     [HttpPost]
     [EndpointSummary("Create a cattle lot")]
+    [EndpointDescription("Creates exactly one empty cattle lot in the ranch identified by ranchId. Requires permission to manage that ranch. The required name labels the lot; optional criterion explains the reason for grouping, as plain text displayed in the lot list and exports. Example body: {\"name\":\"Milking group\",\"criterion\":\"Animals in lactation\"}. Criterion accepts up to 120 characters, is trimmed and is stored as null when blank or omitted. Animal membership is managed explicitly through PUT /api/v1/ranches/{ranchId}/lots/{lotId}/cattle/{cattleId}. Returns 201 with the created lot; use GET on this collection to list lots.")]
     [ProducesResponseType<LotResource>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateLotAsync(Guid ranchId, CreateLotResource resource,
         CancellationToken cancellationToken)
     {
@@ -49,7 +53,11 @@ public sealed class LotsController(
     /// </summary>
     [HttpGet]
     [EndpointSummary("List lots in an authorized ranch")]
+    [EndpointDescription("Returns the complete lot collection of the ranch selected by ranchId in one request, ordered by name then identifier. Requires read access to that ranch. Each lot includes its name, optional grouping reason in criterion, version and stored memberships, including references to inactive animals. Returns an empty array when the ranch has no lots. To create a lot, use POST on this collection.")]
     [ProducesResponseType<IReadOnlyList<LotResource>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetLotsByRanchAsync(Guid ranchId, CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(new GetLotsByRanchQuery(ranchId), cancellationToken);
