@@ -18,7 +18,7 @@ public static class Arrange
 
     public static async Task<JsonElement> RequestSubscriptionAsync(HttpClient client, Guid ranchId, Guid planId, int headCount = 10)
     {
-        using var quote = await client.GetAsync($"api/v1/plans/{planId}/quote?headCount={headCount}");
+        using var quote = await client.GetAsync($"api/v1/quotes?planId={planId}&headCount={headCount}");
         var quoted = await quote.ReadJsonAsync(HttpStatusCode.OK);
         using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions", new
         {
