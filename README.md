@@ -63,7 +63,7 @@ Epidemiological curves compare the observation window with the incubation period
 
 ### Nutrition plan dates
 
-`GET api/v1/ranches/{ranchId}/lots/{lotId}/nutrition-plans/current` without the `on` parameter uses the UTC date of the server, a known limitation until ranches have a time zone. From 19:00 in Lima the UTC date is already the next day, so clients pass `on` with the local date.
+`GET api/v1/lots/{lotId}/nutrition-plans/current` without the `on` parameter uses the UTC date of the server, a known limitation until ranches have a time zone. From 19:00 in Lima the UTC date is already the next day, so clients pass `on` with the local date.
 
 ### Payments
 
