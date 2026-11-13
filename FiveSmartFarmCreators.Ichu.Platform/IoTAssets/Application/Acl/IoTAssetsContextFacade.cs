@@ -135,6 +135,15 @@ public class IoTAssetsContextFacade(
         return new DeviceAttributionSnapshot(device.Id.Value, device.RanchId, cattleId);
     }
 
+    public async Task<IReadOnlyList<DeviceAssignmentSnapshot>> FindOpenCollarAssignmentsAsync(Guid ranchId,
+        CancellationToken cancellationToken)
+    {
+        var collars = await deviceRepository.FindAssignedCollarsAsNoTrackingAsync(ranchId, cancellationToken);
+        return collars.SelectMany(collar => collar.Assignments)
+            .Where(assignment => assignment.IsOpen() && assignment.TargetType == AssignmentTargetType.Cattle)
+            .Select(ToSnapshot).ToList();
+    }
+
     private static DeviceAssignmentSnapshot ToSnapshot(DeviceAssignment assignment) =>
         new(assignment.Id.Value, assignment.DeviceId.Value, assignment.RanchId, assignment.TargetId,
             assignment.TargetType.ToString(), assignment.StartedAt, assignment.EndedAt);

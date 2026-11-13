@@ -15,4 +15,5 @@ public interface IIoTDeviceRepository
     Task<int> CountAssignedCollarsAsync(Guid ranchId, CancellationToken cancellationToken);
     Task<IoTDevice?> FindByAssignedCattleAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken);
     Task<IoTDevice?> FindByAssignedCattleAsNoTrackingAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<IoTDevice>> FindAssignedCollarsAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken);
 }

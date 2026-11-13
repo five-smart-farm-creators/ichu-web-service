@@ -119,6 +119,22 @@ public class IoTAssetsContextFacadeTests
         Assert.Null(attribution);
     }
 
+    [Fact]
+    public async Task FindOpenCollarAssignmentsAsync_ReturnsOnlyOpenAssignmentsOfCollarsToAnimals()
+    {
+        var collar = AddDevice(DeviceType.SmartCollar, CattleId, assignedAt: At.AddDays(-1));
+        var releasedCollar = AddDevice(DeviceType.SmartCollar, Guid.NewGuid(), assignedAt: At.AddDays(-1));
+        releasedCollar.Release("Sold", At.AddHours(-1));
+        AddDevice(DeviceType.WaterController, WaterTroughId, assignedAt: At.AddDays(-1));
+
+        var assignments = await CreateFacade().FindOpenCollarAssignmentsAsync(RanchId, CancellationToken.None);
+
+        var assignment = Assert.Single(assignments);
+        Assert.Equal(collar.Id.Value, assignment.DeviceId);
+        Assert.Equal(CattleId, assignment.TargetId);
+        Assert.Equal("Cattle", assignment.TargetType);
+    }
+
     private EdgeGatewayCommandService CreateCommandService() =>
         new(_gateways, new AllowAllAccess(), new DirectTransaction(), _clock);
 
