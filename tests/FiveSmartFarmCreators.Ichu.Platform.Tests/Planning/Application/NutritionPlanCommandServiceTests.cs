@@ -1,3 +1,4 @@
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.OutboundServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
@@ -29,6 +30,7 @@ public class NutritionPlanCommandServiceTests
     public async Task Register_ForLotOfAnotherRanch_IsNotFoundAndSavesNothing()
     {
         _lots.Lots.Add((OtherRanchId, LotId));
+        _access.DeniedRanches.Add(OtherRanchId);
 
         var result = await _service.HandleAsync(Command(), CancellationToken.None);
 
@@ -77,8 +79,8 @@ public class NutritionPlanCommandServiceTests
         Assert.Equal(new DateOnly(2026, 11, 30), stored.ValidTo);
     }
 
-    private static RegisterNutritionPlanCommand Command(DateOnly? validFrom = null, DateOnly? validTo = null) =>
-        new(RanchId, LotId, "Dry season ration", validFrom ?? new DateOnly(2026, 11, 1), validTo,
+    private static RegisterNutritionPlanRequest Command(DateOnly? validFrom = null, DateOnly? validTo = null) =>
+        new(LotId, "Dry season ration", validFrom ?? new DateOnly(2026, 11, 1), validTo,
             [new RationItemDraft("Alfalfa hay", RationKind.Forage, 6m)], null, null);
 
     private static NutritionPlan Stored(DateOnly validFrom, DateOnly? validTo = null) =>

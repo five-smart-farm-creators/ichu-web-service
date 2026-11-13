@@ -16,7 +16,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/ranches/{ranchId:guid}/lots/{lotId:guid}/nutrition-plans")]
+[Route("api/v1/lots/{lotId:guid}/nutrition-plans")]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class NutritionPlansController(
     INutritionPlanCommandService commandService,
@@ -27,11 +27,10 @@ public sealed class NutritionPlansController(
     [EndpointSummary("List the nutrition plans of a lot")]
     [EndpointDescription("Returns the nutrition plans of the lot, newest first.")]
     [ProducesResponseType<IReadOnlyList<NutritionPlanResource>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPlansAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPlansAsync(Guid lotId, CancellationToken cancellationToken)
     {
-        var result = await queryService.HandleAsync(new GetNutritionPlansByLotQuery(ranchId, lotId), cancellationToken);
+        var result = await queryService.HandleAsync(new GetNutritionPlansByLotQuery(lotId), cancellationToken);
         if (result.IsFailure)
         {
             return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
@@ -44,15 +43,13 @@ public sealed class NutritionPlansController(
     [EndpointSummary("Get the nutrition plan in force for a lot")]
     [EndpointDescription("Returns the plan that covers the day given by 'on'. Without it, the current UTC date is used, because ranches have no time zone yet.")]
     [ProducesResponseType<NutritionPlanResource>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCurrentPlanAsync(
-        Guid ranchId,
         Guid lotId,
         [FromQuery] DateOnly? on,
         CancellationToken cancellationToken)
     {
-        var result = await queryService.HandleAsync(new GetCurrentNutritionPlanQuery(ranchId, lotId, on), cancellationToken);
+        var result = await queryService.HandleAsync(new GetCurrentNutritionPlanQuery(lotId, on), cancellationToken);
         if (result.IsFailure)
         {
             return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
@@ -70,19 +67,18 @@ public sealed class NutritionPlansController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterPlanAsync(
-        Guid ranchId,
         Guid lotId,
         [FromBody] RegisterNutritionPlanResource resource,
         CancellationToken cancellationToken)
     {
-        var command = RegisterNutritionPlanCommandFromResourceAssembler.ToCommandFromResource(ranchId, lotId, resource);
+        var command = RegisterNutritionPlanCommandFromResourceAssembler.ToCommandFromResource(lotId, resource);
         var result = await commandService.HandleAsync(command, cancellationToken);
         if (result.IsFailure)
         {
             return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
         }
 
-        return Created($"/api/v1/ranches/{ranchId}/lots/{lotId}/nutrition-plans",
+        return Created($"/api/v1/lots/{lotId}/nutrition-plans",
             NutritionPlanResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
     }
 }

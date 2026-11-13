@@ -39,6 +39,12 @@ public sealed class CattleInformationContextFacade(
     }
 
     /// <inheritdoc />
+    public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+        lotId == Guid.Empty
+            ? Task.FromResult<Guid?>(null)
+            : lots.FindRanchIdByIdAsync(new LotId(lotId), cancellationToken);
+
+    /// <inheritdoc />
     public async Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken)
     {
         if (cattleId == Guid.Empty)

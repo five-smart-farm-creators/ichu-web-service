@@ -92,6 +92,9 @@ public class CattleInformationCattleLookupTests
             return Task.FromResult(LotExists);
         }
 
+        public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+            Task.FromResult<Guid?>(null);
+
         public Task<IReadOnlyList<CattleInformationSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<CattleInformationSnapshot>>([]);
 

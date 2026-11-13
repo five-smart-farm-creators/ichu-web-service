@@ -18,20 +18,23 @@ public sealed class NutritionPlanCommandService(
     PlanningGuard guard) : INutritionPlanCommandService
 {
     /// <inheritdoc />
-    public async Task<Result<NutritionPlan>> HandleAsync(RegisterNutritionPlanCommand command, CancellationToken cancellationToken)
+    public async Task<Result<NutritionPlan>> HandleAsync(RegisterNutritionPlanRequest request, CancellationToken cancellationToken)
     {
-        var access = await guard.EnsureRanchAccessAsync(command.RanchId, PlanningPermission.ManagePlanning, cancellationToken);
-        if (access.IsFailure)
-        {
-            return Result<NutritionPlan>.Failure(access.DomainError);
-        }
-
-        var lot = await guard.EnsureLotBelongsToRanchAsync(command.RanchId, command.LotId, cancellationToken);
+        var lot = await guard.EnsureLotAccessAsync(request.LotId, PlanningPermission.ManagePlanning, cancellationToken);
         if (lot.IsFailure)
         {
             return Result<NutritionPlan>.Failure(lot.DomainError);
         }
 
+        var command = new RegisterNutritionPlanCommand(
+            lot.Value,
+            request.LotId,
+            request.Name,
+            request.ValidFrom,
+            request.ValidTo,
+            request.Items,
+            request.TargetDailyGainKilograms,
+            request.Notes);
         var candidate = NutritionPlan.Create(command);
         if (candidate.IsFailure)
         {

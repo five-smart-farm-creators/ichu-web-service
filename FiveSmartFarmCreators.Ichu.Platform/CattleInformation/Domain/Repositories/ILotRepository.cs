@@ -5,7 +5,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueOb
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
 
 /// <summary>
-///     Provides ranch-scoped lot persistence. Callers check access before querying.
+///     Provides lot persistence and trusted ownership lookups. Callers authorize ownership lookups before exposing results.
 /// </summary>
 public interface ILotRepository
 {
@@ -13,6 +13,11 @@ public interface ILotRepository
     ///     Finds a lot with its stored memberships in the ranch.
     /// </summary>
     Task<Lot?> FindByIdAsync(Guid ranchId, LotId lotId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Resolves the owning ranch for a trusted in-process caller that authorizes the result itself.
+    /// </summary>
+    Task<Guid?> FindRanchIdByIdAsync(LotId lotId, CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     Lists the ranch's lots ordered by name, then identifier.

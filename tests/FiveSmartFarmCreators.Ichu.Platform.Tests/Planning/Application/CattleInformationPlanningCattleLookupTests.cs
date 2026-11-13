@@ -46,6 +46,9 @@ public class CattleInformationPlanningCattleLookupTests
         public Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Planning only looks up animals.");
 
+        public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+            Task.FromResult<Guid?>(null);
+
         public Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Planning only looks up animals.");
 

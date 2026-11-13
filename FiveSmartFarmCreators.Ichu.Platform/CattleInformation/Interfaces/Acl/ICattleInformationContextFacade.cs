@@ -1,8 +1,8 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 
 /// <summary>
-///     Exposes animal and lot facts to other contexts. Callers that lack ranch read access receive the same answer as
-///     for an unknown identifier.
+///     Exposes animal and lot facts to other contexts. Ranch-scoped methods hide resources callers cannot read;
+///     trusted in-process callers may resolve ownership and must authorize the result themselves.
 /// </summary>
 public interface ICattleInformationContextFacade
 {
@@ -16,6 +16,11 @@ public interface ICattleInformationContextFacade
     ///     Reports whether a lot exists in the ranch, including an empty lot.
     /// </summary>
     Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Resolves the ranch that owns a lot for a trusted in-process caller that authorizes the result itself.
+    /// </summary>
+    Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken);
 
     /// <summary>
     ///     Resolves a lot's active animals across all result pages.

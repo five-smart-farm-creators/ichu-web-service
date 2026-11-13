@@ -42,16 +42,39 @@ public sealed class PlanningGuard(
             : Result.Failure(PlanningErrors.CattleNotFound);
     }
 
-    public async Task<Result> EnsureLotBelongsToRanchAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> EnsureLotAccessAsync(
+        Guid lotId,
+        PlanningPermission permission,
+        CancellationToken cancellationToken)
     {
         if (lotId == Guid.Empty)
         {
-            return Result.Failure(PlanningErrors.InvalidIdentifier);
+            return Result<Guid>.Failure(PlanningErrors.InvalidIdentifier);
         }
 
-        return await lotLookup.LotBelongsToRanchAsync(ranchId, lotId, cancellationToken)
-            ? Result.Success()
-            : Result.Failure(PlanningErrors.LotNotFound);
+        var ranchId = await lotLookup.FindRanchIdAsync(lotId, cancellationToken);
+        if (ranchId is not { } resolvedRanchId)
+        {
+            return Result<Guid>.Failure(PlanningErrors.LotNotFound);
+        }
+
+        var access = await EnsureRanchAccessAsync(resolvedRanchId, permission, cancellationToken);
+        if (access.IsSuccess)
+        {
+            return Result<Guid>.Success(resolvedRanchId);
+        }
+
+        if (permission != PlanningPermission.ReadPlanning)
+        {
+            var readAccess = await EnsureRanchAccessAsync(
+                resolvedRanchId, PlanningPermission.ReadPlanning, cancellationToken);
+            if (readAccess.IsSuccess)
+            {
+                return Result<Guid>.Failure(access.DomainError);
+            }
+        }
+
+        return Result<Guid>.Failure(PlanningErrors.LotNotFound);
     }
 
     public async Task<Result> EnsureInterventionMatchesAsync(

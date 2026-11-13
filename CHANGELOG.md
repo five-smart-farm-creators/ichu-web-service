@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Operations and Monitoring: `GET api/v1/edge-gateways/{gatewayId}/device-assignments` lists the collars that serve an active animal of the gateway's ranch, with the animal's life stage and lot, so that an Edge Gateway evaluates readings only for collars of active animals.
 
+### Changed
+
+- Planning: campaign details use `GET /api/v1/planning-campaigns/{campaignId}`; activity details and their `/applications` and `/follow-ups` routes use `/api/v1/planned-activities/{activityId}`; nutrition plan routes use `/api/v1/lots/{lotId}/nutrition-plans`. Item lookups without ranch read access return 404 to avoid disclosing whether the identifier exists.
+
 ## [0.5.0] - 2026-11-12
 
 ### Added
