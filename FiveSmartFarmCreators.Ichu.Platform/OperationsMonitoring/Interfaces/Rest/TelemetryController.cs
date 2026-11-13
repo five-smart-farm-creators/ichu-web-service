@@ -24,7 +24,7 @@ public class TelemetryController(
 {
     [HttpPost("api/v1/telemetry/batch")]
     [EndpointSummary("Synchronize an Edge Gateway batch")]
-    [EndpointDescription("Receives readings, alerts and alert changes from an Edge Gateway with an individual result per entry. Requires Edge Gateway credentials.")]
+    [EndpointDescription("Accepts readings, alerts and alertChanges using the required X-Gateway-Key header in the form {gatewayId}.{secret}. The key identifies the ranch; a Firebase bearer token is not required. Returns HTTP 200 with a result per entry: Accepted, Duplicate, Rejected or Conflict and a reason when applicable. A repeated identifier does not create another record. Inspect each entry even when the batch returns 200. Invalid batches return 400 and missing or invalid gateway credentials return 401.")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

@@ -142,6 +142,97 @@ public class CattleTests
         Assert.Equal(CattleInformationErrors.CattleInactive.Code, result.DomainError.Code);
     }
 
+    [Fact]
+    public void Patch_WithOnlyAnEarTag_PreservesOtherFieldsAndStageHistory()
+    {
+        var cattle = RegisteredCattle();
+        var previousVersion = cattle.Version;
+        var period = Assert.Single(cattle.StagePeriods);
+
+        var result = cattle.Patch(new PatchCattleCommand(cattle.Id, previousVersion, EarTag: "A-2"), Today);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("A-2", cattle.EarTag.Value);
+        Assert.Equal(Breed.BrownSwiss, cattle.Breed);
+        Assert.Equal(Sex.Female, cattle.Sex);
+        Assert.Equal(BirthDate, cattle.BirthDate);
+        Assert.Equal(LifeStage.Calf, cattle.CurrentStage);
+        Assert.Same(period, Assert.Single(cattle.StagePeriods));
+        Assert.Null(period.ValidTo);
+        Assert.NotEqual(previousVersion, cattle.Version);
+        Assert.DoesNotContain(cattle.DomainEvents, domainEvent => domainEvent is CattleLifeStageChangedEvent);
+    }
+
+    [Fact]
+    public void Patch_WithIdentityAndLifeStage_ChangesBothAndRetainsThePreviousPeriod()
+    {
+        var cattle = RegisteredCattle();
+        var previousVersion = cattle.Version;
+        var effectiveDate = Today.AddDays(-1);
+
+        var result = cattle.Patch(new PatchCattleCommand(cattle.Id, previousVersion, "A-2", Breed.Fleckvieh,
+            Sex.Female, BirthDate.AddDays(-1), LifeStage.Heifer, effectiveDate), Today);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("A-2", cattle.EarTag.Value);
+        Assert.Equal(Breed.Fleckvieh, cattle.Breed);
+        Assert.Equal(BirthDate.AddDays(-1), cattle.BirthDate);
+        Assert.Equal(LifeStage.Heifer, cattle.CurrentStage);
+        Assert.Equal(2, cattle.StagePeriods.Count);
+        Assert.Equal(effectiveDate, cattle.StagePeriods.Single(period => period.LifeStage == LifeStage.Calf).ValidTo);
+        Assert.Equal(effectiveDate, cattle.StagePeriods.Single(period => period.ValidTo is null).ValidFrom);
+        Assert.NotEqual(previousVersion, cattle.Version);
+        var changed = Assert.Single(cattle.DomainEvents.OfType<CattleLifeStageChangedEvent>());
+        Assert.Equal(LifeStage.Calf, changed.PreviousStage);
+        Assert.Equal(LifeStage.Heifer, changed.LifeStage);
+    }
+
+    [Theory]
+    [InlineData("same stage", "CattleInformation.LifeStageAlreadyCurrent")]
+    [InlineData("before current period", "CattleInformation.InvalidLifeStageDate")]
+    [InlineData("future stage", "CattleInformation.InvalidLifeStageDate")]
+    [InlineData("missing effective date", "CattleInformation.InvalidLifeStageDate")]
+    [InlineData("invalid breed", "CattleInformation.InvalidBreed")]
+    [InlineData("invalid sex", "CattleInformation.InvalidSex")]
+    [InlineData("invalid stage", "CattleInformation.InvalidLifeStage")]
+    [InlineData("birth after history", "CattleInformation.BirthDateAfterLifeStage")]
+    [InlineData("stale version", "CattleInformation.CattleVersionMismatch")]
+    public void Patch_WhenAnyPartIsInvalid_LeavesTheEntireAggregateUnchanged(string scenario, string expectedCode)
+    {
+        var cattle = RegisteredCattle();
+        var version = cattle.Version;
+        var events = cattle.DomainEvents.ToArray();
+        var period = Assert.Single(cattle.StagePeriods);
+        var command = new PatchCattleCommand(cattle.Id, version, "A-2", Breed.Fleckvieh, Sex.Male,
+            BirthDate.AddDays(-1), LifeStage.Heifer, Today);
+        command = scenario switch
+        {
+            "same stage" => command with { LifeStage = LifeStage.Calf },
+            "before current period" => command with { ValidFrom = RegisteredOn.AddDays(-1) },
+            "future stage" => command with { ValidFrom = Today.AddDays(1) },
+            "missing effective date" => command with { ValidFrom = null },
+            "invalid breed" => command with { Breed = (Breed)999 },
+            "invalid sex" => command with { Sex = (Sex)999 },
+            "invalid stage" => command with { LifeStage = (LifeStage)999 },
+            "birth after history" => command with { BirthDate = RegisteredOn.AddDays(1) },
+            _ => command with { ExpectedVersion = Guid.NewGuid() }
+        };
+
+        var result = cattle.Patch(command, Today);
+
+        Assert.Equal(expectedCode, result.DomainError.Code);
+        Assert.Equal("A-1", cattle.EarTag.Value);
+        Assert.Equal(Breed.BrownSwiss, cattle.Breed);
+        Assert.Equal(Sex.Female, cattle.Sex);
+        Assert.Equal(BirthDate, cattle.BirthDate);
+        Assert.Equal(LifeStage.Calf, cattle.CurrentStage);
+        Assert.Equal(version, cattle.Version);
+        Assert.Same(period, Assert.Single(cattle.StagePeriods));
+        Assert.Equal(RegisteredOn, period.ValidFrom);
+        Assert.Null(period.ValidTo);
+        Assert.Equal(events, cattle.DomainEvents);
+    }
+
     private static RegisterCattleCommand CalfCommand(string earTag = "A-1") =>
         new(RanchId, earTag, Breed.BrownSwiss, Sex.Female, BirthDate, LifeStage.Calf);
 

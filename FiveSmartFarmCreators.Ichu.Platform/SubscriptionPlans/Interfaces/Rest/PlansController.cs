@@ -48,8 +48,9 @@ public class PlansController(
     }
 
     [HttpGet("{planId:guid}/quote")]
-    [EndpointSummary("Quote a subscription plan")]
-    [EndpointDescription("Quotes the annual price of a plan for a head count. The total is the annual fee plus the devices cost.")]
+    [Obsolete("Use GET /api/v1/quotes?planId=...&headCount=....")]
+    [EndpointSummary("Get a plan quote through the compatibility route")]
+    [EndpointDescription("Compatibility route for GET /api/v1/quotes?planId=...&headCount=.... Both routes use the same price query and return the annual fee, devices cost and total without creating a subscription or starting a payment. Retained while existing clients migrate.")]
     [ProducesResponseType(typeof(PlanQuoteResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

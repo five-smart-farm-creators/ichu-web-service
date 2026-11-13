@@ -94,6 +94,9 @@ public class IoTAssetsEdgeDeviceAssignmentLookupTests
         public Task<CattleInformationSnapshot?> FindByIdAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The lookup reads active placements only.");
 
+        public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The lookup reads active placements only.");
+
         public Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The lookup reads active placements only.");
 

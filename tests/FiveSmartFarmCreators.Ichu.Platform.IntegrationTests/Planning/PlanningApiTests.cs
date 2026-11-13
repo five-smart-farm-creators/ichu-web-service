@@ -140,6 +140,20 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         Assert.Equal("Inside the interval", calendar.GetProperty("title").GetString());
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("?from=2026-11-01T00:00:00Z")]
+    [InlineData("?to=2026-11-30T23:59:59Z")]
+    public async Task Calendar_WithoutBothBounds_ReturnsBadRequest(string query)
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/calendar{query}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task WithdrawalPeriod_RecordedForAnimal_IsListedForRanch()
     {

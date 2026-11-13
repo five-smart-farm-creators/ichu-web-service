@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
@@ -7,7 +8,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Interfaces.A
 ///     Adds the bearer security scheme to the OpenAPI document so that API clients such as Swagger UI can send the
 ///     Firebase identity token.
 /// </summary>
-public class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
+public class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer, IOpenApiOperationTransformer
 {
     private const string SchemeName = "Bearer";
 
@@ -31,12 +32,25 @@ public class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
             Description = "Firebase identity token returned by the sign-in endpoint."
         };
 
-        // Anonymous endpoints ignore the header, so a document-level requirement lets clients send it everywhere.
+        // Authenticated operations inherit this requirement; anonymous operations override it with an empty list.
         document.Security ??= [];
         document.Security.Add(new OpenApiSecurityRequirement
         {
             [new OpenApiSecuritySchemeReference(SchemeName, document)] = []
         });
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Keeps public catalog, sign-in, Stripe and gateway operations free of the user bearer requirement.
+    /// </summary>
+    public Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        if (context.Description.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any())
+        {
+            operation.Security = [];
+        }
+
         return Task.CompletedTask;
     }
 }

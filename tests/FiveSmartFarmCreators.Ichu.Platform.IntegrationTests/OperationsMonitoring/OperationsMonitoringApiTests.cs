@@ -178,6 +178,74 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
     }
 
     [Fact]
+    public async Task MobileSync_AcceptsValidOperationsAndReportsRejectedDuplicateAndConflictingEntries()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-MOBILE-SYNC")).GetProperty("id").GetGuid();
+        var operationId = Guid.NewGuid();
+        var invalidId = Guid.NewGuid();
+        var occurredAt = DateTimeOffset.UtcNow.AddHours(-1);
+        var entry = new { operationId, cattleId, type = "HealthEvent", occurredAt, observation = "Mild lameness" };
+        var batch = new { operations = new object[] { entry, new { operationId = invalidId, cattleId, occurredAt } } };
+
+        using var response = await client.PostJsonAsync("api/v1/mobile-sync/batch", batch);
+
+        var results = (await response.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray().ToList();
+        Assert.Equal("Accepted", Assert.Single(results, result => result.GetProperty("id").GetGuid() == operationId).GetProperty("status").GetString());
+        Assert.Equal("Rejected", Assert.Single(results, result => result.GetProperty("id").GetGuid() == invalidId).GetProperty("status").GetString());
+        using var replay = await client.PostJsonAsync("api/v1/mobile-sync/batch", batch);
+        var repeated = (await replay.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray().ToList();
+        Assert.Equal("Duplicate", Assert.Single(repeated, result => result.GetProperty("id").GetGuid() == operationId).GetProperty("status").GetString());
+        using var conflict = await client.PostJsonAsync("api/v1/mobile-sync/batch", new
+        {
+            operations = new[] { new { operationId, cattleId, type = "HealthEvent", occurredAt, observation = "Different content" } }
+        });
+        var conflicted = Assert.Single((await conflict.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray());
+        Assert.Equal("Conflict", conflicted.GetProperty("status").GetString());
+        using var history = await client.GetAsync($"api/v1/ranches/{ranchId}/cattle/{cattleId}/livestock-operations" +
+            $"?from={occurredAt.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
+        Assert.Single((await history.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task MobileSync_AnOperationForAnotherRanch_IsRejectedWithoutBeingSaved()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var cattleId = (await Arrange.RegisterCattleAsync(owner, ranchId, "PE-MOBILE-FORBIDDEN")).GetProperty("id").GetGuid();
+        using var outsider = factory.CreateClient(TestIdentity.Create());
+        await outsider.RegisterManagerAsync();
+
+        using var response = await outsider.PostJsonAsync("api/v1/mobile-sync/batch", new
+        {
+            operations = new[] { new { operationId = Guid.NewGuid(), cattleId, type = "HealthEvent", occurredAt = DateTimeOffset.UtcNow.AddHours(-1), observation = "Mild lameness" } }
+        });
+
+        var result = Assert.Single((await response.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray());
+        Assert.Equal("Rejected", result.GetProperty("status").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(result.GetProperty("reason").GetString()));
+        using var history = await owner.GetAsync($"api/v1/ranches/{ranchId}/cattle/{cattleId}/livestock-operations" +
+            $"?from={DateTimeOffset.UtcNow.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
+        Assert.Empty((await history.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task MobileSync_RequiresAuthenticationAndANonEmptyBatch()
+    {
+        using var anonymous = factory.CreateClient();
+        using var unauthorized = await anonymous.PostJsonAsync("api/v1/mobile-sync/batch", new { operations = Array.Empty<object>() });
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+        using var manager = factory.CreateClient(TestIdentity.Create());
+        await manager.RegisterManagerAsync();
+
+        using var empty = await manager.PostJsonAsync("api/v1/mobile-sync/batch", new { operations = Array.Empty<object>() });
+
+        var problem = await empty.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("OperationsMonitoring.InvalidMobileBatchSize", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task LatestTelemetry_ForAnimalWithoutReadings_ReportsUnavailable()
     {
         using var client = factory.CreateClient(TestIdentity.Create());
