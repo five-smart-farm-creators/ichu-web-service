@@ -8,6 +8,36 @@ namespace FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.SubscriptionPlans
 public sealed class SubscriptionPlansApiTests(IchuApiFactory factory)
 {
     [Fact]
+    public async Task Swagger_UsesAnIntegerForQuoteHeadCountAndSupportsBearerAuthorization()
+    {
+        using var swaggerFactory = factory.WithWebHostBuilder(builder => builder.UseSetting("OpenApi:Enabled", "true"));
+        using var client = swaggerFactory.CreateClient();
+
+        using var configResponse = await client.GetAsync("/swagger/index.js");
+        Assert.Equal(HttpStatusCode.OK, configResponse.StatusCode);
+        Assert.Contains("/openapi/v1.json", await configResponse.Content.ReadAsStringAsync());
+
+        using var openApiResponse = await client.GetAsync("/openapi/v1.json");
+        var document = await openApiResponse.ReadJsonAsync(HttpStatusCode.OK);
+        var bearer = document.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer");
+        Assert.Equal("bearer", bearer.GetProperty("scheme").GetString());
+        Assert.Contains(document.GetProperty("security").EnumerateArray(),
+            requirement => requirement.TryGetProperty("Bearer", out _));
+
+        var paths = document.GetProperty("paths");
+        foreach (var path in new[] { "/api/v1/quotes", "/api/v1/plans/{planId}/quote" })
+        {
+            var parameters = paths.GetProperty(path).GetProperty("get").GetProperty("parameters");
+            var headCount = Assert.Single(parameters.EnumerateArray(),
+                parameter => parameter.GetProperty("name").GetString() == "headCount");
+            Assert.Equal("integer", headCount.GetProperty("schema").GetProperty("type").GetString());
+        }
+
+        using var protectedResponse = await client.GetAsync("/api/v1/accounts/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, protectedResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task GetPlans_ReturnsSeededCatalogWithoutAuthentication()
     {
         using var client = factory.CreateClient();
