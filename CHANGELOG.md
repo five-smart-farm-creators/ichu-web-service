@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Planning: campaign details use `GET /api/v1/planning-campaigns/{campaignId}`; activity details and their `/applications` and `/follow-ups` routes use `/api/v1/planned-activities/{activityId}`; nutrition plan routes use `/api/v1/lots/{lotId}/nutrition-plans`. Item lookups without ranch read access return 404 to avoid disclosing whether the identifier exists.
+
 ## [0.5.0] - 2026-11-12
 
 ### Added
