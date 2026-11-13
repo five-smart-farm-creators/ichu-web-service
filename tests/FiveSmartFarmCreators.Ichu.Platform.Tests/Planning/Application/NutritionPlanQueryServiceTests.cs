@@ -25,7 +25,7 @@ public class NutritionPlanQueryServiceTests
         _plans.Items.Add(Stored(new DateOnly(2026, 11, 1)));
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 10, 23, 0, 0, TimeSpan.Zero));
 
-        var result = await Service(clock).HandleAsync(new GetCurrentNutritionPlanQuery(RanchId, LotId, null), CancellationToken.None);
+        var result = await Service(clock).HandleAsync(new GetCurrentNutritionPlanQuery(LotId, null), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Dry season ration", result.Value!.Name);
@@ -37,7 +37,7 @@ public class NutritionPlanQueryServiceTests
         _lots.Lots.Add((RanchId, LotId));
         _plans.Items.Add(Stored(new DateOnly(2026, 11, 1)));
 
-        var result = await Service().HandleAsync(new GetCurrentNutritionPlanQuery(RanchId, LotId, new DateOnly(2026, 10, 31)),
+        var result = await Service().HandleAsync(new GetCurrentNutritionPlanQuery(LotId, new DateOnly(2026, 10, 31)),
             CancellationToken.None);
 
         Assert.Equal(PlanningErrors.NoCurrentNutritionPlan.Code, result.DomainError.Code);
@@ -50,7 +50,7 @@ public class NutritionPlanQueryServiceTests
         _plans.Items.Add(Stored(new DateOnly(2026, 11, 1), new DateOnly(2026, 11, 14)));
         _plans.Items.Add(Stored(new DateOnly(2026, 11, 15)));
 
-        var result = await Service().HandleAsync(new GetNutritionPlansByLotQuery(RanchId, LotId), CancellationToken.None);
+        var result = await Service().HandleAsync(new GetNutritionPlansByLotQuery(LotId), CancellationToken.None);
 
         Assert.Equal(new[] { new DateOnly(2026, 11, 15), new DateOnly(2026, 11, 1) }, result.Value!.Select(plan => plan.ValidFrom));
     }
@@ -58,7 +58,7 @@ public class NutritionPlanQueryServiceTests
     [Fact]
     public async Task PlansOfAnUnknownLot_AreNotFound()
     {
-        var result = await Service().HandleAsync(new GetNutritionPlansByLotQuery(RanchId, LotId), CancellationToken.None);
+        var result = await Service().HandleAsync(new GetNutritionPlansByLotQuery(LotId), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.LotNotFound.Code, result.DomainError.Code);
     }

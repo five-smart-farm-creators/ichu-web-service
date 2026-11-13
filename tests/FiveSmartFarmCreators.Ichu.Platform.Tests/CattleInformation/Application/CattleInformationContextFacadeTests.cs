@@ -128,6 +128,9 @@ public class CattleInformationContextFacadeTests
         public Task<Lot?> FindByIdAsync(Guid ranchId, LotId lotId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("The herd read uses memberships only.");
 
+        public Task<Guid?> FindRanchIdByIdAsync(LotId lotId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Items.SingleOrDefault(lot => lot.Id == lotId)?.RanchId);
+
         public Task<IReadOnlyList<Lot>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("The herd read uses memberships only.");
 

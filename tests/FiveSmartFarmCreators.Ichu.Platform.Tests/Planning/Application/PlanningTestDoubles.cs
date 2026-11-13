@@ -13,10 +13,12 @@ internal sealed class FakePlanningAccess : IPlanningAccessControl
 
     public IReadOnlyCollection<PlanningPermission> Grants { get; set; } = Enum.GetValues<PlanningPermission>();
 
+    public HashSet<Guid> DeniedRanches { get; } = [];
+
     public Task<Guid?> GetCurrentAccountIdAsync(CancellationToken cancellationToken) => Task.FromResult(AccountId);
 
     public Task<bool> CanAccessRanchAsync(Guid accountId, Guid ranchId, PlanningPermission permission, CancellationToken cancellationToken) =>
-        Task.FromResult(Grants.Contains(permission));
+        Task.FromResult(Grants.Contains(permission) && !DeniedRanches.Contains(ranchId));
 }
 
 internal sealed class FakeCattleLookup : IPlanningCattleLookup
@@ -107,8 +109,11 @@ internal sealed class FakeLotLookup : IPlanningLotLookup
 {
     public HashSet<(Guid RanchId, Guid LotId)> Lots { get; } = [];
 
-    public Task<bool> LotBelongsToRanchAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
-        Task.FromResult(Lots.Contains((ranchId, lotId)));
+    public Task<Guid?> FindRanchIdAsync(Guid lotId, CancellationToken cancellationToken) =>
+        Task.FromResult(Lots
+            .Where(lot => lot.LotId == lotId)
+            .Select(lot => (Guid?)lot.RanchId)
+            .FirstOrDefault());
 }
 
 internal sealed class FakeNutritionPlans : INutritionPlanRepository

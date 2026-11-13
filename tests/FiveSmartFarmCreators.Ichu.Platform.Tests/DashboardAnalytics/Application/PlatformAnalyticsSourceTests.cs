@@ -223,6 +223,9 @@ public class PlatformAnalyticsSourceTests
         public Task<bool> LotExistsAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The analytics source reads the herd only.");
 
+        public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The analytics source reads the herd only.");
+
         public Task<IReadOnlyList<CattleSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The analytics source reads the herd only.");
 

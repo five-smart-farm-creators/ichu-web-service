@@ -51,7 +51,7 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         var campaignId = campaign.GetProperty("id").GetGuid();
 
         using var listing = await client.GetAsync($"api/v1/ranches/{ranchId}/planning-campaigns");
-        using var single = await client.GetAsync($"api/v1/ranches/{ranchId}/planning-campaigns/{campaignId}");
+        using var single = await client.GetAsync($"api/v1/planning-campaigns/{campaignId}");
 
         var listed = Assert.Single((await listing.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
         Assert.Equal(campaignId, listed.GetProperty("id").GetGuid());
@@ -74,7 +74,7 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         Assert.Equal(cattleId, activity.GetProperty("cattleId").GetGuid());
         Assert.Equal("Vaccinate heifer", activity.GetProperty("title").GetString());
         Assert.Equal(ScheduledAt, activity.GetProperty("scheduledAt").GetDateTimeOffset());
-        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/planned-activities/{activity.GetProperty("id").GetGuid()}");
+        using var response = await client.GetAsync($"api/v1/planned-activities/{activity.GetProperty("id").GetGuid()}");
         await response.ReadBodyAsync(HttpStatusCode.OK);
     }
 
@@ -88,7 +88,7 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         var interventionId = await RegisterVaccinationAsync(client, ranchId, cattleId);
         var appliedAt = ScheduledAt.AddHours(1);
 
-        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/planned-activities/{activityId}/applications", new
+        using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/applications", new
         {
             cattleId,
             appliedAt,
@@ -98,7 +98,7 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         var application = await response.ReadJsonAsync(HttpStatusCode.Created);
         Assert.Equal(cattleId, application.GetProperty("cattleId").GetGuid());
         Assert.Equal(interventionId, application.GetProperty("interventionId").GetGuid());
-        using var listing = await client.GetAsync($"api/v1/ranches/{ranchId}/planned-activities/{activityId}/applications");
+        using var listing = await client.GetAsync($"api/v1/planned-activities/{activityId}/applications");
         var applications = Assert.Single((await listing.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
         Assert.Equal(appliedAt, applications.GetProperty("appliedAt").GetDateTimeOffset());
     }
@@ -111,10 +111,10 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         var activityId = (await ScheduleActivityAsync(client, ranchId, null, null, "Check vaccination response")).GetProperty("id").GetGuid();
         var dueAt = ScheduledAt.AddDays(14);
 
-        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/planned-activities/{activityId}/follow-ups", new { dueAt });
+        using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new { dueAt });
 
         await response.ReadBodyAsync(HttpStatusCode.Created);
-        using var listing = await client.GetAsync($"api/v1/ranches/{ranchId}/planned-activities/{activityId}/follow-ups");
+        using var listing = await client.GetAsync($"api/v1/planned-activities/{activityId}/follow-ups");
         var followUp = Assert.Single((await listing.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
         Assert.Equal(dueAt, followUp.GetProperty("dueAt").GetDateTimeOffset());
     }
@@ -187,7 +187,7 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
     }
 
     [Fact]
-    public async Task GetActivity_ByManagerOfAnotherRanch_IsForbidden()
+    public async Task GetActivity_ByManagerWithoutRanchAccess_IsNotFound()
     {
         using var owner = factory.CreateClient(TestIdentity.Create());
         var ranchId = await owner.RegisterManagerAsync();
@@ -195,10 +195,10 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         using var outsider = factory.CreateClient(TestIdentity.Create());
         await outsider.RegisterManagerAsync();
 
-        using var response = await outsider.GetAsync($"api/v1/ranches/{ranchId}/planned-activities/{activityId}");
+        using var response = await outsider.GetAsync($"api/v1/planned-activities/{activityId}");
 
-        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
-        Assert.Equal("Planning.RanchAccessDenied", problem.GetProperty("code").GetString());
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("Planning.ActivityNotFound", problem.GetProperty("code").GetString());
     }
 
     [Fact]
@@ -226,9 +226,9 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         var ranchId = await owner.RegisterManagerAsync();
         var campaignId = (await CreateCampaignAsync(owner, ranchId, "Brucellosis vaccination")).GetProperty("id").GetGuid();
         using var other = factory.CreateClient(TestIdentity.Create());
-        var otherRanchId = await other.RegisterManagerAsync();
+        await other.RegisterManagerAsync();
 
-        using var response = await other.GetAsync($"api/v1/ranches/{otherRanchId}/planning-campaigns/{campaignId}");
+        using var response = await other.GetAsync($"api/v1/planning-campaigns/{campaignId}");
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("Planning.CampaignNotFound", problem.GetProperty("code").GetString());
