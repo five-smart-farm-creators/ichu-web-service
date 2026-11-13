@@ -95,6 +95,7 @@ public sealed class CattleController(
     /// </summary>
     [HttpPut("{cattleId:guid}")]
     [EndpointSummary("Update cattle identification and productive details")]
+    [EndpointDescription("Replaces earTag, breed, sex and birthDate using expectedVersion. For partial updates and combined productive-stage changes, use PATCH /api/v1/cattle/{cattleId}.")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateCattleAsync(Guid ranchId, Guid cattleId, UpdateCattleResource resource,
         CancellationToken cancellationToken)
@@ -111,11 +112,32 @@ public sealed class CattleController(
         return Ok(CattleResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
     }
 
+    [HttpPatch("~/api/v1/cattle/{cattleId:guid}")]
+    [EndpointSummary("Partially update cattle by its unique identifier")]
+    [EndpointDescription("The server resolves the animal's ranch from its globally unique cattleId and requires permission to manage that ranch. Supply expectedVersion and any of earTag, breed, sex, birthDate or lifeStage. Omitted or null editable fields retain their values; unknown fields are rejected. A lifeStage change requires validFrom, retains the preceding period and opens a new one. Productive stages include Calf (young cattle), Heifer, MilkingCow (milk production) and FatteningBull. The effective date must fall within the current period, on or before today and on or after birth. All supplied changes are validated and saved together; stale versions return 409. Collar assignment is managed through POST /api/v1/ranches/{ranchId}/devices/{deviceId}/assignments.")]
+    [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> PatchCattleAsync(Guid cattleId, PatchCattleResource resource,
+        CancellationToken cancellationToken)
+    {
+        var command = new PatchCattleCommand(new CattleId(cattleId), resource.ExpectedVersion!.Value,
+            resource.EarTag, resource.Breed, resource.Sex, resource.BirthDate, resource.LifeStage, resource.ValidFrom);
+        var result = await commandService.HandleAsync(command, cancellationToken);
+        return result.IsFailure
+            ? CattleInformationActionResultAssembler.ToProblem(this, result.DomainError, localizer)
+            : Ok(CattleResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
+    }
+
     /// <summary>
     ///     Records an effective-dated stage change while retaining the preceding period, including same-day changes.
     /// </summary>
     [HttpPatch("{cattleId:guid}/life-stage")]
     [EndpointSummary("Change the productive stage while retaining its history")]
+    [EndpointDescription("Records a productive stage such as Calf, Heifer, MilkingCow or FatteningBull with validFrom and expectedVersion. To combine stage and identity changes atomically, use PATCH /api/v1/cattle/{cattleId}. Collars are managed through /api/v1/ranches/{ranchId}/devices/{deviceId}/assignments.")]
     [ProducesResponseType<CattleResource>(StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeLifeStageAsync(Guid ranchId, Guid cattleId, ChangeLifeStageResource resource,
         CancellationToken cancellationToken)
