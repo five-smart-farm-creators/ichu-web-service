@@ -103,5 +103,8 @@ public class CattleInformationCattleLookupTests
 
         public Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The lookup resolves single animals and lots only.");
+
+        public Task<IReadOnlyList<CattlePlacementSnapshot>> FindActivePlacementsAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The lookup resolves single animals and lots only.");
     }
 }

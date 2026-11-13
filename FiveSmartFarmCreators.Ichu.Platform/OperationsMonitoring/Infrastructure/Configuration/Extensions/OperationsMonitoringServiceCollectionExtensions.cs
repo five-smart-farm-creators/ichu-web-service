@@ -53,12 +53,14 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IMonitoringThresholdQueryService, MonitoringThresholdQueryService>();
         services.AddScoped<IGeofenceQueryService, GeofenceQueryService>();
         services.AddScoped<IMonitoringRuleSetQueryService, MonitoringRuleSetQueryService>();
+        services.AddScoped<IEdgeDeviceAssignmentQueryService, EdgeDeviceAssignmentQueryService>();
         services.AddScoped<ILivestockOperationQueryService, LivestockOperationQueryService>();
         services.AddScoped<IReproductiveHistoryQueryService, ReproductiveHistoryQueryService>();
 
         services.AddScoped<ICattleLookup, CattleInformationCattleLookup>();
         services.AddScoped<IDeviceAttributionLookup, IoTAssetsDeviceAttributionLookup>();
         services.AddScoped<IEdgeGatewayAuthenticator, IoTAssetsEdgeGatewayAuthenticator>();
+        services.AddScoped<IEdgeDeviceAssignmentLookup, IoTAssetsEdgeDeviceAssignmentLookup>();
 
         services.AddScoped<IOperationsMonitoringContextFacade, OperationsMonitoringContextFacade>();
         services.AddScoped<DevelopmentMonitoringRulesSeeder>();

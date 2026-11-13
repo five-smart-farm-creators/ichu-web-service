@@ -231,6 +231,9 @@ public class PlatformAnalyticsSourceTests
 
         public Task<CattleLifecycleSnapshot?> FindLifecycleAsync(Guid cattleId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The analytics source reads the herd only.");
+
+        public Task<IReadOnlyList<CattlePlacementSnapshot>> FindActivePlacementsAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The analytics source reads the herd only.");
     }
 
     private sealed class FakeOperationsMonitoring : IOperationsMonitoringContextFacade

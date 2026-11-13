@@ -36,5 +36,6 @@ public class EdgeGatewayKeyHeaderTransformer : IOpenApiOperationTransformer
     private static bool IsEdgeGatewayOperation(ControllerActionDescriptor? action) =>
         action is not null &&
         (action.ControllerTypeInfo.AsType() == typeof(TelemetryController) && action.MethodInfo.Name == nameof(TelemetryController.SynchronizeBatch) ||
-         action.ControllerTypeInfo.AsType() == typeof(EdgeGatewaysController) && action.MethodInfo.Name == nameof(EdgeGatewaysController.GetMonitoringRules));
+         action.ControllerTypeInfo.AsType() == typeof(EdgeGatewaysController) && (action.MethodInfo.Name == nameof(EdgeGatewaysController.GetMonitoringRules) ||
+             action.MethodInfo.Name == nameof(EdgeGatewaysController.GetDeviceAssignments)));
 }

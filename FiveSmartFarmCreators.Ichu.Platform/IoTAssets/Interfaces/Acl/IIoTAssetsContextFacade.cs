@@ -33,4 +33,7 @@ public interface IIoTAssetsContextFacade
     /// <summary>Finds the animal that a device served at an instant, for trusted in-process callers that authorize the result themselves.</summary>
     /// <returns>The device attribution, or null when the device does not exist.</returns>
     Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant, CancellationToken cancellationToken);
+
+    /// <summary>Lists the open assignments of the ranch's collars to animals, for trusted in-process callers that authorize the result themselves.</summary>
+    Task<IReadOnlyList<DeviceAssignmentSnapshot>> FindOpenCollarAssignmentsAsync(Guid ranchId, CancellationToken cancellationToken);
 }
