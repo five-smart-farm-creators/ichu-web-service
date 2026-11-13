@@ -87,7 +87,7 @@ public class PlannedActivityCommandServiceTests
         _cattle.Members.Add((RanchId, OtherCattleId));
 
         var result = await _service.HandleAsync(
-            new RecordApplicationCommand(RanchId, activity.Id, OtherCattleId, ScheduledAt, null), CancellationToken.None);
+            new RecordApplicationCommand(activity.Id, OtherCattleId, ScheduledAt, null), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.ActivityCattleMismatch.Code, result.DomainError.Code);
         Assert.Empty(activity.Applications);
@@ -102,7 +102,7 @@ public class PlannedActivityCommandServiceTests
         _access.Grants = [PlanningPermission.ReadPlanning, PlanningPermission.ManagePlanning];
 
         var result = await _service.HandleAsync(
-            new RecordApplicationCommand(RanchId, activity.Id, CattleId, ScheduledAt, null), CancellationToken.None);
+            new RecordApplicationCommand(activity.Id, CattleId, ScheduledAt, null), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.RanchAccessDenied.Code, result.DomainError.Code);
         Assert.Empty(activity.Applications);
@@ -117,7 +117,7 @@ public class PlannedActivityCommandServiceTests
         _interventions.Interventions[interventionId] = new ClinicalInterventionSnapshot(interventionId, RanchId, OtherCattleId);
 
         var result = await _service.HandleAsync(
-            new RecordApplicationCommand(RanchId, activity.Id, CattleId, ScheduledAt, interventionId), CancellationToken.None);
+            new RecordApplicationCommand(activity.Id, CattleId, ScheduledAt, interventionId), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.InterventionCattleMismatch.Code, result.DomainError.Code);
         Assert.Empty(activity.Applications);
@@ -130,7 +130,7 @@ public class PlannedActivityCommandServiceTests
         _cattle.Members.Add((RanchId, CattleId));
 
         var result = await _service.HandleAsync(
-            new RecordApplicationCommand(RanchId, activity.Id, CattleId, ScheduledAt, null), CancellationToken.None);
+            new RecordApplicationCommand(activity.Id, CattleId, ScheduledAt, null), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Single(activity.Applications);

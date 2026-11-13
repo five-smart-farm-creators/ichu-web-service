@@ -19,7 +19,7 @@ public sealed class PlannedActivityQueryService(
 {
     /// <inheritdoc />
     public Task<Result<PlannedActivity>> HandleAsync(GetPlannedActivityByIdQuery query, CancellationToken cancellationToken) =>
-        FindReadableAsync(query.RanchId, query.ActivityId, cancellationToken);
+        FindReadableAsync(query.ActivityId, cancellationToken);
 
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<PlannedActivity>>> HandleAsync(GetPlanningCalendarQuery query, CancellationToken cancellationToken)
@@ -49,7 +49,7 @@ public sealed class PlannedActivityQueryService(
         GetApplicationRecordsByActivityQuery query,
         CancellationToken cancellationToken)
     {
-        var activity = await FindReadableAsync(query.RanchId, query.ActivityId, cancellationToken);
+        var activity = await FindReadableAsync(query.ActivityId, cancellationToken);
         if (activity.IsFailure)
         {
             return Result<IReadOnlyList<ApplicationRecord>>.Failure(activity.DomainError);
@@ -62,7 +62,7 @@ public sealed class PlannedActivityQueryService(
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<FollowUp>>> HandleAsync(GetFollowUpsByActivityQuery query, CancellationToken cancellationToken)
     {
-        var activity = await FindReadableAsync(query.RanchId, query.ActivityId, cancellationToken);
+        var activity = await FindReadableAsync(query.ActivityId, cancellationToken);
         if (activity.IsFailure)
         {
             return Result<IReadOnlyList<FollowUp>>.Failure(activity.DomainError);
@@ -72,18 +72,18 @@ public sealed class PlannedActivityQueryService(
             activity.Value!.FollowUps.OrderBy(followUp => followUp.DueAt).ToList());
     }
 
-    private async Task<Result<PlannedActivity>> FindReadableAsync(Guid ranchId, PlannedActivityId activityId, CancellationToken cancellationToken)
+    private async Task<Result<PlannedActivity>> FindReadableAsync(PlannedActivityId activityId, CancellationToken cancellationToken)
     {
-        var access = await guard.EnsureRanchAccessAsync(ranchId, PlanningPermission.ReadPlanning, cancellationToken);
-        if (access.IsFailure)
+        var activity = await activities.FindByIdAsNoTrackingAsync(activityId, cancellationToken);
+        if (activity is null)
         {
-            return Result<PlannedActivity>.Failure(access.DomainError);
+            return Result<PlannedActivity>.Failure(PlanningErrors.ActivityNotFound);
         }
 
-        // The ranch is checked before the lookup, and an activity of another ranch is reported as missing, so identifiers cannot be probed.
-        var activity = await activities.FindByIdAsNoTrackingAsync(activityId, cancellationToken);
-        if (activity is null || activity.RanchId != ranchId)
+        var access = await guard.EnsureRanchAccessAsync(activity.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
+        if (access.IsFailure)
         {
+            // The item route has no ranch identifier, so inaccessible and unknown activities must look the same.
             return Result<PlannedActivity>.Failure(PlanningErrors.ActivityNotFound);
         }
 
