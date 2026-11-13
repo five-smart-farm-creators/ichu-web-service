@@ -86,14 +86,21 @@ public sealed class CattleInformationContextFacade(
             return [];
         }
 
-        // An animal can hold memberships in several lots; its latest assignment is the lot it is in now.
-        var currentLots = (await lots.FindMembershipsByRanchAsNoTrackingAsync(ranchId, cancellationToken))
-            .GroupBy(membership => membership.CattleId.Value)
-            .ToDictionary(group => group.Key,
-                group => (Guid?)group.OrderByDescending(membership => membership.AssignedAt).First().LotId.Value);
+        var currentLots = await FindCurrentLotsAsync(ranchId, cancellationToken);
         var herd = await cattles.FindByRanchAsNoTrackingAsync(ranchId, cancellationToken);
         return herd.Select(cattle => new HerdMemberSnapshot(cattle.Id.Value, currentLots.GetValueOrDefault(cattle.Id.Value),
             cattle.BirthDate, cattle.ExitReason?.ToString(), cattle.ExitDate)).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<CattlePlacementSnapshot>> FindActivePlacementsAsync(Guid ranchId, CancellationToken cancellationToken)
+    {
+        var currentLots = await FindCurrentLotsAsync(ranchId, cancellationToken);
+        var herd = await cattles.FindByRanchAsNoTrackingAsync(ranchId, cancellationToken);
+        return herd.Where(cattle => cattle.Status == CattleStatus.Active)
+            .Select(cattle => new CattlePlacementSnapshot(cattle.Id.Value, currentLots.GetValueOrDefault(cattle.Id.Value),
+                cattle.CurrentStage.ToString()))
+            .ToList();
     }
 
     // Unknown and unauthorized ranches look the same to other contexts, so ids of other ranches cannot be probed.
@@ -106,6 +113,15 @@ public sealed class CattleInformationContextFacade(
 
         var access = await accessService.EnsureReadAccessAsync(ranchId, cancellationToken);
         return access.IsSuccess;
+    }
+
+    // An animal can hold memberships in several lots; its latest assignment is the lot it is in now.
+    private async Task<IReadOnlyDictionary<Guid, Guid?>> FindCurrentLotsAsync(Guid ranchId, CancellationToken cancellationToken)
+    {
+        var memberships = await lots.FindMembershipsByRanchAsNoTrackingAsync(ranchId, cancellationToken);
+        return memberships.GroupBy(membership => membership.CattleId.Value)
+            .ToDictionary(group => group.Key,
+                group => (Guid?)group.OrderByDescending(membership => membership.AssignedAt).First().LotId.Value);
     }
 
     private static CattleSnapshot ToSnapshot(Cattle cattle) => new(
