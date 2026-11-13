@@ -21,6 +21,48 @@ public class LotTests
     }
 
     [Fact]
+    public void Create_TrimsTheGroupingReasonAndStartsWithNoMembers()
+    {
+        var result = Lot.Create(new CreateLotCommand(RanchId, "  Milking group  ", "  Animals in lactation  "));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Milking group", result.Value!.Name);
+        Assert.Equal("Animals in lactation", result.Value.Criterion);
+        Assert.Empty(result.Value.Memberships);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Create_WithoutAGroupingReason_StoresNull(string? criterion)
+    {
+        var result = Lot.Create(new CreateLotCommand(RanchId, "Milking group", criterion));
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value!.Criterion);
+    }
+
+    [Fact]
+    public void Create_AcceptsAGroupingReasonOfExactly120Characters()
+    {
+        var criterion = new string('a', 120);
+
+        var result = Lot.Create(new CreateLotCommand(RanchId, "Milking group", criterion));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(criterion, result.Value!.Criterion);
+    }
+
+    [Fact]
+    public void Create_RejectsAGroupingReasonLongerThan120Characters()
+    {
+        var result = Lot.Create(new CreateLotCommand(RanchId, "Milking group", new string('a', 121)));
+
+        Assert.Equal(CattleInformationErrors.InvalidLotCriterion.Code, result.DomainError.Code);
+    }
+
+    [Fact]
     public void AddCattle_OfAnActiveAnimalAddsOneMembership()
     {
         var lot = NewLot();
