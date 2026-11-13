@@ -41,6 +41,7 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<EdgeGatewayKeyHeaderTransformer>();
     options.AddOperationTransformer<StripeWebhookSecurityTransformer>();
+    options.AddSchemaTransformer<QuoteHeadCountSchemaTransformer>();
 });
 builder.Services.AddSwaggerGen();
 
