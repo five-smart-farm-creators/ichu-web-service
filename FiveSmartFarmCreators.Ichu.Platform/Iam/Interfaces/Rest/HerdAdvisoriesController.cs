@@ -15,6 +15,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest;
 [Route("api/v1/ranches/{ranchId:guid}/herd-advisories")]
 [Authorize(AuthenticationSchemes = "Firebase")]
 [Produces(MediaTypeNames.Application.Json)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
 [Tags("Veterinary Access Requests")]
 public sealed class HerdAdvisoriesController(
     IHerdAdvisoryCommandService commands,
@@ -22,6 +23,7 @@ public sealed class HerdAdvisoriesController(
     IStringLocalizer<IamMessages> localizer) : ControllerBase
 {
     [HttpPost]
+    [Obsolete("Use POST /api/v1/veterinary-access-requests with ranchId and reason.")]
     [EndpointSummary("Request ranch access as a veterinarian")]
     [EndpointDescription("Compatibility route for POST /api/v1/veterinary-access-requests. Only an authenticated veterinarian with a complete profile can request access. The request starts as Pending, grants no access and returns 409 when a pending request or active authorization already exists.")]
     [ProducesResponseType<AdvisoryResource>(StatusCodes.Status201Created)]
@@ -44,6 +46,7 @@ public sealed class HerdAdvisoriesController(
     }
 
     [HttpGet]
+    [Obsolete("Use GET /api/v1/veterinary-access-requests?ranchId=....")]
     [EndpointSummary("List veterinary access requests through the ranch route")]
     [EndpointDescription("Compatibility route for GET /api/v1/veterinary-access-requests?ranchId=.... The authenticated ranch owner sees every request and authorization for the ranch, with the professional profile. Veterinarians see only their own requests and authorizations, including pending, rejected, revoked and expired entries.")]
     [ProducesResponseType<IReadOnlyList<AdvisoryResource>>(StatusCodes.Status200OK)]
@@ -61,6 +64,7 @@ public sealed class HerdAdvisoriesController(
     }
 
     [HttpPatch("{advisoryId:guid}")]
+    [Obsolete("Use PATCH /api/v1/veterinary-access-requests/{requestId}.")]
     [EndpointSummary("Decide veterinary access through the ranch route")]
     [EndpointDescription("Compatibility route for PATCH /api/v1/veterinary-access-requests/{requestId}. Only the authenticated ranch owner may grant or reject a pending request, or revoke active access. Granting requires a future expiresAt and scope Read or ClinicalWrite; an omitted scope defaults to Read.")]
     [ProducesResponseType<AdvisoryResource>(StatusCodes.Status200OK)]
