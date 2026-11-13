@@ -1,5 +1,8 @@
 using System.Net;
+using System.Text.Json;
 using FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.Harness;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.OperationsMonitoring;
 
@@ -465,6 +468,105 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("OperationsMonitoring.AnimalNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_WithoutGatewayKey_IsUnauthorized()
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"api/v1/edge-gateways/{Guid.NewGuid()}/device-assignments");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Unauthorized);
+        Assert.Equal("OperationsMonitoring.GatewayUnauthenticated", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_ForAnotherGateway_IsForbidden()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var otherGateway = await Arrange.RegisterGatewayAsync(client, monitored.RanchId, "Second gateway");
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{otherGateway.GetProperty("id").GetGuid()}/device-assignments", monitored.GatewayKey);
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
+        Assert.Equal("OperationsMonitoring.GatewayMismatch", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_ListsEachCollarWithTheLotAndStageOfItsAnimal()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var lot = await Arrange.CreateLotAsync(client, monitored.RanchId, "Milking pen");
+        var lotId = lot.GetProperty("id").GetGuid();
+        await Arrange.AssignToLotAsync(client, monitored.RanchId, lotId, monitored.CattleId, lot.GetProperty("version").GetGuid());
+        var heifer = await Arrange.RegisterCattleAsync(client, monitored.RanchId, "PE-0201", lifeStage: 2);
+        var heiferId = heifer.GetProperty("id").GetGuid();
+        var heiferCollar = await Arrange.RegisterCollarAsync(client, monitored.RanchId, $"COL-{Guid.NewGuid():N}");
+        var heiferCollarId = heiferCollar.GetProperty("id").GetGuid();
+        await Arrange.AssignCollarAsync(client, monitored.RanchId, heiferCollarId, heiferId, heiferCollar.GetProperty("version").GetGuid());
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{monitored.GatewayId}/device-assignments", monitored.GatewayKey);
+
+        var body = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(monitored.RanchId, body.GetProperty("ranchId").GetGuid());
+        var assignments = body.GetProperty("assignments").EnumerateArray().ToList();
+        var deviceIds = assignments.Select(assignment => assignment.GetProperty("deviceId").GetGuid()).ToList();
+        Assert.Equal(deviceIds.OrderBy(id => id), deviceIds);
+        var byDevice = assignments.ToDictionary(assignment => assignment.GetProperty("deviceId").GetGuid());
+        var milking = byDevice[monitored.DeviceId];
+        Assert.Equal(monitored.CattleId, milking.GetProperty("cattleId").GetGuid());
+        Assert.Equal(lotId, milking.GetProperty("lotId").GetGuid());
+        Assert.Equal("MilkingCow", milking.GetProperty("lifeStage").GetString());
+        var heiferAssignment = byDevice[heiferCollarId];
+        Assert.Equal(heiferId, heiferAssignment.GetProperty("cattleId").GetGuid());
+        Assert.Equal(JsonValueKind.Null, heiferAssignment.GetProperty("lotId").ValueKind);
+        Assert.Equal("Heifer", heiferAssignment.GetProperty("lifeStage").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_OmitsTheCollarOfAnExitedAnimal()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        using var cattleResponse = await client.GetAsync($"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}");
+        var cattleVersion = (await cattleResponse.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("cattle").GetProperty("version").GetGuid();
+        using var deactivation = await client.PostJsonAsync($"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/deactivations", new
+        {
+            reason = 2,
+            exitDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            expectedVersion = cattleVersion
+        });
+        await deactivation.ReadBodyAsync(HttpStatusCode.OK);
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{monitored.GatewayId}/device-assignments", monitored.GatewayKey);
+
+        var body = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Empty(body.GetProperty("assignments").EnumerateArray());
+    }
+
+    [Theory]
+    [InlineData("monitoring-rules")]
+    [InlineData("device-assignments")]
+    public async Task OpenApiDocument_DeclaresTheGatewayKeyOnEachEdgeGatewayDownload(string download)
+    {
+        using var host = factory.WithWebHostBuilder(builder => builder.ConfigureAppConfiguration(configuration =>
+            configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["OpenApi:Enabled"] = "true" })));
+        using var client = host.CreateClient();
+
+        using var response = await client.GetAsync("openapi/v1.json");
+
+        var document = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var operation = document.GetProperty("paths").GetProperty($"/api/v1/edge-gateways/{{gatewayId}}/{download}").GetProperty("get");
+        var header = Assert.Single(operation.GetProperty("parameters").EnumerateArray(),
+            parameter => parameter.GetProperty("name").GetString() == "X-Gateway-Key");
+        Assert.Equal("header", header.GetProperty("in").GetString());
+        Assert.True(header.GetProperty("required").GetBoolean());
     }
 
     /// <summary>
