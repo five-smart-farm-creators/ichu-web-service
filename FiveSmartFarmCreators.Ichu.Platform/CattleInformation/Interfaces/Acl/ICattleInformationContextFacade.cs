@@ -33,4 +33,9 @@ public interface ICattleInformationContextFacade
     /// </summary>
     /// <returns>Herd member snapshots, or an empty list when the ranch is not visible to the caller.</returns>
     Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Lists the lot and life stage of every active animal of the ranch, for trusted in-process callers that authorize the result themselves.
+    /// </summary>
+    Task<IReadOnlyList<CattlePlacementSnapshot>> FindActivePlacementsAsync(Guid ranchId, CancellationToken cancellationToken);
 }

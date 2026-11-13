@@ -43,4 +43,8 @@ public sealed class FakeIoTDeviceRepository : IIoTDeviceRepository
 
     public Task<IoTDevice?> FindByAssignedCattleAsNoTrackingAsync(Guid ranchId, Guid cattleId, CancellationToken cancellationToken) =>
         FindByAssignedCattleAsync(ranchId, cattleId, cancellationToken);
+
+    public Task<IReadOnlyList<IoTDevice>> FindAssignedCollarsAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<IoTDevice>>(Items.Where(device => device.RanchId == ranchId && device.Type == DeviceType.SmartCollar
+            && device.Assignments.Any(assignment => assignment.IsOpen())).ToList());
 }
