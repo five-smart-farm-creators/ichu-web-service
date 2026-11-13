@@ -62,26 +62,8 @@ public sealed class CattleCommandService(
             return found;
         }
 
-        var earTag = EarTag.Create(command.EarTag);
-        if (earTag.IsFailure)
-        {
-            return Result<Cattle>.Failure(earTag.DomainError);
-        }
-
-        var duplicate = await FindDuplicateEarTagAsync(command.RanchId, earTag.Value!, command.CattleId, cancellationToken);
-        if (duplicate is not null)
-        {
-            return Result<Cattle>.Failure(duplicate);
-        }
-
-        var update = found.Value!.Update(command, Today());
-        if (update.IsFailure)
-        {
-            return Result<Cattle>.Failure(update.DomainError);
-        }
-
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return found;
+        return await ApplyPatchAsync(found.Value!, new PatchCattleCommand(command.CattleId, command.ExpectedVersion,
+            command.EarTag, command.Breed, command.Sex, command.BirthDate), cancellationToken);
     }
 
     /// <inheritdoc />
@@ -110,29 +92,7 @@ public sealed class CattleCommandService(
             return found;
         }
 
-        if (command.EarTag is { } proposedEarTag)
-        {
-            var earTag = EarTag.Create(proposedEarTag);
-            if (earTag.IsFailure)
-            {
-                return Result<Cattle>.Failure(earTag.DomainError);
-            }
-
-            var duplicate = await FindDuplicateEarTagAsync(animal.RanchId, earTag.Value!, command.CattleId, cancellationToken);
-            if (duplicate is not null)
-            {
-                return Result<Cattle>.Failure(duplicate);
-            }
-        }
-
-        var patch = found.Value!.Patch(command, Today());
-        if (patch.IsFailure)
-        {
-            return Result<Cattle>.Failure(patch.DomainError);
-        }
-
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return found;
+        return await ApplyPatchAsync(found.Value!, command, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -150,14 +110,8 @@ public sealed class CattleCommandService(
             return found;
         }
 
-        var change = found.Value!.ChangeStage(command, Today());
-        if (change.IsFailure)
-        {
-            return Result<Cattle>.Failure(change.DomainError);
-        }
-
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return found;
+        return await ApplyPatchAsync(found.Value!, new PatchCattleCommand(command.CattleId, command.ExpectedVersion,
+            LifeStage: command.LifeStage, ValidFrom: command.ValidFrom), cancellationToken);
     }
 
     /// <inheritdoc />
@@ -183,6 +137,33 @@ public sealed class CattleCommandService(
 
         await unitOfWork.CompleteAsync(cancellationToken);
         return found;
+    }
+
+    private async Task<Result<Cattle>> ApplyPatchAsync(Cattle cattle, PatchCattleCommand command, CancellationToken cancellationToken)
+    {
+        if (command.EarTag is { } proposedEarTag)
+        {
+            var earTag = EarTag.Create(proposedEarTag);
+            if (earTag.IsFailure)
+            {
+                return Result<Cattle>.Failure(earTag.DomainError);
+            }
+
+            var duplicate = await FindDuplicateEarTagAsync(cattle.RanchId, earTag.Value!, cattle.Id, cancellationToken);
+            if (duplicate is not null)
+            {
+                return Result<Cattle>.Failure(duplicate);
+            }
+        }
+
+        var patch = cattle.Patch(command, Today());
+        if (patch.IsFailure)
+        {
+            return Result<Cattle>.Failure(patch.DomainError);
+        }
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+        return Result<Cattle>.Success(cattle);
     }
 
     private async Task<Result<Cattle>> FindAsync(Guid ranchId, CattleId cattleId, CancellationToken cancellationToken)
