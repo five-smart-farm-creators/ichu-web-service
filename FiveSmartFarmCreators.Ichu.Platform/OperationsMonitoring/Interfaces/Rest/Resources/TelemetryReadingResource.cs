@@ -10,6 +10,8 @@ public record TelemetryReadingResource(
     DateTimeOffset ReceivedAt,
     MeasurementResource BodyTemperature,
     MeasurementResource ActivityIndex,
+    MeasurementResource HeartRate,
+    MeasurementResource MethaneIndex,
     MeasurementResource RuminationMinutes,
     MeasurementResource BatteryLevel,
     PositionResource Position);

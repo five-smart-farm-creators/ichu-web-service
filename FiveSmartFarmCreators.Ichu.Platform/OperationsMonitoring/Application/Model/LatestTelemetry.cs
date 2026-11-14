@@ -11,5 +11,7 @@ public record LatestTelemetry(
     TelemetryReading? LastReading,
     TelemetryReading? BodyTemperature,
     TelemetryReading? ActivityIndex,
+    TelemetryReading? HeartRate,
+    TelemetryReading? MethaneIndex,
     TelemetryReading? RuminationMinutes,
     TelemetryReading? LastKnownPosition);

@@ -79,6 +79,8 @@ public class TelemetryReadingQueryService(
             await readings.FindLatestByCattleAsync(query.AnimalId, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.BodyTemperature, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.ActivityIndex, cancellationToken),
+            await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.HeartRate, cancellationToken),
+            await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.MethaneIndex, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.RuminationMinutes, cancellationToken),
             await readings.FindLatestValidByCattleAsync(query.AnimalId, TelemetryField.Position, cancellationToken));
         return Result<LatestTelemetry>.Success(latest);

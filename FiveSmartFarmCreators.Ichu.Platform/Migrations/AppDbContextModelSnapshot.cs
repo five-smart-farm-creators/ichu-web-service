@@ -911,6 +911,30 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                                 .HasColumnType("double precision");
                         });
 
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "HeartRate", "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.TelemetryReading.HeartRate#Measurement", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("InvalidReason")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<double?>("Value")
+                                .HasColumnType("double precision");
+                        });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "MethaneIndex", "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.TelemetryReading.MethaneIndex#Measurement", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("InvalidReason")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<double?>("Value")
+                                .HasColumnType("double precision");
+                        });
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Position", "FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.TelemetryReading.Position#PositionMeasurement", b1 =>
                         {
                             b1.IsRequired();

@@ -121,6 +121,18 @@ public class TelemetryReadingCommandService(
             return Result<TelemetryReading>.Failure(activityIndex.DomainError);
         }
 
+        var heartRate = ToMeasurement(entry.HeartRate);
+        if (heartRate.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(heartRate.DomainError);
+        }
+
+        var methaneIndex = ToMeasurement(entry.MethaneIndex);
+        if (methaneIndex.IsFailure)
+        {
+            return Result<TelemetryReading>.Failure(methaneIndex.DomainError);
+        }
+
         var ruminationMinutes = ToMeasurement(entry.RuminationMinutes);
         if (ruminationMinutes.IsFailure)
         {
@@ -142,7 +154,8 @@ public class TelemetryReadingCommandService(
         }
 
         return TelemetryReading.Create(entry.ReadingId, entry.DeviceId, recordedAt, bodyTemperature.Value!, activityIndex.Value!,
-            ruminationMinutes.Value!, batteryPercent.Value!, position.Value!, gatewayId, ranchId, cattleId, receivedAt);
+            heartRate.Value!, methaneIndex.Value!, ruminationMinutes.Value!, batteryPercent.Value!, position.Value!, gatewayId, ranchId,
+            cattleId, receivedAt);
     }
 
     private static Result<Measurement> ToMeasurement(CapturedMetric? metric) =>

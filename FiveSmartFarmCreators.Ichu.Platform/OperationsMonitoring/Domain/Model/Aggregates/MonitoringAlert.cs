@@ -99,7 +99,7 @@ public sealed class MonitoringAlert : AggregateRoot
         IReadOnlyList<TelemetryReading> supportingReadings,
         DateTimeOffset receivedAt)
     {
-        if (type is not (AlertType.Temperature or AlertType.Activity))
+        if (type is not (AlertType.Temperature or AlertType.Activity or AlertType.HeartRate))
         {
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertTypeNotThreshold);
         }
@@ -355,6 +355,7 @@ public sealed class MonitoringAlert : AggregateRoot
     {
         AlertType.Temperature => MonitoredMetric.BodyTemperature,
         AlertType.Activity => MonitoredMetric.ActivityIndex,
+        AlertType.HeartRate => MonitoredMetric.HeartRate,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 

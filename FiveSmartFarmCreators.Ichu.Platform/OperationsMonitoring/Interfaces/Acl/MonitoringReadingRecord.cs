@@ -10,6 +10,8 @@ public record MonitoringReadingRecord(
     DateTimeOffset RecordedAt,
     double? BodyTemperatureCelsius,
     double? ActivityIndex,
+    double? HeartRate,
+    double? MethaneIndex,
     double? RuminationMinutes,
     double? Latitude,
     double? Longitude,

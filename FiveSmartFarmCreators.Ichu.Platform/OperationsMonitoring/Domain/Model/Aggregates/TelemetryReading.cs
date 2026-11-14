@@ -38,6 +38,10 @@ public sealed class TelemetryReading : AggregateRoot
 
     public Measurement ActivityIndex { get; private set; } = Measurement.Absent();
 
+    public Measurement HeartRate { get; private set; } = Measurement.Absent();
+
+    public Measurement MethaneIndex { get; private set; } = Measurement.Absent();
+
     public Measurement RuminationMinutes { get; private set; } = Measurement.Absent();
 
     public Measurement BatteryPercent { get; private set; } = Measurement.Absent();
@@ -50,6 +54,8 @@ public sealed class TelemetryReading : AggregateRoot
         DateTimeOffset recordedAt,
         Measurement bodyTemperature,
         Measurement activityIndex,
+        Measurement heartRate,
+        Measurement methaneIndex,
         Measurement ruminationMinutes,
         Measurement batteryPercent,
         PositionMeasurement position,
@@ -73,6 +79,16 @@ public sealed class TelemetryReading : AggregateRoot
             return Result<TelemetryReading>.Failure(OperationsMonitoringErrors.ActivityIndexNegative);
         }
 
+        if (heartRate.Value is < 30 or > 200)
+        {
+            return Result<TelemetryReading>.Failure(OperationsMonitoringErrors.HeartRateOutOfRange);
+        }
+
+        if (methaneIndex.Value is < 0 or > 100)
+        {
+            return Result<TelemetryReading>.Failure(OperationsMonitoringErrors.MethaneIndexOutOfRange);
+        }
+
         if (ruminationMinutes.Value < 0)
         {
             return Result<TelemetryReading>.Failure(OperationsMonitoringErrors.RuminationMinutesNegative);
@@ -91,6 +107,8 @@ public sealed class TelemetryReading : AggregateRoot
             RecordedAt = MonitoringTime.Normalize(recordedAt),
             BodyTemperature = bodyTemperature,
             ActivityIndex = activityIndex,
+            HeartRate = heartRate,
+            MethaneIndex = methaneIndex,
             RuminationMinutes = ruminationMinutes,
             BatteryPercent = batteryPercent,
             Position = position,
@@ -107,6 +125,7 @@ public sealed class TelemetryReading : AggregateRoot
     {
         MonitoredMetric.BodyTemperature => BodyTemperature,
         MonitoredMetric.ActivityIndex => ActivityIndex,
+        MonitoredMetric.HeartRate => HeartRate,
         // Every monitored metric is mapped above, so an unknown value is a programming error.
         _ => throw new ArgumentOutOfRangeException(nameof(metric), metric, null)
     };
@@ -118,6 +137,8 @@ public sealed class TelemetryReading : AggregateRoot
         RecordedAt == other.RecordedAt &&
         BodyTemperature == other.BodyTemperature &&
         ActivityIndex == other.ActivityIndex &&
+        HeartRate == other.HeartRate &&
+        MethaneIndex == other.MethaneIndex &&
         RuminationMinutes == other.RuminationMinutes &&
         BatteryPercent == other.BatteryPercent &&
         Position == other.Position;

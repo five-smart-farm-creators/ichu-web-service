@@ -127,7 +127,7 @@
     <value>Both the minimum and maximum values are required.</value>
   </data>
   <data name="OperationsMonitoring.MetricUnknown" xml:space="preserve">
-    <value>The metric must be one of: BodyTemperature, ActivityIndex.</value>
+    <value>The metric must be one of: BodyTemperature, ActivityIndex, HeartRate.</value>
   </data>
   <data name="OperationsMonitoring.SeverityUnknown" xml:space="preserve">
     <value>The severity must be one of: Informative, Warning, Critical.</value>
@@ -197,6 +197,12 @@
   </data>
   <data name="OperationsMonitoring.BatteryLevelOutOfRange" xml:space="preserve">
     <value>Battery level must be between 0 and 100 percent.</value>
+  </data>
+  <data name="OperationsMonitoring.HeartRateOutOfRange" xml:space="preserve">
+    <value>Heart rate must be between 30 and 200 beats per minute.</value>
+  </data>
+  <data name="OperationsMonitoring.MethaneIndexOutOfRange" xml:space="preserve">
+    <value>Methane index must be between 0 and 100.</value>
   </data>
   <data name="OperationsMonitoring.MeasurementValidAndInvalid" xml:space="preserve">
     <value>A measurement cannot be valid and invalid at the same time.</value>

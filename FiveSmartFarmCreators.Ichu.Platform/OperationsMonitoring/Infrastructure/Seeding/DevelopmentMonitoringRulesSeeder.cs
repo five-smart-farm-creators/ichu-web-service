@@ -23,7 +23,8 @@ public sealed class DevelopmentMonitoringRulesSeeder(
     private static readonly DevelopmentThreshold[] Thresholds =
     [
         new(MonitoredMetric.BodyTemperature, 37.8, 39.5, AlertSeverity.Critical),
-        new(MonitoredMetric.ActivityIndex, 15, 85, AlertSeverity.Warning)
+        new(MonitoredMetric.ActivityIndex, 15, 85, AlertSeverity.Warning),
+        new(MonitoredMetric.HeartRate, 48, 84, AlertSeverity.Warning)
     ];
 
     // A square of about 1.1 km around the position used in the edge examples.

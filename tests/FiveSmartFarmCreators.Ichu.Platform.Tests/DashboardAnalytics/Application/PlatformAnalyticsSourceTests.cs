@@ -204,7 +204,7 @@ public class PlatformAnalyticsSourceTests
         new(cattleId, lotId ?? LotId, birthDate ?? new DateOnly(2026, 1, 1), exitReason, exitDate);
 
     private static MonitoringReadingRecord Reading(Guid cattleId, DateTimeOffset recordedAt, double? temperature = 38.5) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), cattleId, recordedAt, temperature, null, null, null, null, null);
+        new(Guid.NewGuid(), Guid.NewGuid(), cattleId, recordedAt, temperature, null, null, null, null, null, null, null);
 
     private static MonitoringAlertRecord Alert(Guid cattleId, AlertType type, DateTimeOffset raisedAt, DateTimeOffset? cleared) =>
         new(Guid.NewGuid(), cattleId, type, AlertSeverity.Critical, raisedAt, null, cleared);

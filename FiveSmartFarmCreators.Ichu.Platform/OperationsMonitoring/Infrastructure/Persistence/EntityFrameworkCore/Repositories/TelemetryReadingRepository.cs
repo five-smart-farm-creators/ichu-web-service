@@ -56,6 +56,8 @@ public class TelemetryReadingRepository(AppDbContext context) : ITelemetryReadin
         {
             TelemetryField.BodyTemperature => readings.Where(r => r.BodyTemperature.Value != null),
             TelemetryField.ActivityIndex => readings.Where(r => r.ActivityIndex.Value != null),
+            TelemetryField.HeartRate => readings.Where(r => r.HeartRate.Value != null),
+            TelemetryField.MethaneIndex => readings.Where(r => r.MethaneIndex.Value != null),
             TelemetryField.RuminationMinutes => readings.Where(r => r.RuminationMinutes.Value != null),
             TelemetryField.BatteryPercent => readings.Where(r => r.BatteryPercent.Value != null),
             TelemetryField.Position => readings.Where(r => r.Position.Latitude != null),

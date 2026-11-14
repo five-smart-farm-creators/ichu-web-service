@@ -22,6 +22,8 @@ public static class SynchronizeEdgeBatchCommandFromResourceAssembler
             reading.RecordedAt,
             ToCapturedMetric(reading.BodyTemperature),
             ToCapturedMetric(reading.ActivityIndex),
+            ToCapturedMetric(reading.HeartRate),
+            ToCapturedMetric(reading.MethaneIndex),
             ToCapturedMetric(reading.RuminationMinutes),
             ToCapturedMetric(reading.BatteryLevel),
             reading.Position is null

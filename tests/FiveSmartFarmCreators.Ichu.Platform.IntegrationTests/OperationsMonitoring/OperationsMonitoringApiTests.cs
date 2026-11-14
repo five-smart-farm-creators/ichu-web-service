@@ -478,6 +478,8 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(38.6, temperature.GetProperty("value").GetDouble());
         Assert.Equal("celsius", temperature.GetProperty("unit").GetString());
         Assert.Equal("Unavailable", latest.GetProperty("activityIndex").GetProperty("status").GetString());
+        Assert.Equal("Unavailable", latest.GetProperty("heartRate").GetProperty("status").GetString());
+        Assert.Equal("Unavailable", latest.GetProperty("methaneIndex").GetProperty("status").GetString());
     }
 
     [Fact]
@@ -498,6 +500,40 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(readingId, reading.GetProperty("readingId").GetGuid());
         Assert.Equal(38.6, reading.GetProperty("bodyTemperature").GetProperty("value").GetDouble());
         Assert.Equal("Valid", reading.GetProperty("bodyTemperature").GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task TelemetryHistory_KeepsHeartRateAndMethaneIndexOfEachReading()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var readingId = Guid.NewGuid();
+        var recordedAt = DateTimeOffset.UtcNow;
+        using var synchronization = await client.PostJsonWithGatewayKeyAsync("api/v1/telemetry/batch", monitored.GatewayKey, new
+        {
+            readings = new[]
+            {
+                new
+                {
+                    readingId,
+                    deviceId = monitored.DeviceId,
+                    recordedAt,
+                    heartRate = new { value = 72.0 },
+                    methaneIndex = new { invalidReason = "Gas sensor warming up" }
+                }
+            }
+        });
+        await synchronization.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var response = await client.GetAsync(
+            $"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/telemetry?from={recordedAt.AddHours(-1).ToQueryValue()}&to={recordedAt.AddHours(1).ToQueryValue()}");
+
+        var history = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var reading = Assert.Single(history.GetProperty("items").EnumerateArray());
+        Assert.Equal(72.0, reading.GetProperty("heartRate").GetProperty("value").GetDouble());
+        Assert.Equal("bpm", reading.GetProperty("heartRate").GetProperty("unit").GetString());
+        Assert.Equal("Invalid", reading.GetProperty("methaneIndex").GetProperty("status").GetString());
+        Assert.Equal("Gas sensor warming up", reading.GetProperty("methaneIndex").GetProperty("invalidReason").GetString());
     }
 
     [Fact]

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - API review: recorded the published/local OpenAPI comparison, affected consumers, migration plans and verified or pending flow results in `docs/api-route-review.md`.
 - Operations and Monitoring: `GET api/v1/edge-gateways/{gatewayId}/device-assignments` lists the collars that serve an active animal of the gateway's ranch, with the animal's life stage and lot, so that an Edge Gateway evaluates readings only for collars of active animals.
+- Operations and Monitoring: telemetry readings carry heart rate in beats per minute and a relative methane index from 0 to 100, which Edge Gateways synchronize and the API returns with the readings and latest indicators; the methane index is not in parts per million and has no alert.
+- Operations and Monitoring: heart rate is a monitored metric, so a threshold raises `HeartRate` alerts; Development seeds a 48–84 bpm Warning threshold for `MilkingCow` and `Heifer` as a demo placeholder, not a clinical range.
 
 ### Changed
 
