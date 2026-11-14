@@ -84,6 +84,12 @@ public class IoTAssetsEdgeDeviceAssignmentLookupTests
 
         public Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The lookup reads open collar assignments only.");
+
+        public Task<WaterControllerAssignmentSnapshot?> FindWaterControllerAssignmentAsync(Guid controllerId, DateTimeOffset instant,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>> GetWaterTroughMonitoringSnapshotsAsync(Guid ranchId,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private sealed class FakeCattleInformationFacade(params CattlePlacementSnapshot[] placements) : ICattleInformationContextFacade
