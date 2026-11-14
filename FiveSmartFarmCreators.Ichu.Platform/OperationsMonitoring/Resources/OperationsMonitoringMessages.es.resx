@@ -127,7 +127,7 @@
     <value>Se requieren los valores mínimo y máximo.</value>
   </data>
   <data name="OperationsMonitoring.MetricUnknown" xml:space="preserve">
-    <value>La métrica debe ser una de: BodyTemperature, ActivityIndex, HeartRate.</value>
+    <value>La métrica debe ser una de: BodyTemperature, ActivityIndex, HeartRate, MethaneIndex.</value>
   </data>
   <data name="OperationsMonitoring.SeverityUnknown" xml:space="preserve">
     <value>La severidad debe ser una de: Informative, Warning, Critical.</value>
@@ -136,7 +136,7 @@
     <value>La severidad de la alerta debe ser una de: Informative, Warning, Critical.</value>
   </data>
   <data name="OperationsMonitoring.AlertTypeUnknown" xml:space="preserve">
-    <value>El tipo de alerta debe ser uno de: Temperature, Activity, Geofence.</value>
+    <value>El tipo de alerta debe ser uno de: Temperature, Activity, HeartRate, Methane, Geofence.</value>
   </data>
   <data name="OperationsMonitoring.ChangeKindUnknown" xml:space="preserve">
     <value>El tipo de cambio debe ser uno de: Evidence, Cleared, Acknowledged.</value>
@@ -233,6 +233,9 @@
   </data>
   <data name="OperationsMonitoring.ThresholdLifeStageLength" xml:space="preserve">
     <value>Una etapa productiva debe tener entre 1 y 40 caracteres.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdLevelsInconsistent" xml:space="preserve">
+    <value>El rango Critical debe contener al rango Warning de la misma etapa productiva y métrica.</value>
   </data>
   <data name="OperationsMonitoring.RanchIdentifierRequired" xml:space="preserve">
     <value>Se requiere un identificador de rancho.</value>

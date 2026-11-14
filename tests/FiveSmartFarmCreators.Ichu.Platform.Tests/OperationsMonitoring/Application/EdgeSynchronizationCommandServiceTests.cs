@@ -182,17 +182,10 @@ public class EdgeSynchronizationCommandServiceTests
     [Fact]
     public async Task AHeartRateAboveTheThresholdRaisesAHeartRateAlertCitingItsReading()
     {
-        var alerts = new FakeAlerts();
-        var alertCommands = new MonitoringAlertCommandService(new FakeAccess(), _cattle, _readings, alerts, new FakeGeofences(),
-            new FakeRuleSets(), _unitOfWork, Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
-        var service = new EdgeSynchronizationCommandService(_gateway,
-            new TelemetryReadingCommandService(_devices, _cattle, _readings, _unitOfWork, Options.Create(_options)), alertCommands,
-            Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
         var alert = new EdgeAlertEntry(new MonitoringAlertId(AlertOne), TelemetryFixtures.DeviceId, AlertType.HeartRate,
             AlertSeverity.Warning, [ReadingOne], 1, 48, 84, null, null);
-        var batch = new SynchronizeEdgeBatchCommand([Entry(ReadingOne, heartRate: new CapturedMetric(120, null))], [alert], []);
 
-        var results = (await service.Handle(batch, CancellationToken.None)).Value!;
+        var (results, alerts) = await SynchronizeWithAlertAsync(Entry(ReadingOne, heartRate: new CapturedMetric(120, null)), alert);
 
         Assert.Equal(new[] { SyncEntryStatus.Accepted, SyncEntryStatus.Accepted }, results.Select(result => result.Status).ToArray());
         var stored = Assert.Single(alerts.Stored);
@@ -200,7 +193,35 @@ public class EdgeSynchronizationCommandServiceTests
         Assert.Equal(120d, stored.DetectedValue);
     }
 
+    [Fact]
+    public async Task AMethaneIndexAboveTheThresholdRaisesAMethaneAlertCitingItsReading()
+    {
+        var alert = new EdgeAlertEntry(new MonitoringAlertId(AlertOne), TelemetryFixtures.DeviceId, AlertType.Methane,
+            AlertSeverity.Warning, [ReadingOne], 1, 0, 60, null, null);
+
+        var (results, alerts) = await SynchronizeWithAlertAsync(Entry(ReadingOne, methaneIndex: new CapturedMetric(80, null)), alert);
+
+        Assert.Equal(new[] { SyncEntryStatus.Accepted, SyncEntryStatus.Accepted }, results.Select(result => result.Status).ToArray());
+        var stored = Assert.Single(alerts.Stored);
+        Assert.Equal(AlertType.Methane, stored.Type);
+        Assert.Equal(80d, stored.DetectedValue);
+    }
+
     private static SynchronizeEdgeBatchCommand Batch(params EdgeReadingEntry[] readings) => new(readings, [], []);
+
+    // Synchronizes one reading and the alert that cites it in the same batch, so that the alert is checked against the ranch rules.
+    private async Task<(IReadOnlyList<SyncEntryResult> Results, FakeAlerts Alerts)> SynchronizeWithAlertAsync(EdgeReadingEntry reading, EdgeAlertEntry alert)
+    {
+        var alerts = new FakeAlerts();
+        var alertCommands = new MonitoringAlertCommandService(new FakeAccess(), _cattle, _readings, alerts, new FakeGeofences(),
+            new FakeRuleSets(), _unitOfWork, Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
+        var service = new EdgeSynchronizationCommandService(_gateway,
+            new TelemetryReadingCommandService(_devices, _cattle, _readings, _unitOfWork, Options.Create(_options)), alertCommands,
+            Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
+
+        var results = (await service.Handle(new SynchronizeEdgeBatchCommand([reading], [alert], []), CancellationToken.None)).Value!;
+        return (results, alerts);
+    }
 
     private static EdgeReadingEntry Entry(
         Guid readingId,

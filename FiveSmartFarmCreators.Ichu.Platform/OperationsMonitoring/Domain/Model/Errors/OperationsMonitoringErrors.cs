@@ -102,6 +102,7 @@ public static class OperationsMonitoringErrors
     public static readonly Error CoordinateOutOfRange = Define("CoordinateOutOfRange", EErrorType.Validation);
     public static readonly Error ThresholdRangeInvalid = Define("ThresholdRangeInvalid", EErrorType.Validation);
     public static readonly Error ThresholdLifeStageLength = Define("ThresholdLifeStageLength", EErrorType.Validation);
+    public static readonly Error ThresholdLevelsInconsistent = Define("ThresholdLevelsInconsistent", EErrorType.Validation);
     public static readonly Error RanchIdentifierRequired = Define("RanchIdentifierRequired", EErrorType.Validation);
     public static readonly Error GeofenceIdentifiersRequired = Define("GeofenceIdentifiersRequired", EErrorType.Validation);
     public static readonly Error GeofenceNameLength = Define("GeofenceNameLength", EErrorType.Validation);

@@ -3,7 +3,7 @@ using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Valu
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Commands;
 
 /// <summary>
-///     Creates or replaces the threshold of a ranch for one life stage and metric.
+///     Creates or replaces the threshold of a ranch for one life stage, metric and severity.
 /// </summary>
 public record ConfigureThresholdCommand(
     Guid RanchId,

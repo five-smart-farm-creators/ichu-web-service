@@ -843,7 +843,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RanchId", "LifeStage", "Metric")
+                    b.HasIndex("RanchId", "LifeStage", "Metric", "Severity")
                         .IsUnique();
 
                     b.ToTable("MonitoringThresholds", "monitoring");

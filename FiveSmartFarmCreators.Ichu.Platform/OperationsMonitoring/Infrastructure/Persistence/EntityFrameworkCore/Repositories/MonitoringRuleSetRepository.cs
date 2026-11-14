@@ -42,6 +42,7 @@ public class MonitoringRuleSetRepository(AppDbContext context) : IMonitoringRule
             .Where(t => t.RanchId == ranchId)
             .OrderBy(t => t.LifeStage)
             .ThenBy(t => t.Metric)
+            .ThenBy(t => t.Severity)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
         var geofences = await context.Set<Geofence>()
