@@ -953,6 +953,71 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Migrations
                     b.ToTable("TelemetryReadings", "monitoring");
                 });
 
+            modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates.WaterTroughReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CapturedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ControllerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GatewayId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HeaterState")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("IsValid")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("RanchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReadingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Temperature")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TemperatureUnit")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WaterTroughId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ControllerId", "ReadingId")
+                        .IsUnique();
+
+                    b.HasIndex("RanchId", "ControllerId", "CapturedAt");
+
+                    b.HasIndex("RanchId", "WaterTroughId", "CapturedAt");
+
+                    b.ToTable("WaterTroughReadings", "monitoring");
+                });
+
             modelBuilder.Entity("FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates.NutritionPlan", b =>
                 {
                     b.Property<Guid>("Id")
