@@ -99,7 +99,7 @@ public sealed class MonitoringAlert : AggregateRoot
         IReadOnlyList<TelemetryReading> supportingReadings,
         DateTimeOffset receivedAt)
     {
-        if (type is not (AlertType.Temperature or AlertType.Activity or AlertType.HeartRate))
+        if (type is not (AlertType.Temperature or AlertType.Activity or AlertType.HeartRate or AlertType.Methane))
         {
             return Result<MonitoringAlert>.Failure(OperationsMonitoringErrors.AlertTypeNotThreshold);
         }
@@ -153,10 +153,12 @@ public sealed class MonitoringAlert : AggregateRoot
         return attachment.IsFailure ? Result<MonitoringAlert>.Failure(attachment.DomainError) : creation;
     }
 
-    public bool IsOpenDuplicateCandidate(AlertType type, Guid cattleId, DateTimeOffset raisedAt) =>
+    // A more severe alert is an escalation, so it is never absorbed by a milder open one.
+    public bool IsOpenDuplicateCandidate(AlertType type, AlertSeverity severity, Guid cattleId, DateTimeOffset raisedAt) =>
         Status == AlertStatus.Pending &&
         ClearedAt is null &&
         Type == type &&
+        Severity >= severity &&
         CattleId == cattleId &&
         (raisedAt - RaisedAt).Duration() <= DeduplicationWindow;
 
@@ -356,6 +358,7 @@ public sealed class MonitoringAlert : AggregateRoot
         AlertType.Temperature => MonitoredMetric.BodyTemperature,
         AlertType.Activity => MonitoredMetric.ActivityIndex,
         AlertType.HeartRate => MonitoredMetric.HeartRate,
+        AlertType.Methane => MonitoredMetric.MethaneIndex,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 

@@ -33,6 +33,8 @@ public record ThresholdRange
 
     public bool IsExceededBy(double value) => value < MinValue || value > MaxValue;
 
+    public bool Contains(ThresholdRange other) => MinValue <= other.MinValue && other.MaxValue <= MaxValue;
+
     private static bool IsValid(double minValue, double maxValue) =>
         double.IsFinite(minValue) && double.IsFinite(maxValue) && minValue < maxValue;
 }

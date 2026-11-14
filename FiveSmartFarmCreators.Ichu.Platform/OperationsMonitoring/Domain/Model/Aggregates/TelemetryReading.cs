@@ -126,6 +126,7 @@ public sealed class TelemetryReading : AggregateRoot
         MonitoredMetric.BodyTemperature => BodyTemperature,
         MonitoredMetric.ActivityIndex => ActivityIndex,
         MonitoredMetric.HeartRate => HeartRate,
+        MonitoredMetric.MethaneIndex => MethaneIndex,
         // Every monitored metric is mapped above, so an unknown value is a programming error.
         _ => throw new ArgumentOutOfRangeException(nameof(metric), metric, null)
     };

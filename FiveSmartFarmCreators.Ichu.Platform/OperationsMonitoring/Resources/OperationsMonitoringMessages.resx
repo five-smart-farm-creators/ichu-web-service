@@ -127,7 +127,7 @@
     <value>Both the minimum and maximum values are required.</value>
   </data>
   <data name="OperationsMonitoring.MetricUnknown" xml:space="preserve">
-    <value>The metric must be one of: BodyTemperature, ActivityIndex, HeartRate.</value>
+    <value>The metric must be one of: BodyTemperature, ActivityIndex, HeartRate, MethaneIndex.</value>
   </data>
   <data name="OperationsMonitoring.SeverityUnknown" xml:space="preserve">
     <value>The severity must be one of: Informative, Warning, Critical.</value>
@@ -136,7 +136,7 @@
     <value>The alert severity must be one of: Informative, Warning, Critical.</value>
   </data>
   <data name="OperationsMonitoring.AlertTypeUnknown" xml:space="preserve">
-    <value>The alert type must be one of: Temperature, Activity, Geofence.</value>
+    <value>The alert type must be one of: Temperature, Activity, HeartRate, Methane, Geofence.</value>
   </data>
   <data name="OperationsMonitoring.ChangeKindUnknown" xml:space="preserve">
     <value>The change kind must be one of: Evidence, Cleared, Acknowledged.</value>
@@ -233,6 +233,9 @@
   </data>
   <data name="OperationsMonitoring.ThresholdLifeStageLength" xml:space="preserve">
     <value>A life stage must contain 1 to 40 characters.</value>
+  </data>
+  <data name="OperationsMonitoring.ThresholdLevelsInconsistent" xml:space="preserve">
+    <value>The Critical range must contain the Warning range of the same life stage and metric.</value>
   </data>
   <data name="OperationsMonitoring.RanchIdentifierRequired" xml:space="preserve">
     <value>A ranch identifier is required.</value>

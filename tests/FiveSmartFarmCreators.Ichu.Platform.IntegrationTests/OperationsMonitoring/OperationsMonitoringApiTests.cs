@@ -47,6 +47,36 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
     }
 
     [Fact]
+    public async Task ConfigureThreshold_AcceptsWarningAndCriticalLevelsOfTheSameMetric()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        using var warningResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(48, 84, "Warning"));
+        await warningResponse.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var criticalResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(40, 90, "Critical"));
+
+        var critical = await criticalResponse.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal("Critical", critical.GetProperty("severity").GetString());
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds");
+        Assert.Equal(2, (await response.ReadJsonAsync(HttpStatusCode.OK)).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ConfigureThreshold_CriticalRangeThatDoesNotContainTheWarningRange_ReturnsValidationProblem()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        using var warningResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(48, 84, "Warning"));
+        await warningResponse.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var response = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(50, 90, "Critical"));
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("OperationsMonitoring.ThresholdLevelsInconsistent", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task DefineGeofence_ForLot_ReturnsCreatedBoundary()
     {
         using var client = factory.CreateClient(TestIdentity.Create());
@@ -687,6 +717,15 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var gateway = await Arrange.RegisterGatewayAsync(client, ranchId, "Corral gateway");
         return new MonitoredRanch(ranchId, cattleId, deviceId, gateway.GetProperty("id").GetGuid(), gateway.GetProperty("key").GetString()!);
     }
+
+    private static object HeartRateThreshold(double minValue, double maxValue, string severity) => new
+    {
+        lifeStage = "MilkingCow",
+        metric = "HeartRate",
+        minValue,
+        maxValue,
+        severity
+    };
 
     private static object GeofenceRequest(Guid lotId, string name) => new
     {

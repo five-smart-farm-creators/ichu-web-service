@@ -149,7 +149,7 @@ public static class ModelBuilderExtensions
             range.Property(r => r.MinValue);
             range.Property(r => r.MaxValue);
         });
-        threshold.HasIndex(t => new { t.RanchId, t.LifeStage, t.Metric }).IsUnique();
+        threshold.HasIndex(t => new { t.RanchId, t.LifeStage, t.Metric, t.Severity }).IsUnique();
     }
 
     private static void ConfigureMonitoringRuleSet(EntityTypeBuilder<MonitoringRuleSet> ruleSet)

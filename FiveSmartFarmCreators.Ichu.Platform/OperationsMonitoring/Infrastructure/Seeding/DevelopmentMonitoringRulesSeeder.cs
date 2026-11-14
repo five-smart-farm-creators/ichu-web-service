@@ -24,7 +24,10 @@ public sealed class DevelopmentMonitoringRulesSeeder(
     [
         new(MonitoredMetric.BodyTemperature, 37.8, 39.5, AlertSeverity.Critical),
         new(MonitoredMetric.ActivityIndex, 15, 85, AlertSeverity.Warning),
-        new(MonitoredMetric.HeartRate, 48, 84, AlertSeverity.Warning)
+        new(MonitoredMetric.HeartRate, 48, 84, AlertSeverity.Warning),
+        new(MonitoredMetric.HeartRate, 40, 90, AlertSeverity.Critical),
+        new(MonitoredMetric.MethaneIndex, 0, 60, AlertSeverity.Warning),
+        new(MonitoredMetric.MethaneIndex, 0, 80, AlertSeverity.Critical)
     ];
 
     // A square of about 1.1 km around the position used in the edge examples.
@@ -44,7 +47,7 @@ public sealed class DevelopmentMonitoringRulesSeeder(
         {
             foreach (var rule in Thresholds)
             {
-                if (await thresholds.FindByRanchLifeStageAndMetricAsync(DevelopmentSeed.RanchId, lifeStage, rule.Metric, cancellationToken) is null)
+                if (await thresholds.FindByRanchLifeStageAndMetricAndSeverityAsync(DevelopmentSeed.RanchId, lifeStage, rule.Metric, rule.Severity, cancellationToken) is null)
                 {
                     missingThresholds.Add((lifeStage, rule));
                 }

@@ -43,6 +43,7 @@ public static class AlertResourceFromEntityAssembler
         AlertType.Temperature => MonitoringUnits.Celsius,
         AlertType.Activity => MonitoringUnits.Index,
         AlertType.HeartRate => MonitoringUnits.BeatsPerMinute,
+        AlertType.Methane => MonitoringUnits.Index,
         _ => null
     };
 }
