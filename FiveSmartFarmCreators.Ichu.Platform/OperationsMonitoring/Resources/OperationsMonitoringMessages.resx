@@ -348,4 +348,31 @@
   <data name="OperationsMonitoring.ReproductiveEventRequiresFemale" xml:space="preserve">
     <value>Reproductive events can only be recorded for female animals.</value>
   </data>
+  <data name="OperationsMonitoring.WaterControllerNotFound" xml:space="preserve">
+    <value>The water controller was not found.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterControllerGatewayAccessDenied" xml:space="preserve">
+    <value>The water controller is not assigned to a water trough of this Edge Gateway's ranch.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterTroughNotFound" xml:space="preserve">
+    <value>The water trough was not found.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingInvalid" xml:space="preserve">
+    <value>The water reading is invalid: readingId, a finite temperature, capturedAt, temperatureUnit and heaterState are required.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingIdentifierConflict" xml:space="preserve">
+    <value>A water reading with this readingId was already stored with different values.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingConcurrentlyStored" xml:space="preserve">
+    <value>The water reading was stored by a concurrent request; retry with the same readingId.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingEventsUnsupported" xml:space="preserve">
+    <value>Water readings do not accept events yet; send an empty or missing events field.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingPeriodOffsetRequired" xml:space="preserve">
+    <value>from and to must be ISO 8601 instants with an explicit offset, such as Z or -05:00.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingPeriodPrecisionInvalid" xml:space="preserve">
+    <value>from and to must not be more precise than microseconds.</value>
+  </data>
 </root>

@@ -135,6 +135,55 @@ public class IoTAssetsContextFacade(
         return new DeviceAttributionSnapshot(device.Id.Value, device.RanchId, cattleId);
     }
 
+    public async Task<WaterControllerAssignmentSnapshot?> FindWaterControllerAssignmentAsync(Guid controllerId,
+        DateTimeOffset instant, CancellationToken cancellationToken)
+    {
+        var device = await deviceRepository.FindByIdAsNoTrackingAsync(new DeviceId(controllerId), cancellationToken);
+        if (device is null)
+        {
+            return null;
+        }
+
+        var assignment = device.Assignments.SingleOrDefault(item => item.CoversInstant(instant));
+        var isWaterController = device.Type == DeviceType.WaterController;
+        var isWaterTroughAssignment = isWaterController && assignment?.TargetType == AssignmentTargetType.WaterTrough;
+        return new WaterControllerAssignmentSnapshot(device.Id.Value, device.RanchId, isWaterController,
+            isWaterTroughAssignment ? assignment!.TargetId : null,
+            isWaterTroughAssignment ? assignment!.StartedAt : null);
+    }
+
+    public async Task<Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>> GetWaterTroughMonitoringSnapshotsAsync(
+        Guid ranchId, CancellationToken cancellationToken)
+    {
+        var troughs = await waterTroughQueryService.HandleAsync(new GetWaterTroughsQuery(ranchId), cancellationToken);
+        if (troughs.IsFailure)
+        {
+            return Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>.Failure(troughs.DomainError);
+        }
+
+        var devices = await deviceQueryService.HandleAsync(new GetDeviceInventoryQuery(ranchId), cancellationToken);
+        if (devices.IsFailure)
+        {
+            return Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>.Failure(devices.DomainError);
+        }
+
+        var assignments = devices.Value!
+            .Where(device => device.Type == DeviceType.WaterController)
+            .SelectMany(device => device.Assignments.Where(assignment => assignment.IsOpen()
+                    && assignment.TargetType == AssignmentTargetType.WaterTrough)
+                .Select(assignment => (ControllerId: device.Id.Value, WaterTroughId: assignment.TargetId,
+                    AssignedAt: assignment.StartedAt)))
+            .ToDictionary(assignment => assignment.WaterTroughId);
+        var snapshots = troughs.Value!.Select(trough =>
+        {
+            var hasAssignment = assignments.TryGetValue(trough.Id.Value, out var assignment);
+            return new WaterTroughMonitoringSnapshot(trough.Id.Value, trough.RanchId, trough.Name, trough.LotId,
+                trough.TemperatureRange?.MinimumCelsius, trough.TemperatureRange?.MaximumCelsius,
+                hasAssignment ? assignment.ControllerId : null, hasAssignment ? assignment.AssignedAt : null);
+        }).ToArray();
+        return Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>.Success(snapshots);
+    }
+
     public async Task<IReadOnlyList<DeviceAssignmentSnapshot>> FindOpenCollarAssignmentsAsync(Guid ranchId,
         CancellationToken cancellationToken)
     {

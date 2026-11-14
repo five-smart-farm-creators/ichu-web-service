@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - API review: recorded the published/local OpenAPI comparison, affected consumers, migration plans and verified or pending flow results in `docs/api-route-review.md`.
+- Operations and Monitoring: added idempotent Edge Gateway water-reading reception and authenticated controller-history and ranch water-trough status queries; documented the TS-14 event gap and unresolved reminder, alert and offline decisions in `docs/water-monitoring-and-reminders-contract.md`.
 - Operations and Monitoring: `GET api/v1/edge-gateways/{gatewayId}/device-assignments` lists the collars that serve an active animal of the gateway's ranch, with the animal's life stage and lot, so that an Edge Gateway evaluates readings only for collars of active animals.
 - Operations and Monitoring: telemetry readings carry heart rate in beats per minute and a relative methane index from 0 to 100, which Edge Gateways synchronize and the API returns with the readings and latest indicators; the methane index is not in parts per million and has no alert.
 - Operations and Monitoring: heart rate is a monitored metric, so a threshold raises `HeartRate` alerts; Development seeds a 48–84 bpm Warning threshold for `MilkingCow` and `Heifer` as a demo placeholder, not a clinical range.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Planning: activity and follow-up creation require their JSON timestamps, and follow-ups must be due strictly after the activity's scheduled UTC time.
 - OpenAPI: compatibility quote, veterinary access and cattle update operations are marked deprecated; public and gateway operations no longer inherit user bearer authentication, and the Stripe webhook documents its signature header and original JSON body.
 - Planning: the calendar requires both inclusive UTC query bounds instead of accepting an omitted bound as a default timestamp.
 - Cattle Information: legacy detail and stage updates share the partial update application case while retaining scoped ranch authorization.
