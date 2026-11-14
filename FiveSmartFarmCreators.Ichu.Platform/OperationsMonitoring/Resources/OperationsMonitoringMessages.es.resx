@@ -342,4 +342,31 @@
   <data name="OperationsMonitoring.ReproductiveEventRequiresFemale" xml:space="preserve">
     <value>Los eventos reproductivos solo pueden registrarse en animales hembra.</value>
   </data>
+  <data name="OperationsMonitoring.WaterControllerNotFound" xml:space="preserve">
+    <value>No se encontró el controlador de agua.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterControllerGatewayAccessDenied" xml:space="preserve">
+    <value>El controlador de agua no está asignado a un bebedero del rancho de este Edge Gateway.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterTroughNotFound" xml:space="preserve">
+    <value>No se encontró el bebedero.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingInvalid" xml:space="preserve">
+    <value>La lectura de agua no es válida: se requieren readingId, una temperatura finita, capturedAt, temperatureUnit y heaterState.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingIdentifierConflict" xml:space="preserve">
+    <value>Ya se guardó una lectura de agua con este readingId y otros valores.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingConcurrentlyStored" xml:space="preserve">
+    <value>Una solicitud simultánea guardó la lectura de agua; reintenta con el mismo readingId.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingEventsUnsupported" xml:space="preserve">
+    <value>Las lecturas de agua aún no aceptan eventos; envía el campo events vacío u omítelo.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingPeriodOffsetRequired" xml:space="preserve">
+    <value>from y to deben ser instantes ISO 8601 con un desfase explícito, como Z o -05:00.</value>
+  </data>
+  <data name="OperationsMonitoring.WaterReadingPeriodPrecisionInvalid" xml:space="preserve">
+    <value>from y to no deben tener una precisión mayor a microsegundos.</value>
+  </data>
 </root>
