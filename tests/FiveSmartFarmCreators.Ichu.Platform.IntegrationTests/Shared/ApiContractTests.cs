@@ -13,6 +13,7 @@ public sealed class ApiContractTests(IchuApiFactory factory)
     [InlineData("get", "/api/v1/quotes")]
     [InlineData("post", "/api/v1/accounts/sessions")]
     [InlineData("post", "/api/v1/telemetry/batch")]
+    [InlineData("post", "/api/v1/water-controllers/{controllerId}/readings")]
     [InlineData("post", "/api/v1/payments/stripe/webhooks")]
     [InlineData("get", "/api/v1/edge-gateways/{gatewayId}/monitoring-rules")]
     [InlineData("get", "/api/v1/edge-gateways/{gatewayId}/device-assignments")]
@@ -37,6 +38,10 @@ public sealed class ApiContractTests(IchuApiFactory factory)
     [InlineData("patch", "/api/v1/cattle/{cattleId}", "200", true)]
     [InlineData("post", "/api/v1/mobile-sync/batch", "200", true)]
     [InlineData("post", "/api/v1/telemetry/batch", "200", true)]
+    [InlineData("post", "/api/v1/water-controllers/{controllerId}/readings", "201", true)]
+    [InlineData("get", "/api/v1/water-controllers/{controllerId}/readings", "200", false)]
+    [InlineData("get", "/api/v1/ranches/{ranchId}/water-troughs/status", "200", false)]
+    [InlineData("get", "/api/v1/ranches/{ranchId}/water-troughs/{waterTroughId}/status", "200", false)]
     public async Task OpenApi_ReviewedFlows_DescribePurposeInputsAndResults(string method, string path, string successStatus, bool hasBody)
     {
         var document = await DocumentAsync();
@@ -126,6 +131,40 @@ public sealed class ApiContractTests(IchuApiFactory factory)
         {
             await File.WriteAllTextAsync(snapshotPath, document.GetRawText());
         }
+    }
+
+    [Fact]
+    public async Task OpenApi_WaterReadingDocumentsRequiredFieldsGatewayHeaderAndUserQueryBounds()
+    {
+        var document = await DocumentAsync();
+        var receive = Operation(document, "post", "/api/v1/water-controllers/{controllerId}/readings");
+        var gatewayKey = Assert.Single(receive.GetProperty("parameters").EnumerateArray(),
+            parameter => parameter.GetProperty("name").GetString() == "X-Gateway-Key");
+        Assert.Equal("header", gatewayKey.GetProperty("in").GetString());
+        Assert.True(gatewayKey.GetProperty("required").GetBoolean());
+        Assert.Empty(receive.GetProperty("security").EnumerateArray());
+
+        var schemaReference = receive.GetProperty("requestBody").GetProperty("content")
+            .GetProperty("application/json").GetProperty("schema").GetProperty("$ref").GetString()!;
+        var schemaName = schemaReference[(schemaReference.LastIndexOf('/') + 1)..];
+        var required = document.GetProperty("components").GetProperty("schemas").GetProperty(schemaName)
+            .GetProperty("required").EnumerateArray().Select(value => value.GetString()).ToHashSet();
+        Assert.Contains("readingId", required);
+        Assert.Contains("temperature", required);
+        Assert.Contains("temperatureUnit", required);
+        Assert.Contains("isValid", required);
+        Assert.Contains("heaterState", required);
+        Assert.Contains("capturedAt", required);
+        Assert.DoesNotContain("events", required);
+
+        var history = Operation(document, "get", "/api/v1/water-controllers/{controllerId}/readings");
+        foreach (var name in new[] { "from", "to" })
+        {
+            var bound = Assert.Single(history.GetProperty("parameters").EnumerateArray(),
+                parameter => parameter.GetProperty("name").GetString() == name);
+            Assert.True(bound.GetProperty("required").GetBoolean());
+        }
+        Assert.False(history.TryGetProperty("security", out var security) && security.GetArrayLength() == 0);
     }
 
     private async Task<JsonElement> DocumentAsync()
