@@ -28,6 +28,8 @@ public static class OperationsMonitoringErrors
     public static readonly Error GeofenceNotInRanch = Define("GeofenceNotInRanch", EErrorType.NotFound);
     public static readonly Error AlertNotSynchronized = Define("AlertNotSynchronized", EErrorType.NotFound);
     public static readonly Error DeviceNotRegistered = Define("DeviceNotRegistered", EErrorType.NotFound);
+    public static readonly Error WaterControllerNotFound = Define("WaterControllerNotFound", EErrorType.NotFound);
+    public static readonly Error WaterTroughNotFound = Define("WaterTroughNotFound", EErrorType.NotFound);
 
     public static readonly Error GeofenceAlreadyDefined = Define("GeofenceAlreadyDefined", EErrorType.Conflict);
     public static readonly Error AlertConflict = Define("AlertConflict", EErrorType.Conflict);
@@ -38,6 +40,8 @@ public static class OperationsMonitoringErrors
     public static readonly Error AlertChangeConflict = Define("AlertChangeConflict", EErrorType.Conflict);
     public static readonly Error ReadingIdentifierConflict = Define("ReadingIdentifierConflict", EErrorType.Conflict);
     public static readonly Error ReadingConcurrentlyStored = Define("ReadingConcurrentlyStored", EErrorType.Conflict);
+    public static readonly Error WaterReadingIdentifierConflict = Define("WaterReadingIdentifierConflict", EErrorType.Conflict);
+    public static readonly Error WaterReadingConcurrentlyStored = Define("WaterReadingConcurrentlyStored", EErrorType.Conflict);
     public static readonly Error AlertConcurrentlyStored = Define("AlertConcurrentlyStored", EErrorType.Conflict);
     public static readonly Error AlertChangeConcurrentlyStored = Define("AlertChangeConcurrentlyStored", EErrorType.Conflict);
     public static readonly Error LivestockOperationConcurrentlyStored = Define("LivestockOperationConcurrentlyStored", EErrorType.Conflict);
@@ -128,6 +132,11 @@ public static class OperationsMonitoringErrors
     public static readonly Error SupportingReadingNotSynchronized = Define("SupportingReadingNotSynchronized", EErrorType.Validation);
     public static readonly Error EdgeAttentionAuthorRequired = Define("EdgeAttentionAuthorRequired", EErrorType.Validation);
     public static readonly Error EdgeAttentionVersionRequired = Define("EdgeAttentionVersionRequired", EErrorType.Validation);
+    public static readonly Error WaterControllerGatewayAccessDenied = Define("WaterControllerGatewayAccessDenied", EErrorType.Forbidden);
+    public static readonly Error WaterReadingInvalid = Define("WaterReadingInvalid", EErrorType.Validation);
+    public static readonly Error WaterReadingPeriodPrecisionInvalid = Define("WaterReadingPeriodPrecisionInvalid", EErrorType.Validation);
+    public static readonly Error WaterReadingEventsUnsupported = Define("WaterReadingEventsUnsupported", EErrorType.Validation);
+    public static readonly Error WaterReadingPeriodOffsetRequired = Define("WaterReadingPeriodOffsetRequired", EErrorType.Validation);
 
     private static Error Define(string name, EErrorType type)
     {
