@@ -99,4 +99,7 @@
   <data name="Planning.ConcurrentModification" xml:space="preserve">
     <value>Los datos de planificación cambiaron mientras se procesaba la solicitud; envíela de nuevo.</value>
   </data>
+  <data name="Planning.FollowUpDueAtInvalid" xml:space="preserve">
+    <value>The follow-up due time must be after the activity's scheduled time.</value>
+  </data>
 </root>

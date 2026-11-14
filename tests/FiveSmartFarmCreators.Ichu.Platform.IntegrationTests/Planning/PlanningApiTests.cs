@@ -1,6 +1,10 @@
 using System.Net;
 using System.Text.Json;
 using FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.Harness;
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.Planning;
 
@@ -79,6 +83,39 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
     }
 
     [Fact]
+    public async Task ScheduleActivity_WithoutScheduledAt_ReturnsBadRequestAndRecordsNothing()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/planned-activities", new
+        {
+            title = "Missing schedule"
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.True(problem.TryGetProperty("errors", out _));
+        await AssertNoActivitiesAsync(ranchId);
+    }
+
+    [Fact]
+    public async Task ScheduleActivity_WithANonUtcSchedule_ReturnsBadRequestAndRecordsNothing()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+
+        using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/planned-activities", new
+        {
+            title = "Local schedule",
+            scheduledAt = ScheduledAt.ToOffset(TimeSpan.FromHours(-5))
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("Planning.UtcTimestampRequired", problem.GetProperty("code").GetString());
+        await AssertNoActivitiesAsync(ranchId);
+    }
+
+    [Fact]
     public async Task RecordApplication_LinkedToClinicalIntervention_IsListedWithActivity()
     {
         using var client = factory.CreateClient(TestIdentity.Create());
@@ -113,10 +150,68 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
 
         using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new { dueAt });
 
-        await response.ReadBodyAsync(HttpStatusCode.Created);
+        var created = await response.ReadJsonAsync(HttpStatusCode.Created);
+        Assert.Equal(activityId, created.GetProperty("activityId").GetGuid());
+        Assert.Equal(dueAt, created.GetProperty("dueAt").GetDateTimeOffset());
         using var listing = await client.GetAsync($"api/v1/planned-activities/{activityId}/follow-ups");
         var followUp = Assert.Single((await listing.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
+        Assert.Equal(created.GetProperty("id").GetGuid(), followUp.GetProperty("id").GetGuid());
+        Assert.Equal(activityId, followUp.GetProperty("activityId").GetGuid());
         Assert.Equal(dueAt, followUp.GetProperty("dueAt").GetDateTimeOffset());
+    }
+
+    [Fact]
+    public async Task ScheduleFollowUp_WithoutDueAt_ReturnsBadRequestAndRecordsNothing()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        var activityId = (await ScheduleActivityAsync(client, ranchId, null, null, "Check vaccination response")).GetProperty("id").GetGuid();
+
+        using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new { });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.True(problem.TryGetProperty("errors", out _));
+        await AssertNoFollowUpsAsync(client, activityId);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    public async Task ScheduleFollowUp_DueAtOrBeforeTheActivity_ReturnsBadRequestAndRecordsNothing(int daysAfterActivity)
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        var activityId = (await ScheduleActivityAsync(client, ranchId, null, null, "Check vaccination response")).GetProperty("id").GetGuid();
+
+        using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new
+        {
+            dueAt = ScheduledAt.AddDays(daysAfterActivity)
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("Planning.FollowUpDueAtInvalid", problem.GetProperty("code").GetString());
+        Assert.Equal("The follow-up due time must be after the activity's scheduled time.", problem.GetProperty("title").GetString());
+        await AssertNoFollowUpsAsync(client, activityId);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(7)]
+    public async Task ScheduleFollowUp_WithANonUtcDueInstant_ReturnsBadRequestAndRecordsNothing(int daysAfterActivity)
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        var activityId = (await ScheduleActivityAsync(client, ranchId, null, null, "Check vaccination response")).GetProperty("id").GetGuid();
+
+        using var response = await client.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new
+        {
+            dueAt = ScheduledAt.AddDays(daysAfterActivity).ToOffset(TimeSpan.FromHours(-5))
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("Planning.UtcTimestampRequired", problem.GetProperty("code").GetString());
+        await AssertNoFollowUpsAsync(client, activityId);
     }
 
     [Fact]
@@ -198,10 +293,13 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("Planning.CattleNotFound", problem.GetProperty("code").GetString());
+        await AssertNoActivitiesAsync(plannerRanchId);
     }
 
-    [Fact]
-    public async Task GetActivity_ByManagerWithoutRanchAccess_IsNotFound()
+    [Theory]
+    [InlineData("")]
+    [InlineData("/follow-ups")]
+    public async Task GetActivityOrFollowUps_ByManagerWithoutRanchAccess_IsNotFound(string suffix)
     {
         using var owner = factory.CreateClient(TestIdentity.Create());
         var ranchId = await owner.RegisterManagerAsync();
@@ -209,10 +307,64 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
         using var outsider = factory.CreateClient(TestIdentity.Create());
         await outsider.RegisterManagerAsync();
 
-        using var response = await outsider.GetAsync($"api/v1/planned-activities/{activityId}");
+        using var response = await outsider.GetAsync($"api/v1/planned-activities/{activityId}{suffix}");
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("Planning.ActivityNotFound", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task ScheduleFollowUp_ByManagerWithoutRanchAccess_IsNotFoundAndRecordsNothing()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var activityId = (await ScheduleActivityAsync(owner, ranchId, null, null, "Private activity")).GetProperty("id").GetGuid();
+        using var outsider = factory.CreateClient(TestIdentity.Create());
+        await outsider.RegisterManagerAsync();
+
+        using var response = await outsider.PostJsonAsync($"api/v1/planned-activities/{activityId}/follow-ups", new
+        {
+            dueAt = ScheduledAt.AddDays(1)
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("Planning.ActivityNotFound", problem.GetProperty("code").GetString());
+        await AssertNoFollowUpsAsync(owner, activityId);
+    }
+
+    [Fact]
+    public async Task ScheduleActivity_ByManagerWithoutRanchAccess_IsForbiddenAndRecordsNothing()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        using var outsider = factory.CreateClient(TestIdentity.Create());
+        await outsider.RegisterManagerAsync();
+
+        using var response = await outsider.PostJsonAsync($"api/v1/ranches/{ranchId}/planned-activities", new
+        {
+            title = "Foreign activity",
+            scheduledAt = ScheduledAt
+        });
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
+        Assert.Equal("Planning.RanchAccessDenied", problem.GetProperty("code").GetString());
+        await AssertNoActivitiesAsync(ranchId);
+    }
+
+    [Fact]
+    public async Task Calendar_ByManagerWithoutRanchAccess_IsForbidden()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        await ScheduleActivityAsync(owner, ranchId, null, null, "Private activity");
+        using var outsider = factory.CreateClient(TestIdentity.Create());
+        await outsider.RegisterManagerAsync();
+
+        using var response = await outsider.GetAsync(
+            $"api/v1/ranches/{ranchId}/calendar?from={ScheduledAt.ToQueryValue()}&to={ScheduledAt.AddDays(1).ToQueryValue()}");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
+        Assert.Equal("Planning.RanchAccessDenied", problem.GetProperty("code").GetString());
     }
 
     [Fact]
@@ -246,6 +398,19 @@ public sealed class PlanningApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.NotFound);
         Assert.Equal("Planning.CampaignNotFound", problem.GetProperty("code").GetString());
+    }
+
+    private async Task AssertNoActivitiesAsync(Guid ranchId)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await context.Set<PlannedActivity>().AnyAsync(activity => activity.RanchId == ranchId));
+    }
+
+    private static async Task AssertNoFollowUpsAsync(HttpClient client, Guid activityId)
+    {
+        using var response = await client.GetAsync($"api/v1/planned-activities/{activityId}/follow-ups");
+        Assert.Empty((await response.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
     }
 
     private static async Task<JsonElement> CreateCampaignAsync(HttpClient client, Guid ranchId, string name)

@@ -34,6 +34,14 @@ public interface IIoTAssetsContextFacade
     /// <returns>The device attribution, or null when the device does not exist.</returns>
     Task<DeviceAttributionSnapshot?> FindDeviceAttributionAsync(Guid deviceId, DateTimeOffset instant, CancellationToken cancellationToken);
 
+    /// <summary>Resolves a water controller and its historical trough assignment for a trusted integration at capture time.</summary>
+    Task<WaterControllerAssignmentSnapshot?> FindWaterControllerAssignmentAsync(Guid controllerId,
+        DateTimeOffset instant, CancellationToken cancellationToken);
+
+    /// <summary>Returns water trough facts and current controller assignments after enforcing IoT Assets read access for the ranch.</summary>
+    Task<Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>> GetWaterTroughMonitoringSnapshotsAsync(Guid ranchId,
+        CancellationToken cancellationToken);
+
     /// <summary>Lists the open assignments of the ranch's collars to animals, for trusted in-process callers that authorize the result themselves.</summary>
     Task<IReadOnlyList<DeviceAssignmentSnapshot>> FindOpenCollarAssignmentsAsync(Guid ranchId, CancellationToken cancellationToken);
 }
