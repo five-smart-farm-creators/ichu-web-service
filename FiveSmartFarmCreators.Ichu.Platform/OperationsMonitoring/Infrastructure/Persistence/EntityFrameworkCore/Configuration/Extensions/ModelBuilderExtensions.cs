@@ -41,6 +41,8 @@ public static class ModelBuilderExtensions
         reading.HasIndex(r => new { r.RanchId, r.RecordedAt });
         reading.ComplexProperty(r => r.BodyTemperature, ConfigureMeasurement);
         reading.ComplexProperty(r => r.ActivityIndex, ConfigureMeasurement);
+        reading.ComplexProperty(r => r.HeartRate, ConfigureMeasurement);
+        reading.ComplexProperty(r => r.MethaneIndex, ConfigureMeasurement);
         reading.ComplexProperty(r => r.RuminationMinutes, ConfigureMeasurement);
         reading.ComplexProperty(r => r.BatteryPercent, ConfigureMeasurement);
         reading.ComplexProperty(r => r.Position, position =>

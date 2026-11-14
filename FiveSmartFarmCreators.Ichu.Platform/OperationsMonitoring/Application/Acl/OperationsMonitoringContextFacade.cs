@@ -100,6 +100,8 @@ public class OperationsMonitoringContextFacade(
             reading.RecordedAt,
             reading.BodyTemperature.Value,
             reading.ActivityIndex.Value,
+            reading.HeartRate.Value,
+            reading.MethaneIndex.Value,
             reading.RuminationMinutes.Value,
             reading.Position.Latitude,
             reading.Position.Longitude,

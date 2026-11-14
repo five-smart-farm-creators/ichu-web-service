@@ -18,6 +18,7 @@ public class EdgeSynchronizationCommandServiceTests
 {
     private static readonly Guid ReadingOne = Guid.Parse("88888888-8888-4888-8888-888888888888");
     private static readonly Guid ReadingTwo = Guid.Parse("99999999-9999-4999-8999-999999999999");
+    private static readonly Guid AlertOne = Guid.Parse("cccccccc-cccc-4ccc-8ccc-cccccccccccc");
     private static readonly Guid UnknownDevice = Guid.Parse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
     private static readonly Guid OtherRanch = Guid.Parse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
 
@@ -155,6 +156,50 @@ public class EdgeSynchronizationCommandServiceTests
         Assert.Equal(OperationsMonitoringErrors.InvalidEdgeBatchSize.Code, oversized.DomainError.Code);
     }
 
+    [Fact]
+    public async Task AReadingWithAnInvalidMethaneIndexIsStoredWithItsReason()
+    {
+        var result = (await _service.Handle(
+            Batch(Entry(ReadingOne, methaneIndex: new CapturedMetric(null, "Gas sensor warming up"))), CancellationToken.None)).Value!.Single();
+
+        Assert.Equal(SyncEntryStatus.Accepted, result.Status);
+        var stored = Assert.Single(_readings.Stored);
+        Assert.Equal(MeasurementStatus.Invalid, stored.MethaneIndex.Status);
+        Assert.Equal("Gas sensor warming up", stored.MethaneIndex.InvalidReason);
+    }
+
+    [Fact]
+    public async Task AHeartRateOutsideThePhysiologicalRangeIsRejectedWithItsReason()
+    {
+        var result = (await _service.Handle(
+            Batch(Entry(ReadingOne, heartRate: new CapturedMetric(250, null))), CancellationToken.None)).Value!.Single();
+
+        Assert.Equal(SyncEntryStatus.Rejected, result.Status);
+        Assert.Equal(OperationsMonitoringErrors.HeartRateOutOfRange.Message, result.Reason);
+        Assert.Empty(_readings.Stored);
+    }
+
+    [Fact]
+    public async Task AHeartRateAboveTheThresholdRaisesAHeartRateAlertCitingItsReading()
+    {
+        var alerts = new FakeAlerts();
+        var alertCommands = new MonitoringAlertCommandService(new FakeAccess(), _cattle, _readings, alerts, new FakeGeofences(),
+            new FakeRuleSets(), _unitOfWork, Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
+        var service = new EdgeSynchronizationCommandService(_gateway,
+            new TelemetryReadingCommandService(_devices, _cattle, _readings, _unitOfWork, Options.Create(_options)), alertCommands,
+            Options.Create(_options), new FakeTimeProvider(TelemetryFixtures.ReceivedAt));
+        var alert = new EdgeAlertEntry(new MonitoringAlertId(AlertOne), TelemetryFixtures.DeviceId, AlertType.HeartRate,
+            AlertSeverity.Warning, [ReadingOne], 1, 48, 84, null, null);
+        var batch = new SynchronizeEdgeBatchCommand([Entry(ReadingOne, heartRate: new CapturedMetric(120, null))], [alert], []);
+
+        var results = (await service.Handle(batch, CancellationToken.None)).Value!;
+
+        Assert.Equal(new[] { SyncEntryStatus.Accepted, SyncEntryStatus.Accepted }, results.Select(result => result.Status).ToArray());
+        var stored = Assert.Single(alerts.Stored);
+        Assert.Equal(AlertType.HeartRate, stored.Type);
+        Assert.Equal(120d, stored.DetectedValue);
+    }
+
     private static SynchronizeEdgeBatchCommand Batch(params EdgeReadingEntry[] readings) => new(readings, [], []);
 
     private static EdgeReadingEntry Entry(
@@ -162,9 +207,12 @@ public class EdgeSynchronizationCommandServiceTests
         Guid? deviceId = null,
         double? temperature = 37.2,
         double? activityIndex = null,
-        DateTimeOffset? recordedAt = null) =>
+        DateTimeOffset? recordedAt = null,
+        CapturedMetric? heartRate = null,
+        CapturedMetric? methaneIndex = null) =>
         new(readingId, deviceId ?? TelemetryFixtures.DeviceId, recordedAt ?? TelemetryFixtures.CapturedAt,
-            new CapturedMetric(temperature, null), activityIndex is null ? null : new CapturedMetric(activityIndex, null), null, null, null);
+            new CapturedMetric(temperature, null), activityIndex is null ? null : new CapturedMetric(activityIndex, null),
+            heartRate, methaneIndex, null, null, null);
 
     private sealed class FakeGateway : IEdgeGatewayAuthenticator
     {
@@ -248,6 +296,85 @@ public class EdgeSynchronizationCommandServiceTests
             Attempts++;
             return Task.FromResult(Succeeds);
         }
+    }
+
+    private sealed class FakeAlerts : IMonitoringAlertRepository
+    {
+        public List<MonitoringAlert> Stored { get; } = [];
+
+        public Task AddAsync(MonitoringAlert alert, CancellationToken cancellationToken = default)
+        {
+            Stored.Add(alert);
+            return Task.CompletedTask;
+        }
+
+        public Task<MonitoringAlert?> FindByIdAsNoTrackingAsync(MonitoringAlertId alertId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Stored.SingleOrDefault(alert => alert.Id == alertId));
+
+        public Task<MonitoringAlert?> FindByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<MonitoringAlert?>(null);
+
+        public Task<IReadOnlyList<MonitoringAlert>> FindPendingByCattleAndTypeAsync(Guid cattleId, AlertType type, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<MonitoringAlert>>(Stored.Where(alert => alert.CattleId == cattleId && alert.Type == type).ToList());
+
+        public Task<MonitoringAlert?> FindByIdAsync(MonitoringAlertId alertId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The synchronization reads alerts without tracking them.");
+
+        public Task<IReadOnlyList<MonitoringAlert>> FindByRanchAsync(Guid ranchId, AlertStatus? status, Guid? cattleId, int skip, int take, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The synchronization does not list alerts.");
+
+        public Task<int> CountByRanchAsync(Guid ranchId, AlertStatus? status, Guid? cattleId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The synchronization does not list alerts.");
+
+        public Task<IReadOnlyList<MonitoringAlert>> FindActiveDuringAsync(Guid ranchId, TimePeriod period, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The synchronization does not list alerts.");
+
+        public Task<IReadOnlyDictionary<AlertSeverity, int>> CountOpenByRanchAndSeverityAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The synchronization does not list alerts.");
+    }
+
+    private sealed class FakeRuleSets : IMonitoringRuleSetRepository
+    {
+        // The ranch has published revision 1, which the alert cites as its configuration.
+        private readonly MonitoringRuleSet _ruleSet = new(TelemetryFixtures.RanchId);
+
+        public FakeRuleSets() => _ruleSet.Advance();
+
+        public Task<MonitoringRuleSet?> FindByRanchAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<MonitoringRuleSet?>(_ruleSet);
+
+        public Task AddAsync(MonitoringRuleSet ruleSet, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The alert test only reads the published revision.");
+
+        public Task<MonitoringRuleSet?> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The alert test only reads the published revision.");
+
+        public Task<MonitoringRuleSnapshot> ReadSnapshotAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The alert test only reads the published revision.");
+    }
+
+    private sealed class FakeGeofences : IGeofenceRepository
+    {
+        public Task AddAsync(Geofence geofence, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Heart rate alerts do not use geofences.");
+
+        public Task<Geofence?> FindByIdAsync(GeofenceId geofenceId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Heart rate alerts do not use geofences.");
+
+        public Task<Geofence?> FindByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Heart rate alerts do not use geofences.");
+
+        public Task<IReadOnlyList<Geofence>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Heart rate alerts do not use geofences.");
+    }
+
+    private sealed class FakeAccess : IMonitoringAccessControl
+    {
+        public Task<Guid?> GetCurrentAccountIdAsync(CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Edge synchronization authenticates the gateway, not an account.");
+
+        public Task<bool> CanAccessRanchAsync(Guid accountId, Guid ranchId, MonitoringPermission permission, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("Edge synchronization authenticates the gateway, not an account.");
     }
 
     private sealed class NoAlertCommands : IMonitoringAlertCommandService

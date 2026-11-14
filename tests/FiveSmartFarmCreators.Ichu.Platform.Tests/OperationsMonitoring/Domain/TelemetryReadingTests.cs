@@ -1,6 +1,7 @@
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.ValueObjects;
+using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Tests.OperationsMonitoring.Domain;
 
@@ -55,8 +56,8 @@ public class TelemetryReadingTests
     {
         var reading = TelemetryReading.Create(Guid.NewGuid(), TelemetryFixtures.DeviceId, TelemetryFixtures.CapturedAt,
             Measurement.Absent(), Measurement.From(-1, null).Value!, Measurement.Absent(), Measurement.Absent(),
-            PositionMeasurement.Absent(), TelemetryFixtures.GatewayId, TelemetryFixtures.RanchId, TelemetryFixtures.CattleId,
-            TelemetryFixtures.ReceivedAt);
+            Measurement.Absent(), Measurement.Absent(), PositionMeasurement.Absent(), TelemetryFixtures.GatewayId,
+            TelemetryFixtures.RanchId, TelemetryFixtures.CattleId, TelemetryFixtures.ReceivedAt);
 
         Assert.Equal(OperationsMonitoringErrors.ActivityIndexNegative.Code, reading.DomainError.Code);
     }
@@ -65,9 +66,9 @@ public class TelemetryReadingTests
     public void ReadingWithBatteryAboveFullChargeIsRejected()
     {
         var reading = TelemetryReading.Create(Guid.NewGuid(), TelemetryFixtures.DeviceId, TelemetryFixtures.CapturedAt,
-            Measurement.Absent(), Measurement.Absent(), Measurement.Absent(), Measurement.From(101, null).Value!,
-            PositionMeasurement.Absent(), TelemetryFixtures.GatewayId, TelemetryFixtures.RanchId, TelemetryFixtures.CattleId,
-            TelemetryFixtures.ReceivedAt);
+            Measurement.Absent(), Measurement.Absent(), Measurement.Absent(), Measurement.Absent(),
+            Measurement.Absent(), Measurement.From(101, null).Value!, PositionMeasurement.Absent(), TelemetryFixtures.GatewayId,
+            TelemetryFixtures.RanchId, TelemetryFixtures.CattleId, TelemetryFixtures.ReceivedAt);
 
         Assert.Equal(OperationsMonitoringErrors.BatteryLevelOutOfRange.Code, reading.DomainError.Code);
     }
@@ -77,8 +78,8 @@ public class TelemetryReadingTests
     {
         var reading = TelemetryReading.Create(Guid.NewGuid(), Guid.Empty, TelemetryFixtures.CapturedAt,
             Measurement.Absent(), Measurement.Absent(), Measurement.Absent(), Measurement.Absent(),
-            PositionMeasurement.Absent(), TelemetryFixtures.GatewayId, TelemetryFixtures.RanchId, TelemetryFixtures.CattleId,
-            TelemetryFixtures.ReceivedAt);
+            Measurement.Absent(), Measurement.Absent(), PositionMeasurement.Absent(), TelemetryFixtures.GatewayId,
+            TelemetryFixtures.RanchId, TelemetryFixtures.CattleId, TelemetryFixtures.ReceivedAt);
 
         Assert.Equal(OperationsMonitoringErrors.ReadingIdentifiersRequired.Code, reading.DomainError.Code);
     }
@@ -91,4 +92,52 @@ public class TelemetryReadingTests
         Assert.False(reading.IsStale(reading.RecordedAt.AddHours(23)));
         Assert.True(reading.IsStale(reading.RecordedAt.AddHours(25)));
     }
+
+    [Theory]
+    [InlineData(29)]
+    [InlineData(201)]
+    public void ReadingWithAHeartRateOutsideThePhysiologicalRangeIsRejected(double heartRate)
+    {
+        var reading = CreateWithVitals(Measurement.From(heartRate, null).Value!, Measurement.Absent());
+
+        Assert.Equal(OperationsMonitoringErrors.HeartRateOutOfRange.Code, reading.DomainError.Code);
+    }
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(200)]
+    public void HeartRateAtTheLimitsOfThePhysiologicalRangeIsAccepted(double heartRate)
+    {
+        var reading = CreateWithVitals(Measurement.From(heartRate, null).Value!, Measurement.Absent());
+
+        Assert.True(reading.IsSuccess);
+        Assert.Equal(heartRate, reading.Value!.MeasurementOf(MonitoredMetric.HeartRate).Value);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(101)]
+    public void ReadingWithAMethaneIndexOutsideTheRangeIsRejected(double methaneIndex)
+    {
+        var reading = CreateWithVitals(Measurement.Absent(), Measurement.From(methaneIndex, null).Value!);
+
+        Assert.Equal(OperationsMonitoringErrors.MethaneIndexOutOfRange.Code, reading.DomainError.Code);
+    }
+
+    [Fact]
+    public void ACaptureWithAnotherHeartRateOrMethaneIndexIsNotTheSameCapture()
+    {
+        var readingId = Guid.NewGuid();
+        var original = TelemetryFixtures.Reading(37.2, readingId, heartRate: 70, methaneIndex: 20);
+
+        Assert.True(original.HasSameCaptureAs(TelemetryFixtures.Reading(37.2, readingId, heartRate: 70, methaneIndex: 20)));
+        Assert.False(original.HasSameCaptureAs(TelemetryFixtures.Reading(37.2, readingId, heartRate: 71, methaneIndex: 20)));
+        Assert.False(original.HasSameCaptureAs(TelemetryFixtures.Reading(37.2, readingId, heartRate: 70, methaneIndex: 21)));
+    }
+
+    private static Result<TelemetryReading> CreateWithVitals(Measurement heartRate, Measurement methaneIndex) =>
+        TelemetryReading.Create(Guid.NewGuid(), TelemetryFixtures.DeviceId, TelemetryFixtures.CapturedAt,
+            Measurement.Absent(), Measurement.Absent(), heartRate, methaneIndex, Measurement.Absent(), Measurement.Absent(),
+            PositionMeasurement.Absent(), TelemetryFixtures.GatewayId, TelemetryFixtures.RanchId, TelemetryFixtures.CattleId,
+            TelemetryFixtures.ReceivedAt);
 }

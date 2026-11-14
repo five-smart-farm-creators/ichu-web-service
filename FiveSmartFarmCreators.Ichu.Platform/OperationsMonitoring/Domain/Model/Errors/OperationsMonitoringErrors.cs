@@ -90,6 +90,8 @@ public static class OperationsMonitoringErrors
     public static readonly Error ActivityIndexNegative = Define("ActivityIndexNegative", EErrorType.Validation);
     public static readonly Error RuminationMinutesNegative = Define("RuminationMinutesNegative", EErrorType.Validation);
     public static readonly Error BatteryLevelOutOfRange = Define("BatteryLevelOutOfRange", EErrorType.Validation);
+    public static readonly Error HeartRateOutOfRange = Define("HeartRateOutOfRange", EErrorType.Validation);
+    public static readonly Error MethaneIndexOutOfRange = Define("MethaneIndexOutOfRange", EErrorType.Validation);
     public static readonly Error MeasurementValidAndInvalid = Define("MeasurementValidAndInvalid", EErrorType.Validation);
     public static readonly Error MeasurementNotFinite = Define("MeasurementNotFinite", EErrorType.Validation);
     public static readonly Error InvalidMeasurementReason = Define("InvalidMeasurementReason", EErrorType.Validation);

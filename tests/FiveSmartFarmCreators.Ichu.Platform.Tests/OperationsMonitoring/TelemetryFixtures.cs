@@ -20,7 +20,9 @@ internal static class TelemetryFixtures
         Guid? readingId = null,
         DateTimeOffset? capturedAt = null,
         PositionMeasurement? position = null,
-        bool attributed = true)
+        bool attributed = true,
+        double? heartRate = null,
+        double? methaneIndex = null)
     {
         var reading = TelemetryReading.Create(
             readingId ?? Guid.NewGuid(),
@@ -28,6 +30,8 @@ internal static class TelemetryFixtures
             capturedAt ?? CapturedAt,
             Measurement.From(temperature, null).Value!,
             Measurement.Absent(),
+            Measurement.From(heartRate, null).Value!,
+            Measurement.From(methaneIndex, null).Value!,
             Measurement.Absent(),
             Measurement.Absent(),
             position ?? PositionMeasurement.Absent(),
