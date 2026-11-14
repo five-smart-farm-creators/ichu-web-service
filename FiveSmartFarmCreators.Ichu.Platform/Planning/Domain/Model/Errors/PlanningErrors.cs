@@ -19,6 +19,7 @@ public static class PlanningErrors
     public static readonly Error CampaignDateRangeInvalid = Define("CampaignDateRangeInvalid", EErrorType.Validation);
     public static readonly Error ActivityTitleRequired = Define("ActivityTitleRequired", EErrorType.Validation);
     public static readonly Error UtcTimestampRequired = Define("UtcTimestampRequired", EErrorType.Validation);
+    public static readonly Error FollowUpDueAtInvalid = Define("FollowUpDueAtInvalid", EErrorType.Validation);
     public static readonly Error CalendarRangeInvalid = Define("CalendarRangeInvalid", EErrorType.Validation);
     public static readonly Error WithdrawalDateRangeInvalid = Define("WithdrawalDateRangeInvalid", EErrorType.Validation);
     public static readonly Error NutritionPlanNameRequired = Define("NutritionPlanNameRequired", EErrorType.Validation);
