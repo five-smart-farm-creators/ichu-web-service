@@ -40,16 +40,15 @@ public sealed class PlanningCampaignsController(
         return Ok(result.Value!.Select(PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity).ToList());
     }
 
-    [HttpGet("{campaignId:guid}")]
+    [HttpGet("~/api/v1/planning-campaigns/{campaignId:guid}")]
     [EndpointSummary("Get a planning campaign")]
     [EndpointDescription("Returns a campaign when the account may read its ranch.")]
     [ProducesResponseType<PlanningCampaignResource>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetCampaignAsync(Guid ranchId, Guid campaignId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCampaignAsync(Guid campaignId, CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(
-            new GetPlanningCampaignByIdQuery(ranchId, new PlanningCampaignId(campaignId)), cancellationToken);
+            new GetPlanningCampaignByIdQuery(new PlanningCampaignId(campaignId)), cancellationToken);
         if (result.IsFailure)
         {
             return PlanningActionResultAssembler.ToProblem(this, result.DomainError, localizer);
@@ -77,6 +76,6 @@ public sealed class PlanningCampaignsController(
         }
 
         var campaign = PlanningCampaignResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        return Created($"/api/v1/ranches/{ranchId}/planning-campaigns/{campaign.Id}", campaign);
+        return Created($"/api/v1/planning-campaigns/{campaign.Id}", campaign);
     }
 }

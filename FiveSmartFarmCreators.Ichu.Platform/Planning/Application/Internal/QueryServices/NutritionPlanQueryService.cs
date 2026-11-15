@@ -19,13 +19,7 @@ public sealed class NutritionPlanQueryService(
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<NutritionPlan>>> HandleAsync(GetNutritionPlansByLotQuery query, CancellationToken cancellationToken)
     {
-        var access = await guard.EnsureRanchAccessAsync(query.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
-        if (access.IsFailure)
-        {
-            return Result<IReadOnlyList<NutritionPlan>>.Failure(access.DomainError);
-        }
-
-        var lot = await guard.EnsureLotBelongsToRanchAsync(query.RanchId, query.LotId, cancellationToken);
+        var lot = await guard.EnsureLotAccessAsync(query.LotId, PlanningPermission.ReadPlanning, cancellationToken);
         if (lot.IsFailure)
         {
             return Result<IReadOnlyList<NutritionPlan>>.Failure(lot.DomainError);
@@ -37,13 +31,7 @@ public sealed class NutritionPlanQueryService(
     /// <inheritdoc />
     public async Task<Result<NutritionPlan>> HandleAsync(GetCurrentNutritionPlanQuery query, CancellationToken cancellationToken)
     {
-        var access = await guard.EnsureRanchAccessAsync(query.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
-        if (access.IsFailure)
-        {
-            return Result<NutritionPlan>.Failure(access.DomainError);
-        }
-
-        var lot = await guard.EnsureLotBelongsToRanchAsync(query.RanchId, query.LotId, cancellationToken);
+        var lot = await guard.EnsureLotAccessAsync(query.LotId, PlanningPermission.ReadPlanning, cancellationToken);
         if (lot.IsFailure)
         {
             return Result<NutritionPlan>.Failure(lot.DomainError);

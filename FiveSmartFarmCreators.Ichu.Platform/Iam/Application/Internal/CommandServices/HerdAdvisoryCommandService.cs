@@ -81,15 +81,28 @@ public sealed class HerdAdvisoryCommandService(
 
         var owner = actor.Value!;
         var now = clock.GetUtcNow();
+        HerdAdvisory? advisory = null;
+        var ranchId = command.RanchId;
+        if (ranchId is null)
+        {
+            advisory = await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
+            if (advisory is null)
+            {
+                return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryNotFound);
+            }
+
+            ranchId = advisory.RanchId;
+        }
+
         var memberships = await ranches.FindMembershipsByAccountAsync(owner.Id, cancellationToken);
-        if (!authorization.CanAccessRanch(owner, command.RanchId, AccessScope.Manage, memberships, [], now))
+        if (!authorization.CanAccessRanch(owner, ranchId.Value, AccessScope.Manage, memberships, [], now))
         {
             return Result<HerdAdvisory>.Failure(IamErrors.OwnerRequired);
         }
 
-        // The ranch is checked before the lookup, and an advisory of another ranch is reported as missing, so identifiers cannot be probed.
-        var advisory = await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
-        if (advisory is null || advisory.RanchId != command.RanchId)
+        // Scoped routes still authorize their ranch before the lookup and hide requests belonging to a different ranch.
+        advisory ??= await advisories.FindByIdAsync(new HerdAdvisoryId(command.AdvisoryId), cancellationToken);
+        if (advisory is null || advisory.RanchId != ranchId.Value)
         {
             return Result<HerdAdvisory>.Failure(IamErrors.AdvisoryNotFound);
         }

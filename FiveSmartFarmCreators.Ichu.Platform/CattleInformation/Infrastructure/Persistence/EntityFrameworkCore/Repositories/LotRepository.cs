@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
 /// <summary>
-///     Tracks ranch lots and their memberships in the shared context, filtering every query by ranch.
+///     Tracks ranch lots and their memberships in the shared context, with a trusted lookup for a lot's owning ranch.
 /// </summary>
 public sealed class LotRepository(AppDbContext context) : ILotRepository
 {
@@ -17,6 +17,14 @@ public sealed class LotRepository(AppDbContext context) : ILotRepository
         context.Set<Lot>()
             .Include(lot => lot.Memberships)
             .FirstOrDefaultAsync(lot => lot.RanchId == ranchId && lot.Id == lotId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Guid?> FindRanchIdByIdAsync(LotId lotId, CancellationToken cancellationToken = default) =>
+        context.Set<Lot>()
+            .AsNoTracking()
+            .Where(lot => lot.Id == lotId)
+            .Select(lot => (Guid?)lot.RanchId)
+            .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Lot>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>

@@ -137,6 +137,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IEdgeGatewayAuthenticator>());
         Assert.NotNull(services.GetRequiredService<ICattleLookup>());
         Assert.NotNull(services.GetRequiredService<IDeviceAttributionLookup>());
+        Assert.NotNull(services.GetRequiredService<IEdgeDeviceAssignmentLookup>());
         Assert.NotNull(services.GetRequiredService<ITelemetryReadingCommandService>());
         Assert.NotNull(services.GetRequiredService<IMonitoringAlertCommandService>());
         Assert.NotNull(services.GetRequiredService<IEdgeSynchronizationCommandService>());
@@ -148,6 +149,7 @@ public class DependencyInjectionCompositionTests
         Assert.NotNull(services.GetRequiredService<IMonitoringThresholdQueryService>());
         Assert.NotNull(services.GetRequiredService<IGeofenceQueryService>());
         Assert.NotNull(services.GetRequiredService<IMonitoringRuleSetQueryService>());
+        Assert.NotNull(services.GetRequiredService<IEdgeDeviceAssignmentQueryService>());
         Assert.NotNull(services.GetRequiredService<ILivestockOperationQueryService>());
         Assert.NotNull(services.GetRequiredService<IReproductiveHistoryQueryService>());
         Assert.NotNull(services.GetRequiredService<ReproductiveHistoryCalculator>());

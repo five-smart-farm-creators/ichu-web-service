@@ -30,6 +30,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddHttpContextAccessor();
 
         services.AddScoped<ITelemetryReadingRepository, TelemetryReadingRepository>();
+        services.AddScoped<IWaterTroughReadingRepository, WaterTroughReadingRepository>();
         services.AddScoped<IMonitoringAlertRepository, MonitoringAlertRepository>();
         services.AddScoped<IGeofenceRepository, GeofenceRepository>();
         services.AddScoped<IMonitoringThresholdRepository, MonitoringThresholdRepository>();
@@ -42,6 +43,7 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<IMonitoringAccessControl, IamOperationsMonitoringAccessControl>();
 
         services.AddScoped<ITelemetryReadingCommandService, TelemetryReadingCommandService>();
+        services.AddScoped<IWaterTroughReadingCommandService, WaterTroughReadingCommandService>();
         services.AddScoped<IMonitoringAlertCommandService, MonitoringAlertCommandService>();
         services.AddScoped<IEdgeSynchronizationCommandService, EdgeSynchronizationCommandService>();
         services.AddScoped<IMonitoringThresholdCommandService, MonitoringThresholdCommandService>();
@@ -49,16 +51,19 @@ public static class OperationsMonitoringServiceCollectionExtensions
         services.AddScoped<ILivestockOperationCommandService, LivestockOperationCommandService>();
 
         services.AddScoped<ITelemetryReadingQueryService, TelemetryReadingQueryService>();
+        services.AddScoped<IWaterTroughMonitoringQueryService, WaterTroughMonitoringQueryService>();
         services.AddScoped<IMonitoringAlertQueryService, MonitoringAlertQueryService>();
         services.AddScoped<IMonitoringThresholdQueryService, MonitoringThresholdQueryService>();
         services.AddScoped<IGeofenceQueryService, GeofenceQueryService>();
         services.AddScoped<IMonitoringRuleSetQueryService, MonitoringRuleSetQueryService>();
+        services.AddScoped<IEdgeDeviceAssignmentQueryService, EdgeDeviceAssignmentQueryService>();
         services.AddScoped<ILivestockOperationQueryService, LivestockOperationQueryService>();
         services.AddScoped<IReproductiveHistoryQueryService, ReproductiveHistoryQueryService>();
 
         services.AddScoped<ICattleLookup, CattleInformationCattleLookup>();
         services.AddScoped<IDeviceAttributionLookup, IoTAssetsDeviceAttributionLookup>();
         services.AddScoped<IEdgeGatewayAuthenticator, IoTAssetsEdgeGatewayAuthenticator>();
+        services.AddScoped<IEdgeDeviceAssignmentLookup, IoTAssetsEdgeDeviceAssignmentLookup>();
 
         services.AddScoped<IOperationsMonitoringContextFacade, OperationsMonitoringContextFacade>();
         services.AddScoped<DevelopmentMonitoringRulesSeeder>();

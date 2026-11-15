@@ -2,6 +2,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 
 public static class MonitoringUnits
 {
+    public const string BeatsPerMinute = "bpm";
+
     public const string Celsius = "celsius";
 
     public const string Index = "index";

@@ -10,10 +10,20 @@ public interface IMonitoringThresholdRepository
 {
     Task AddAsync(MonitoringThreshold threshold, CancellationToken cancellationToken = default);
 
-    Task<MonitoringThreshold?> FindByRanchLifeStageAndMetricAsync(Guid ranchId, string lifeStage, MonitoredMetric metric, CancellationToken cancellationToken = default);
+    Task<MonitoringThreshold?> FindByRanchLifeStageAndMetricAndSeverityAsync(
+        Guid ranchId,
+        string lifeStage,
+        MonitoredMetric metric,
+        AlertSeverity severity,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    ///     Finds the thresholds of a ranch ordered by life stage and metric.
+    ///     Finds the thresholds of a ranch for one life stage and metric, at most one per severity.
+    /// </summary>
+    Task<IReadOnlyList<MonitoringThreshold>> FindByRanchLifeStageAndMetricAsync(Guid ranchId, string lifeStage, MonitoredMetric metric, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Finds the thresholds of a ranch ordered by life stage, metric and severity.
     /// </summary>
     Task<IReadOnlyList<MonitoringThreshold>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default);
 }

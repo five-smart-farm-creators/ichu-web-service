@@ -48,7 +48,7 @@ public class PlannedActivityQueryServiceTests
     public async Task GetActivity_OfAnUnknownIdentifier_IsNotFound()
     {
         var result = await _service.HandleAsync(
-            new GetPlannedActivityByIdQuery(RanchId, new PlannedActivityId(Guid.NewGuid())), CancellationToken.None);
+            new GetPlannedActivityByIdQuery(new PlannedActivityId(Guid.NewGuid())), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.ActivityNotFound.Code, result.DomainError.Code);
     }
@@ -58,8 +58,9 @@ public class PlannedActivityQueryServiceTests
     {
         var activity = PlannedActivity.Create(OtherRanchId, null, null, "Vaccination", From).Value!;
         _activities.Items.Add(activity);
+        _access.DeniedRanches.Add(OtherRanchId);
 
-        var result = await _service.HandleAsync(new GetPlannedActivityByIdQuery(RanchId, activity.Id), CancellationToken.None);
+        var result = await _service.HandleAsync(new GetPlannedActivityByIdQuery(activity.Id), CancellationToken.None);
 
         Assert.Equal(PlanningErrors.ActivityNotFound.Code, result.DomainError.Code);
     }
@@ -73,7 +74,7 @@ public class PlannedActivityQueryServiceTests
         activity.RecordApplication(animal, From.AddDays(1), null);
         _activities.Items.Add(activity);
 
-        var result = await _service.HandleAsync(new GetApplicationRecordsByActivityQuery(RanchId, activity.Id), CancellationToken.None);
+        var result = await _service.HandleAsync(new GetApplicationRecordsByActivityQuery(activity.Id), CancellationToken.None);
 
         Assert.Equal(new[] { From.AddDays(1), From.AddDays(2) }, result.Value!.Select(application => application.AppliedAt));
     }

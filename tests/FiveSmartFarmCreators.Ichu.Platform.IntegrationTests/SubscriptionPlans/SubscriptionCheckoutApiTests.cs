@@ -42,6 +42,26 @@ public sealed class SubscriptionCheckoutApiTests(IchuApiFactory factory) : IDisp
         Assert.Equal("cs_test_fake", session.GetProperty("sessionId").GetString());
         Assert.Equal("https://checkout.example.test/cs_test_fake", session.GetProperty("url").GetString());
         Assert.Equal(SessionExpiry, session.GetProperty("expiresAt").GetDateTimeOffset());
+        using var subscriptionResponse = await client.GetAsync($"api/v1/ranches/{ranchId}/subscriptions");
+        var subscription = await subscriptionResponse.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal("Pending", subscription.GetProperty("status").GetString());
+        Assert.Equal(1, Payments.CheckoutRequests);
+    }
+
+    [Fact]
+    public async Task GetQuote_DoesNotCreateASubscriptionOrStartCheckout()
+    {
+        using var manager = CreateClient(TestIdentity.Create());
+        var ranchId = await manager.RegisterManagerAsync();
+        using var visitor = _host.CreateClient();
+
+        using var response = await visitor.GetAsync($"api/v1/quotes?planId={Arrange.StandardPlanId}&headCount=10");
+
+        await response.ReadJsonAsync(HttpStatusCode.OK);
+        using var subscriptionResponse = await manager.GetAsync($"api/v1/ranches/{ranchId}/subscriptions");
+        var problem = await subscriptionResponse.ReadJsonAsync(HttpStatusCode.NotFound);
+        Assert.Equal("SubscriptionPlans.SubscriptionNotFound", problem.GetProperty("code").GetString());
+        Assert.Equal(0, Payments.CheckoutRequests);
     }
 
     [Fact]
@@ -89,6 +109,8 @@ public sealed class SubscriptionCheckoutApiTests(IchuApiFactory factory) : IDisp
 
     public void Dispose() => _host.Dispose();
 
+    private FakePaymentGateway Payments => (FakePaymentGateway)_host.Services.GetRequiredService<IPaymentGateway>();
+
     private HttpClient CreateClient(TestIdentity identity)
     {
         var client = _host.CreateClient();
@@ -104,9 +126,14 @@ public sealed class SubscriptionCheckoutApiTests(IchuApiFactory factory) : IDisp
 
     private sealed class FakePaymentGateway : IPaymentGateway
     {
-        public Task<Result<CheckoutSession>> CreateCheckoutSessionAsync(Subscription subscription, string planName, CancellationToken cancellationToken) =>
-            Task.FromResult(Result<CheckoutSession>.Success(new CheckoutSession(
+        public int CheckoutRequests { get; private set; }
+
+        public Task<Result<CheckoutSession>> CreateCheckoutSessionAsync(Subscription subscription, string planName, CancellationToken cancellationToken)
+        {
+            CheckoutRequests++;
+            return Task.FromResult(Result<CheckoutSession>.Success(new CheckoutSession(
                 "cs_test_fake", new Uri("https://checkout.example.test/cs_test_fake"), SessionExpiry)));
+        }
 
         public Result<PaymentConfirmation> ReadConfirmation(string payload, string signatureHeader) =>
             throw new NotSupportedException("The checkout tests do not receive payment events.");

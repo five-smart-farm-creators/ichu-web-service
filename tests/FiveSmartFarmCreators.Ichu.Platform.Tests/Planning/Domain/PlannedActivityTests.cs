@@ -51,15 +51,47 @@ public class PlannedActivityTests
         Assert.Single(activity.Applications);
     }
 
-    [Fact]
-    public void ScheduleFollowUp_WithANonUtcDueInstant_IsRejectedAndKeepsNoFollowUp()
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(7)]
+    public void ScheduleFollowUp_WithANonUtcDueInstant_IsRejectedAndKeepsNoFollowUp(int daysAfterActivity)
     {
         var activity = PlannedActivity.Create(RanchId, null, null, "Weighing", ScheduledAt).Value!;
-        var localDue = new DateTimeOffset(2026, 11, 27, 8, 0, 0, TimeSpan.FromHours(-5));
+        var localDue = ScheduledAt.AddDays(daysAfterActivity).ToOffset(TimeSpan.FromHours(-5));
 
         var result = activity.ScheduleFollowUp(localDue);
 
         Assert.Equal(PlanningErrors.UtcTimestampRequired.Code, result.DomainError.Code);
         Assert.Empty(activity.FollowUps);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    public void ScheduleFollowUp_DueAtOrBeforeTheActivity_IsRejectedAndKeepsNoFollowUp(int daysAfterActivity)
+    {
+        var activity = PlannedActivity.Create(RanchId, null, null, "Weighing", ScheduledAt).Value!;
+
+        var result = activity.ScheduleFollowUp(ScheduledAt.AddDays(daysAfterActivity));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PlanningErrors.FollowUpDueAtInvalid.Code, result.DomainError.Code);
+        Assert.Empty(activity.FollowUps);
+    }
+
+    [Fact]
+    public void ScheduleFollowUp_DueAfterTheActivity_IsKeptByTheActivity()
+    {
+        var activity = PlannedActivity.Create(RanchId, null, null, "Weighing", ScheduledAt).Value!;
+        var dueAt = ScheduledAt.AddTicks(1);
+
+        var result = activity.ScheduleFollowUp(dueAt);
+
+        Assert.True(result.IsSuccess);
+        var followUp = Assert.Single(activity.FollowUps);
+        Assert.Same(result.Value, followUp);
+        Assert.Equal(activity.Id, followUp.ActivityId);
+        Assert.Equal(dueAt, followUp.DueAt);
     }
 }

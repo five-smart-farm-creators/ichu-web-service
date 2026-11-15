@@ -13,6 +13,8 @@ public interface ICattleCommandService
 
     Task<Result<Cattle>> HandleAsync(UpdateCattleCommand command, CancellationToken cancellationToken);
 
+    Task<Result<Cattle>> HandleAsync(PatchCattleCommand command, CancellationToken cancellationToken);
+
     Task<Result<Cattle>> HandleAsync(ChangeLifeStageCommand command, CancellationToken cancellationToken);
 
     Task<Result<Cattle>> HandleAsync(DeactivateCattleCommand command, CancellationToken cancellationToken);

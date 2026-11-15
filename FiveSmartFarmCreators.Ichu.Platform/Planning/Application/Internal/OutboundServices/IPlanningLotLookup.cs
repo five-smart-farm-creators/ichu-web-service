@@ -1,9 +1,9 @@
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Application.Internal.OutboundServices;
 
 /// <summary>
-/// Anti-corruption port towards Cattle Information, which answers whether a lot exists in a ranch.
+/// Anti-corruption port towards Cattle Information, which resolves the owning ranch for a lot.
 /// </summary>
 public interface IPlanningLotLookup
 {
-    Task<bool> LotBelongsToRanchAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken);
+    Task<Guid?> FindRanchIdAsync(Guid lotId, CancellationToken cancellationToken);
 }

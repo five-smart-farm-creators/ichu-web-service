@@ -1,3 +1,4 @@
+using FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Resources;
 
@@ -8,9 +9,8 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform
 /// </summary>
 public static class RegisterNutritionPlanCommandFromResourceAssembler
 {
-    public static RegisterNutritionPlanCommand ToCommandFromResource(Guid ranchId, Guid lotId, RegisterNutritionPlanResource resource) =>
+    public static RegisterNutritionPlanRequest ToCommandFromResource(Guid lotId, RegisterNutritionPlanResource resource) =>
         new(
-            ranchId,
             lotId,
             resource.Name,
             resource.ValidFrom,

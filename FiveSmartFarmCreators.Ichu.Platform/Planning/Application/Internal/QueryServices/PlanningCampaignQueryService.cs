@@ -18,16 +18,16 @@ public sealed class PlanningCampaignQueryService(
     /// <inheritdoc />
     public async Task<Result<PlanningCampaign>> HandleAsync(GetPlanningCampaignByIdQuery query, CancellationToken cancellationToken)
     {
-        var access = await guard.EnsureRanchAccessAsync(query.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
-        if (access.IsFailure)
+        var campaign = await campaigns.FindByIdAsNoTrackingAsync(query.CampaignId, cancellationToken);
+        if (campaign is null)
         {
-            return Result<PlanningCampaign>.Failure(access.DomainError);
+            return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignNotFound);
         }
 
-        // The ranch is checked before the lookup, and a campaign of another ranch is reported as missing, so identifiers cannot be probed.
-        var campaign = await campaigns.FindByIdAsNoTrackingAsync(query.CampaignId, cancellationToken);
-        if (campaign is null || campaign.RanchId != query.RanchId)
+        var access = await guard.EnsureRanchAccessAsync(campaign.RanchId, PlanningPermission.ReadPlanning, cancellationToken);
+        if (access.IsFailure)
         {
+            // The item route has no ranch identifier, so inaccessible and unknown campaigns must look the same.
             return Result<PlanningCampaign>.Failure(PlanningErrors.CampaignNotFound);
         }
 

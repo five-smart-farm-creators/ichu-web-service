@@ -20,7 +20,7 @@ public sealed class RanchesController(
 {
     [HttpGet]
     [EndpointSummary("Find a ranch by its access code")]
-    [EndpointDescription("Returns the ranch that a veterinarian identifies with the access code its manager shares, so that the veterinarian can request advisory access.")]
+    [EndpointDescription("Only an authenticated veterinarian may look up a ranch using the access code shared by its manager. This lookup grants no access. A veterinarian with a complete professional profile can then submit the returned ranchId and a reason to POST /api/v1/veterinary-access-requests and wait for the ranch owner's decision.")]
     [ProducesResponseType<RanchSummaryResource>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]

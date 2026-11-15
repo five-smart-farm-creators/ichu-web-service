@@ -18,7 +18,7 @@ public static class Arrange
 
     public static async Task<JsonElement> RequestSubscriptionAsync(HttpClient client, Guid ranchId, Guid planId, int headCount = 10)
     {
-        using var quote = await client.GetAsync($"api/v1/plans/{planId}/quote?headCount={headCount}");
+        using var quote = await client.GetAsync($"api/v1/quotes?planId={planId}&headCount={headCount}");
         var quoted = await quote.ReadJsonAsync(HttpStatusCode.OK);
         using var response = await client.PostJsonAsync($"api/v1/ranches/{ranchId}/subscriptions", new
         {
@@ -144,8 +144,9 @@ public static class Arrange
     /// </summary>
     public static async Task<Guid> RequestHerdAdvisoryAsync(HttpClient veterinarian, Guid ranchId)
     {
-        using var response = await veterinarian.PostJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories", new
+        using var response = await veterinarian.PostJsonAsync("api/v1/veterinary-access-requests", new
         {
+            ranchId,
             reason = "Herd health review"
         });
         var advisory = await response.ReadJsonAsync(HttpStatusCode.Created);
@@ -157,13 +158,14 @@ public static class Arrange
     /// </summary>
     public static async Task GrantReadAdvisoryAsync(HttpClient owner, Guid ranchId, Guid advisoryId, DateTimeOffset expiresAt)
     {
-        using var response = await owner.PatchJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories/{advisoryId}", new
+        using var response = await owner.PatchJsonAsync($"api/v1/veterinary-access-requests/{advisoryId}", new
         {
             decision = "grant",
             scope = "Read",
             expiresAt
         });
-        await response.ReadBodyAsync(HttpStatusCode.OK);
+        var advisory = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(ranchId, advisory.GetProperty("ranchId").GetGuid());
     }
 
     /// <summary>
@@ -171,8 +173,9 @@ public static class Arrange
     /// </summary>
     public static async Task RevokeAdvisoryAsync(HttpClient owner, Guid ranchId, Guid advisoryId)
     {
-        using var response = await owner.PatchJsonAsync($"api/v1/ranches/{ranchId}/herd-advisories/{advisoryId}", new { decision = "revoke" });
-        await response.ReadBodyAsync(HttpStatusCode.OK);
+        using var response = await owner.PatchJsonAsync($"api/v1/veterinary-access-requests/{advisoryId}", new { decision = "revoke" });
+        var advisory = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(ranchId, advisory.GetProperty("ranchId").GetGuid());
     }
 
     /// <summary>

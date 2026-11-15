@@ -71,7 +71,7 @@ public class LivestockOperationsController(
 
     [HttpPost("api/v1/mobile-sync/batch")]
     [EndpointSummary("Synchronize a mobile batch")]
-    [EndpointDescription("Synchronizes operations recorded offline by the mobile application, with an individual result per operation.")]
+    [EndpointDescription("Requires a verified Firebase bearer token and a non-empty operations array. Each entry supplies a stable operationId, cattleId, type, occurredAt and the fields required by its operation type. The server resolves the animal's ranch and checks permission for that operation. Reuse operationId when retrying. Returns HTTP 200 with an Accepted, Duplicate, Rejected or Conflict result and reason per entry; inspect those results before removing operations from the offline queue. Invalid batch sizes return 400; missing user credentials return 401.")]
     [ProducesResponseType(typeof(SyncBatchResultResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

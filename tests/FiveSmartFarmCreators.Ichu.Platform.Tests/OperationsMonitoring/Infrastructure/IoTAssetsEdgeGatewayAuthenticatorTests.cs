@@ -89,5 +89,14 @@ public class IoTAssetsEdgeGatewayAuthenticatorTests
         public Task<Result<int>> ReleaseCollarForInactiveCattleAsync(Guid ranchId, Guid cattleId, DateTimeOffset deactivatedAt,
             CancellationToken cancellationToken) =>
             throw new NotSupportedException();
+
+        public Task<IReadOnlyList<DeviceAssignmentSnapshot>> FindOpenCollarAssignmentsAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<WaterControllerAssignmentSnapshot?> FindWaterControllerAssignmentAsync(Guid controllerId, DateTimeOffset instant,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Result<IReadOnlyList<WaterTroughMonitoringSnapshot>>> GetWaterTroughMonitoringSnapshotsAsync(Guid ranchId,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

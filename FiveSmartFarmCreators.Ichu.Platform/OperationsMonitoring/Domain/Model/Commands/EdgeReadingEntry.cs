@@ -9,6 +9,8 @@ public record EdgeReadingEntry(
     DateTimeOffset? RecordedAt,
     CapturedMetric? BodyTemperature,
     CapturedMetric? ActivityIndex,
+    CapturedMetric? HeartRate,
+    CapturedMetric? MethaneIndex,
     CapturedMetric? RuminationMinutes,
     CapturedMetric? BatteryPercent,
     CapturedPosition? Position);

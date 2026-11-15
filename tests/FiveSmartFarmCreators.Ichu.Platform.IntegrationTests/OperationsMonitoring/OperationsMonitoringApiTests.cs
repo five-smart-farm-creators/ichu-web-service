@@ -1,5 +1,8 @@
 using System.Net;
+using System.Text.Json;
 using FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.Harness;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.IntegrationTests.OperationsMonitoring;
 
@@ -41,6 +44,36 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
         Assert.Equal("OperationsMonitoring.ThresholdRangeInvalid", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task ConfigureThreshold_AcceptsWarningAndCriticalLevelsOfTheSameMetric()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        using var warningResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(48, 84, "Warning"));
+        await warningResponse.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var criticalResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(40, 90, "Critical"));
+
+        var critical = await criticalResponse.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal("Critical", critical.GetProperty("severity").GetString());
+        using var response = await client.GetAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds");
+        Assert.Equal(2, (await response.ReadJsonAsync(HttpStatusCode.OK)).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ConfigureThreshold_CriticalRangeThatDoesNotContainTheWarningRange_ReturnsValidationProblem()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        using var warningResponse = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(48, 84, "Warning"));
+        await warningResponse.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var response = await client.PutJsonAsync($"api/v1/ranches/{ranchId}/monitoring-thresholds", HeartRateThreshold(50, 90, "Critical"));
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("OperationsMonitoring.ThresholdLevelsInconsistent", problem.GetProperty("code").GetString());
     }
 
     [Fact]
@@ -172,6 +205,74 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
 
         var problem = await response.ReadJsonAsync(HttpStatusCode.BadRequest);
         Assert.Equal("OperationsMonitoring.FieldEventTypeOnly", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task MobileSync_AcceptsValidOperationsAndReportsRejectedDuplicateAndConflictingEntries()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await client.RegisterManagerAsync();
+        var cattleId = (await Arrange.RegisterCattleAsync(client, ranchId, "PE-MOBILE-SYNC")).GetProperty("id").GetGuid();
+        var operationId = Guid.NewGuid();
+        var invalidId = Guid.NewGuid();
+        var occurredAt = DateTimeOffset.UtcNow.AddHours(-1);
+        var entry = new { operationId, cattleId, type = "HealthEvent", occurredAt, observation = "Mild lameness" };
+        var batch = new { operations = new object[] { entry, new { operationId = invalidId, cattleId, occurredAt } } };
+
+        using var response = await client.PostJsonAsync("api/v1/mobile-sync/batch", batch);
+
+        var results = (await response.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray().ToList();
+        Assert.Equal("Accepted", Assert.Single(results, result => result.GetProperty("id").GetGuid() == operationId).GetProperty("status").GetString());
+        Assert.Equal("Rejected", Assert.Single(results, result => result.GetProperty("id").GetGuid() == invalidId).GetProperty("status").GetString());
+        using var replay = await client.PostJsonAsync("api/v1/mobile-sync/batch", batch);
+        var repeated = (await replay.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray().ToList();
+        Assert.Equal("Duplicate", Assert.Single(repeated, result => result.GetProperty("id").GetGuid() == operationId).GetProperty("status").GetString());
+        using var conflict = await client.PostJsonAsync("api/v1/mobile-sync/batch", new
+        {
+            operations = new[] { new { operationId, cattleId, type = "HealthEvent", occurredAt, observation = "Different content" } }
+        });
+        var conflicted = Assert.Single((await conflict.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray());
+        Assert.Equal("Conflict", conflicted.GetProperty("status").GetString());
+        using var history = await client.GetAsync($"api/v1/ranches/{ranchId}/cattle/{cattleId}/livestock-operations" +
+            $"?from={occurredAt.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
+        Assert.Single((await history.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task MobileSync_AnOperationForAnotherRanch_IsRejectedWithoutBeingSaved()
+    {
+        using var owner = factory.CreateClient(TestIdentity.Create());
+        var ranchId = await owner.RegisterManagerAsync();
+        var cattleId = (await Arrange.RegisterCattleAsync(owner, ranchId, "PE-MOBILE-FORBIDDEN")).GetProperty("id").GetGuid();
+        using var outsider = factory.CreateClient(TestIdentity.Create());
+        await outsider.RegisterManagerAsync();
+
+        using var response = await outsider.PostJsonAsync("api/v1/mobile-sync/batch", new
+        {
+            operations = new[] { new { operationId = Guid.NewGuid(), cattleId, type = "HealthEvent", occurredAt = DateTimeOffset.UtcNow.AddHours(-1), observation = "Mild lameness" } }
+        });
+
+        var result = Assert.Single((await response.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("results").EnumerateArray());
+        Assert.Equal("Rejected", result.GetProperty("status").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(result.GetProperty("reason").GetString()));
+        using var history = await owner.GetAsync($"api/v1/ranches/{ranchId}/cattle/{cattleId}/livestock-operations" +
+            $"?from={DateTimeOffset.UtcNow.AddDays(-1).ToQueryValue()}&to={DateTimeOffset.UtcNow.AddHours(1).ToQueryValue()}");
+        Assert.Empty((await history.ReadJsonAsync(HttpStatusCode.OK)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task MobileSync_RequiresAuthenticationAndANonEmptyBatch()
+    {
+        using var anonymous = factory.CreateClient();
+        using var unauthorized = await anonymous.PostJsonAsync("api/v1/mobile-sync/batch", new { operations = Array.Empty<object>() });
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+        using var manager = factory.CreateClient(TestIdentity.Create());
+        await manager.RegisterManagerAsync();
+
+        using var empty = await manager.PostJsonAsync("api/v1/mobile-sync/batch", new { operations = Array.Empty<object>() });
+
+        var problem = await empty.ReadJsonAsync(HttpStatusCode.BadRequest);
+        Assert.Equal("OperationsMonitoring.InvalidMobileBatchSize", problem.GetProperty("code").GetString());
     }
 
     [Fact]
@@ -407,6 +508,8 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(38.6, temperature.GetProperty("value").GetDouble());
         Assert.Equal("celsius", temperature.GetProperty("unit").GetString());
         Assert.Equal("Unavailable", latest.GetProperty("activityIndex").GetProperty("status").GetString());
+        Assert.Equal("Unavailable", latest.GetProperty("heartRate").GetProperty("status").GetString());
+        Assert.Equal("Unavailable", latest.GetProperty("methaneIndex").GetProperty("status").GetString());
     }
 
     [Fact]
@@ -427,6 +530,40 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal(readingId, reading.GetProperty("readingId").GetGuid());
         Assert.Equal(38.6, reading.GetProperty("bodyTemperature").GetProperty("value").GetDouble());
         Assert.Equal("Valid", reading.GetProperty("bodyTemperature").GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task TelemetryHistory_KeepsHeartRateAndMethaneIndexOfEachReading()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var readingId = Guid.NewGuid();
+        var recordedAt = DateTimeOffset.UtcNow;
+        using var synchronization = await client.PostJsonWithGatewayKeyAsync("api/v1/telemetry/batch", monitored.GatewayKey, new
+        {
+            readings = new[]
+            {
+                new
+                {
+                    readingId,
+                    deviceId = monitored.DeviceId,
+                    recordedAt,
+                    heartRate = new { value = 72.0 },
+                    methaneIndex = new { invalidReason = "Gas sensor warming up" }
+                }
+            }
+        });
+        await synchronization.ReadJsonAsync(HttpStatusCode.OK);
+
+        using var response = await client.GetAsync(
+            $"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/telemetry?from={recordedAt.AddHours(-1).ToQueryValue()}&to={recordedAt.AddHours(1).ToQueryValue()}");
+
+        var history = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var reading = Assert.Single(history.GetProperty("items").EnumerateArray());
+        Assert.Equal(72.0, reading.GetProperty("heartRate").GetProperty("value").GetDouble());
+        Assert.Equal("bpm", reading.GetProperty("heartRate").GetProperty("unit").GetString());
+        Assert.Equal("Invalid", reading.GetProperty("methaneIndex").GetProperty("status").GetString());
+        Assert.Equal("Gas sensor warming up", reading.GetProperty("methaneIndex").GetProperty("invalidReason").GetString());
     }
 
     [Fact]
@@ -467,6 +604,105 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         Assert.Equal("OperationsMonitoring.AnimalNotFound", problem.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task DeviceAssignments_WithoutGatewayKey_IsUnauthorized()
+    {
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"api/v1/edge-gateways/{Guid.NewGuid()}/device-assignments");
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Unauthorized);
+        Assert.Equal("OperationsMonitoring.GatewayUnauthenticated", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_ForAnotherGateway_IsForbidden()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var otherGateway = await Arrange.RegisterGatewayAsync(client, monitored.RanchId, "Second gateway");
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{otherGateway.GetProperty("id").GetGuid()}/device-assignments", monitored.GatewayKey);
+
+        var problem = await response.ReadJsonAsync(HttpStatusCode.Forbidden);
+        Assert.Equal("OperationsMonitoring.GatewayMismatch", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_ListsEachCollarWithTheLotAndStageOfItsAnimal()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        var lot = await Arrange.CreateLotAsync(client, monitored.RanchId, "Milking pen");
+        var lotId = lot.GetProperty("id").GetGuid();
+        await Arrange.AssignToLotAsync(client, monitored.RanchId, lotId, monitored.CattleId, lot.GetProperty("version").GetGuid());
+        var heifer = await Arrange.RegisterCattleAsync(client, monitored.RanchId, "PE-0201", lifeStage: 2);
+        var heiferId = heifer.GetProperty("id").GetGuid();
+        var heiferCollar = await Arrange.RegisterCollarAsync(client, monitored.RanchId, $"COL-{Guid.NewGuid():N}");
+        var heiferCollarId = heiferCollar.GetProperty("id").GetGuid();
+        await Arrange.AssignCollarAsync(client, monitored.RanchId, heiferCollarId, heiferId, heiferCollar.GetProperty("version").GetGuid());
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{monitored.GatewayId}/device-assignments", monitored.GatewayKey);
+
+        var body = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Equal(monitored.RanchId, body.GetProperty("ranchId").GetGuid());
+        var assignments = body.GetProperty("assignments").EnumerateArray().ToList();
+        var deviceIds = assignments.Select(assignment => assignment.GetProperty("deviceId").GetGuid()).ToList();
+        Assert.Equal(deviceIds.OrderBy(id => id), deviceIds);
+        var byDevice = assignments.ToDictionary(assignment => assignment.GetProperty("deviceId").GetGuid());
+        var milking = byDevice[monitored.DeviceId];
+        Assert.Equal(monitored.CattleId, milking.GetProperty("cattleId").GetGuid());
+        Assert.Equal(lotId, milking.GetProperty("lotId").GetGuid());
+        Assert.Equal("MilkingCow", milking.GetProperty("lifeStage").GetString());
+        var heiferAssignment = byDevice[heiferCollarId];
+        Assert.Equal(heiferId, heiferAssignment.GetProperty("cattleId").GetGuid());
+        Assert.Equal(JsonValueKind.Null, heiferAssignment.GetProperty("lotId").ValueKind);
+        Assert.Equal("Heifer", heiferAssignment.GetProperty("lifeStage").GetString());
+    }
+
+    [Fact]
+    public async Task DeviceAssignments_OmitsTheCollarOfAnExitedAnimal()
+    {
+        using var client = factory.CreateClient(TestIdentity.Create());
+        var monitored = await MonitorCattleAsync(client);
+        using var cattleResponse = await client.GetAsync($"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}");
+        var cattleVersion = (await cattleResponse.ReadJsonAsync(HttpStatusCode.OK)).GetProperty("cattle").GetProperty("version").GetGuid();
+        using var deactivation = await client.PostJsonAsync($"api/v1/ranches/{monitored.RanchId}/cattle/{monitored.CattleId}/deactivations", new
+        {
+            reason = 2,
+            exitDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            expectedVersion = cattleVersion
+        });
+        await deactivation.ReadBodyAsync(HttpStatusCode.OK);
+
+        using var response = await client.GetWithGatewayKeyAsync(
+            $"api/v1/edge-gateways/{monitored.GatewayId}/device-assignments", monitored.GatewayKey);
+
+        var body = await response.ReadJsonAsync(HttpStatusCode.OK);
+        Assert.Empty(body.GetProperty("assignments").EnumerateArray());
+    }
+
+    [Theory]
+    [InlineData("monitoring-rules")]
+    [InlineData("device-assignments")]
+    public async Task OpenApiDocument_DeclaresTheGatewayKeyOnEachEdgeGatewayDownload(string download)
+    {
+        using var host = factory.WithWebHostBuilder(builder => builder.ConfigureAppConfiguration(configuration =>
+            configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["OpenApi:Enabled"] = "true" })));
+        using var client = host.CreateClient();
+
+        using var response = await client.GetAsync("openapi/v1.json");
+
+        var document = await response.ReadJsonAsync(HttpStatusCode.OK);
+        var operation = document.GetProperty("paths").GetProperty($"/api/v1/edge-gateways/{{gatewayId}}/{download}").GetProperty("get");
+        var header = Assert.Single(operation.GetProperty("parameters").EnumerateArray(),
+            parameter => parameter.GetProperty("name").GetString() == "X-Gateway-Key");
+        Assert.Equal("header", header.GetProperty("in").GetString());
+        Assert.True(header.GetProperty("required").GetBoolean());
+    }
+
     /// <summary>
     ///     Builds a ranch whose collar is assigned to an animal and whose edge gateway holds a valid key.
     /// </summary>
@@ -481,6 +717,15 @@ public sealed class OperationsMonitoringApiTests(IchuApiFactory factory)
         var gateway = await Arrange.RegisterGatewayAsync(client, ranchId, "Corral gateway");
         return new MonitoredRanch(ranchId, cattleId, deviceId, gateway.GetProperty("id").GetGuid(), gateway.GetProperty("key").GetString()!);
     }
+
+    private static object HeartRateThreshold(double minValue, double maxValue, string severity) => new
+    {
+        lifeStage = "MilkingCow",
+        metric = "HeartRate",
+        minValue,
+        maxValue,
+        severity
+    };
 
     private static object GeofenceRequest(Guid lotId, string name) => new
     {

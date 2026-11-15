@@ -6,6 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest.Transform;
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Localization;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Interfaces.Rest;
@@ -23,14 +24,15 @@ public sealed class PlanningCalendarController(
 {
     [HttpGet]
     [EndpointSummary("List planned activities in a calendar interval")]
-    [EndpointDescription("Returns the activities of the ranch scheduled between the two inclusive UTC instants, ordered by their schedule.")]
+    [EndpointDescription("Requires read access to ranchId and both from and to query parameters as ISO 8601 UTC instants, for example 2026-11-01T00:00:00Z and 2026-11-30T23:59:59Z. Returns activities scheduled inside this inclusive interval, ordered by schedule, or an empty array. Missing bounds, non-UTC instants and inverted ranges return 400.")]
     [ProducesResponseType<IReadOnlyList<PlanningActivityResource>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetCalendarAsync(
         Guid ranchId,
-        [FromQuery] DateTimeOffset from,
-        [FromQuery] DateTimeOffset to,
+        [FromQuery, BindRequired] DateTimeOffset from,
+        [FromQuery, BindRequired] DateTimeOffset to,
         CancellationToken cancellationToken)
     {
         var result = await queryService.HandleAsync(new GetPlanningCalendarQuery(ranchId, from, to), cancellationToken);

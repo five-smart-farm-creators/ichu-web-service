@@ -23,6 +23,7 @@ public static class ModelBuilderExtensions
     public static void ApplyOperationsMonitoringConfiguration(this ModelBuilder builder)
     {
         ConfigureTelemetryReading(builder.Entity<TelemetryReading>());
+        ConfigureWaterTroughReading(builder.Entity<WaterTroughReading>());
         ConfigureMonitoringAlert(builder.Entity<MonitoringAlert>());
         ConfigureGeofence(builder.Entity<Geofence>());
         ConfigureMonitoringThreshold(builder.Entity<MonitoringThreshold>());
@@ -40,6 +41,8 @@ public static class ModelBuilderExtensions
         reading.HasIndex(r => new { r.RanchId, r.RecordedAt });
         reading.ComplexProperty(r => r.BodyTemperature, ConfigureMeasurement);
         reading.ComplexProperty(r => r.ActivityIndex, ConfigureMeasurement);
+        reading.ComplexProperty(r => r.HeartRate, ConfigureMeasurement);
+        reading.ComplexProperty(r => r.MethaneIndex, ConfigureMeasurement);
         reading.ComplexProperty(r => r.RuminationMinutes, ConfigureMeasurement);
         reading.ComplexProperty(r => r.BatteryPercent, ConfigureMeasurement);
         reading.ComplexProperty(r => r.Position, position =>
@@ -49,6 +52,20 @@ public static class ModelBuilderExtensions
             position.Property(p => p.AccuracyMeters);
             position.Property(p => p.InvalidReason).HasMaxLength(Measurement.MaximumReasonLength);
         });
+    }
+
+    private static void ConfigureWaterTroughReading(EntityTypeBuilder<WaterTroughReading> reading)
+    {
+        reading.ToTable("WaterTroughReadings", Schema);
+        reading.HasKey(item => item.Id);
+        reading.Property(item => item.Id).ValueGeneratedNever();
+        reading.Property(item => item.Temperature).HasColumnType("numeric").IsRequired();
+        reading.Property(item => item.TemperatureUnit).HasConversion<string>().HasMaxLength(EnumLength).IsRequired();
+        reading.Property(item => item.HeaterState).HasConversion<string>().HasMaxLength(EnumLength).IsRequired();
+        reading.Property(item => item.Origin).HasMaxLength(EnumLength).IsRequired();
+        reading.HasIndex(item => new { item.ControllerId, item.ReadingId }).IsUnique();
+        reading.HasIndex(item => new { item.RanchId, item.ControllerId, item.CapturedAt });
+        reading.HasIndex(item => new { item.RanchId, item.WaterTroughId, item.CapturedAt });
     }
 
     private static void ConfigureMeasurement(ComplexPropertyBuilder<Measurement> measurement)
@@ -132,7 +149,7 @@ public static class ModelBuilderExtensions
             range.Property(r => r.MinValue);
             range.Property(r => r.MaxValue);
         });
-        threshold.HasIndex(t => new { t.RanchId, t.LifeStage, t.Metric }).IsUnique();
+        threshold.HasIndex(t => new { t.RanchId, t.LifeStage, t.Metric, t.Severity }).IsUnique();
     }
 
     private static void ConfigureMonitoringRuleSet(EntityTypeBuilder<MonitoringRuleSet> ruleSet)

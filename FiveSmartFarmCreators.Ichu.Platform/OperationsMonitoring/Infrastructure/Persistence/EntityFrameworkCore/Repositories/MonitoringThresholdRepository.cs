@@ -20,8 +20,21 @@ public class MonitoringThresholdRepository(AppDbContext context) : IMonitoringTh
     }
 
     /// <inheritdoc />
-    public Task<MonitoringThreshold?> FindByRanchLifeStageAndMetricAsync(Guid ranchId, string lifeStage, MonitoredMetric metric, CancellationToken cancellationToken = default) =>
-        Thresholds.SingleOrDefaultAsync(t => t.RanchId == ranchId && t.LifeStage == lifeStage && t.Metric == metric, cancellationToken);
+    public Task<MonitoringThreshold?> FindByRanchLifeStageAndMetricAndSeverityAsync(
+        Guid ranchId,
+        string lifeStage,
+        MonitoredMetric metric,
+        AlertSeverity severity,
+        CancellationToken cancellationToken = default) =>
+        Thresholds.SingleOrDefaultAsync(t => t.RanchId == ranchId && t.LifeStage == lifeStage && t.Metric == metric && t.Severity == severity, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<MonitoringThreshold>> FindByRanchLifeStageAndMetricAsync(Guid ranchId, string lifeStage, MonitoredMetric metric, CancellationToken cancellationToken = default) =>
+        await Thresholds
+            .Where(t => t.RanchId == ranchId && t.LifeStage == lifeStage && t.Metric == metric)
+            .OrderBy(t => t.Severity)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<MonitoringThreshold>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
@@ -29,6 +42,7 @@ public class MonitoringThresholdRepository(AppDbContext context) : IMonitoringTh
             .Where(t => t.RanchId == ranchId)
             .OrderBy(t => t.LifeStage)
             .ThenBy(t => t.Metric)
+            .ThenBy(t => t.Severity)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 }

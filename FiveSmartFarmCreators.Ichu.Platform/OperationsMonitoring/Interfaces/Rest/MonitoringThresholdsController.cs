@@ -26,7 +26,7 @@ public class MonitoringThresholdsController(
 {
     [HttpPut]
     [EndpointSummary("Configure a threshold")]
-    [EndpointDescription("Creates or replaces the threshold of a ranch for one life stage and metric, advancing the rule revision.")]
+    [EndpointDescription("Creates or replaces the threshold of a ranch for one life stage, metric and severity, advancing the rule revision. A ranch keeps at most one Warning and one Critical threshold per life stage and metric, and the Critical range must contain the Warning range; otherwise the request returns HTTP 400 with OperationsMonitoring.ThresholdLevelsInconsistent.")]
     [ProducesResponseType(typeof(ThresholdResource), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

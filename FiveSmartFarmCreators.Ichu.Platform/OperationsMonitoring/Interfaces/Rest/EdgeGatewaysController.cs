@@ -11,7 +11,7 @@ using Microsoft.Extensions.Localization;
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Rest;
 
 /// <summary>
-///     Publishes the monitoring rules to Edge Gateways. Gateway credentials are verified by the gateway authenticator, not by user authentication.
+///     Publishes the monitoring rules and collar assignments to Edge Gateways. Gateway credentials are verified by the gateway authenticator, not by user authentication.
 /// </summary>
 [ApiController]
 [Route("api/v1/edge-gateways")]
@@ -19,6 +19,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Interfaces.Re
 [Tags("Edge Gateways")]
 public class EdgeGatewaysController(
     IMonitoringRuleSetQueryService ruleSetQueryService,
+    IEdgeDeviceAssignmentQueryService deviceAssignmentQueryService,
     IStringLocalizer<OperationsMonitoringMessages> localizer) : ControllerBase
 {
     [HttpGet("{gatewayId:guid}/monitoring-rules")]
@@ -38,5 +39,19 @@ public class EdgeGatewaysController(
         var result = await ruleSetQueryService.Handle(new GetEdgeMonitoringRulesQuery(gatewayId, afterRevision), cancellationToken);
         return OperationsMonitoringActionResultAssembler.ToMonitoringRulesActionResult(this, result, localizer,
             snapshot => Ok(MonitoringRulesResourceFromEntityAssembler.ToResourceFromEntity(snapshot)));
+    }
+
+    [HttpGet("{gatewayId:guid}/device-assignments")]
+    [EndpointSummary("Get the collar assignments of an Edge Gateway")]
+    [EndpointDescription("Returns the collars of the gateway's ranch that serve an active animal, with the life stage and lot of each animal, ordered by device. Requires Edge Gateway credentials.")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(EdgeDeviceAssignmentsResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDeviceAssignments(Guid gatewayId, CancellationToken cancellationToken)
+    {
+        var result = await deviceAssignmentQueryService.Handle(new GetEdgeDeviceAssignmentsQuery(gatewayId), cancellationToken);
+        return OperationsMonitoringActionResultAssembler.ToActionResult(this, result, localizer,
+            snapshot => Ok(EdgeDeviceAssignmentsResourceFromEntityAssembler.ToResourceFromEntity(snapshot)));
     }
 }

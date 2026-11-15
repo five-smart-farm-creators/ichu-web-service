@@ -52,6 +52,23 @@ public class MonitoringAlertTests
     }
 
     [Fact]
+    public void MethaneAlertRecordsTheIndexAboveItsRange()
+    {
+        var alert = RaiseMethane(TelemetryFixtures.Reading(null, methaneIndex: 80)).Value!;
+
+        Assert.Equal(AlertType.Methane, alert.Type);
+        Assert.Equal(80, alert.DetectedValue);
+    }
+
+    [Fact]
+    public void MethaneAlertRejectsAReadingWithoutAMethaneIndex()
+    {
+        var result = RaiseMethane(TelemetryFixtures.Reading(null));
+
+        Assert.Equal(OperationsMonitoringErrors.ReadingNotSupportsAlert.Code, result.DomainError.Code);
+    }
+
+    [Fact]
     public void GeofenceAlertRecordsTheDistanceAndTheTriggeringPosition()
     {
         var alert = RaiseGeofence().Value!;
@@ -188,9 +205,18 @@ public class MonitoringAlertTests
     {
         var alert = RaiseFever(TelemetryFixtures.Reading(40)).Value!;
 
-        Assert.True(alert.IsOpenDuplicateCandidate(AlertType.Temperature, TelemetryFixtures.CattleId, alert.RaisedAt.AddHours(5)));
-        Assert.False(alert.IsOpenDuplicateCandidate(AlertType.Temperature, TelemetryFixtures.CattleId, alert.RaisedAt.AddHours(7)));
-        Assert.False(alert.IsOpenDuplicateCandidate(AlertType.Activity, TelemetryFixtures.CattleId, alert.RaisedAt));
+        Assert.True(alert.IsOpenDuplicateCandidate(AlertType.Temperature, AlertSeverity.Warning, TelemetryFixtures.CattleId, alert.RaisedAt.AddHours(5)));
+        Assert.False(alert.IsOpenDuplicateCandidate(AlertType.Temperature, AlertSeverity.Warning, TelemetryFixtures.CattleId, alert.RaisedAt.AddHours(7)));
+        Assert.False(alert.IsOpenDuplicateCandidate(AlertType.Activity, AlertSeverity.Warning, TelemetryFixtures.CattleId, alert.RaisedAt));
+    }
+
+    [Fact]
+    public void OpenWarningAlertDoesNotAbsorbACriticalEscalation()
+    {
+        var alert = RaiseFever(TelemetryFixtures.Reading(40)).Value!;
+
+        Assert.True(alert.IsOpenDuplicateCandidate(AlertType.Temperature, AlertSeverity.Informative, TelemetryFixtures.CattleId, alert.RaisedAt));
+        Assert.False(alert.IsOpenDuplicateCandidate(AlertType.Temperature, AlertSeverity.Critical, TelemetryFixtures.CattleId, alert.RaisedAt));
     }
 
     [Fact]
@@ -208,6 +234,10 @@ public class MonitoringAlertTests
 
     private static Result<MonitoringAlert> RaiseFever(TelemetryReading trigger) =>
         MonitoringAlert.RaiseForThreshold(AlertId, AlertType.Temperature, AlertSeverity.Warning, FeverRange, 1,
+            TelemetryFixtures.GatewayId, [trigger], ReceivedAt);
+
+    private static Result<MonitoringAlert> RaiseMethane(TelemetryReading trigger) =>
+        MonitoringAlert.RaiseForThreshold(AlertId, AlertType.Methane, AlertSeverity.Warning, ThresholdRange.Create(0, 60).Value!, 1,
             TelemetryFixtures.GatewayId, [trigger], ReceivedAt);
 
     private static Result<MonitoringAlert> RaiseGeofence() =>

@@ -1,5 +1,4 @@
 using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Aggregates;
-using FiveSmartFarmCreators.Ichu.Platform.Planning.Domain.Model.Commands;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServices;
@@ -9,5 +8,5 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Planning.Application.CommandServic
 /// </summary>
 public interface INutritionPlanCommandService
 {
-    Task<Result<NutritionPlan>> HandleAsync(RegisterNutritionPlanCommand command, CancellationToken cancellationToken);
+    Task<Result<NutritionPlan>> HandleAsync(RegisterNutritionPlanRequest request, CancellationToken cancellationToken);
 }

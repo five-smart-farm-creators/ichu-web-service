@@ -20,6 +20,8 @@ public static class LatestTelemetryResourceFromEntityAssembler
             MonitoringUnits.EdgeGatewayOrigin,
             ToIndicator(latest.BodyTemperature, r => r.BodyTemperature, MonitoringUnits.Celsius, now),
             ToIndicator(latest.ActivityIndex, r => r.ActivityIndex, MonitoringUnits.Index, now),
+            ToIndicator(latest.HeartRate, r => r.HeartRate, MonitoringUnits.BeatsPerMinute, now),
+            ToIndicator(latest.MethaneIndex, r => r.MethaneIndex, MonitoringUnits.Index, now),
             ToIndicator(latest.RuminationMinutes, r => r.RuminationMinutes, MonitoringUnits.Minutes, now),
             ToLastKnownPosition(latest.LastKnownPosition, now));
     }

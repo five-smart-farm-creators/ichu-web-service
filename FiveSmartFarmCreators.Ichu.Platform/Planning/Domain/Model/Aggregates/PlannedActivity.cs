@@ -96,6 +96,11 @@ public sealed class PlannedActivity : AggregateRoot
             return followUp;
         }
 
+        if (dueAt <= ScheduledAt)
+        {
+            return Result<FollowUp>.Failure(PlanningErrors.FollowUpDueAtInvalid);
+        }
+
         _followUps.Add(followUp.Value!);
         return followUp;
     }

@@ -90,6 +90,57 @@ public class CattleCommandServiceTests
         Assert.Equal(CattleInformationErrors.CattleNotFound.Code, result.DomainError.Code);
     }
 
+    [Fact]
+    public async Task Patch_ResolvesTheStoredRanchAndSavesIdentityAndStageTogetherOnce()
+    {
+        var actualRanchId = Guid.NewGuid();
+        var animal = Cattle.Register(Register("A-1") with { RanchId = actualRanchId }, BirthDate).Value!;
+        _cattle.Items.Add(animal);
+
+        var result = await _service.HandleAsync(new PatchCattleCommand(animal.Id, animal.Version, EarTag: "A-2",
+            LifeStage: LifeStage.Heifer, ValidFrom: new DateOnly(2026, 11, 7)), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(actualRanchId, Assert.Single(_access.ManagedRanches));
+        Assert.Equal("A-2", animal.EarTag.Value);
+        Assert.Equal(LifeStage.Heifer, animal.CurrentStage);
+        Assert.Equal(2, animal.StagePeriods.Count);
+        Assert.Equal(1, _unitOfWork.CompletedCount);
+    }
+
+    [Fact]
+    public async Task Patch_WhenStageChangeFails_DoesNotChangeIdentityOrSave()
+    {
+        var animal = Cattle.Register(Register("A-1"), BirthDate).Value!;
+        _cattle.Items.Add(animal);
+        var version = animal.Version;
+
+        var result = await _service.HandleAsync(new PatchCattleCommand(animal.Id, version, EarTag: "A-2",
+            LifeStage: LifeStage.Calf, ValidFrom: new DateOnly(2026, 11, 7)), CancellationToken.None);
+
+        Assert.Equal(CattleInformationErrors.LifeStageAlreadyCurrent.Code, result.DomainError.Code);
+        Assert.Equal("A-1", animal.EarTag.Value);
+        Assert.Equal(version, animal.Version);
+        Assert.Single(animal.StagePeriods);
+        Assert.Equal(0, _unitOfWork.CompletedCount);
+    }
+
+    [Fact]
+    public async Task Patch_WithoutPermissionForTheStoredRanch_ChangesAndSavesNothing()
+    {
+        var animal = Cattle.Register(Register("A-1"), BirthDate).Value!;
+        _cattle.Items.Add(animal);
+        _access.Outcome = Result.Failure(CattleInformationErrors.RanchAccessDenied);
+
+        var result = await _service.HandleAsync(new PatchCattleCommand(animal.Id, animal.Version, EarTag: "A-2"),
+            CancellationToken.None);
+
+        Assert.Equal(CattleInformationErrors.RanchAccessDenied.Code, result.DomainError.Code);
+        Assert.Equal(RanchId, Assert.Single(_access.ManagedRanches));
+        Assert.Equal("A-1", animal.EarTag.Value);
+        Assert.Equal(0, _unitOfWork.CompletedCount);
+    }
+
     private static RegisterCattleCommand Register(string earTag) =>
         new(RanchId, earTag, Breed.BrownSwiss, Sex.Female, BirthDate, LifeStage.Calf);
 
@@ -97,9 +148,15 @@ public class CattleCommandServiceTests
     {
         public Result Outcome { get; set; } = Result.Success();
 
+        public List<Guid> ManagedRanches { get; } = [];
+
         public Task<Result> EnsureReadAccessAsync(Guid ranchId, CancellationToken cancellationToken) => Task.FromResult(Outcome);
 
-        public Task<Result> EnsureManageAccessAsync(Guid ranchId, CancellationToken cancellationToken) => Task.FromResult(Outcome);
+        public Task<Result> EnsureManageAccessAsync(Guid ranchId, CancellationToken cancellationToken)
+        {
+            ManagedRanches.Add(ranchId);
+            return Task.FromResult(Outcome);
+        }
     }
 
     private sealed class FakeCattleRepository : ICattleRepository

@@ -92,6 +92,9 @@ public class CattleInformationCattleLookupTests
             return Task.FromResult(LotExists);
         }
 
+        public Task<Guid?> FindRanchIdForLotAsync(Guid lotId, CancellationToken cancellationToken) =>
+            Task.FromResult<Guid?>(null);
+
         public Task<IReadOnlyList<CattleInformationSnapshot>> FindActiveByLotAsync(Guid ranchId, Guid lotId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<CattleInformationSnapshot>>([]);
 
@@ -99,6 +102,9 @@ public class CattleInformationCattleLookupTests
             Task.FromResult(Lifecycle);
 
         public Task<IReadOnlyList<HerdMemberSnapshot>> GetHerdAsync(Guid ranchId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The lookup resolves single animals and lots only.");
+
+        public Task<IReadOnlyList<CattlePlacementSnapshot>> FindActivePlacementsAsync(Guid ranchId, CancellationToken cancellationToken) =>
             throw new NotSupportedException("The lookup resolves single animals and lots only.");
     }
 }

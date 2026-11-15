@@ -28,6 +28,9 @@ public sealed class Lot : AggregateRoot
 
     public string Name { get; private set; } = string.Empty;
 
+    /// <summary>
+    ///     Explains why the animals are grouped, for example "Animals in lactation", as optional descriptive text.
+    /// </summary>
     public string? Criterion { get; private set; }
 
     /// <summary>

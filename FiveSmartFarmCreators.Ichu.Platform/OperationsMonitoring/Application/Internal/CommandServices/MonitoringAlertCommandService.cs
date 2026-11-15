@@ -155,7 +155,7 @@ public class MonitoringAlertCommandService(
         }
 
         var pending = await alerts.FindPendingByCattleAndTypeAsync(raised.CattleId, type, cancellationToken);
-        var open = pending.FirstOrDefault(a => a.IsOpenDuplicateCandidate(type, raised.CattleId, raised.RaisedAt));
+        var open = pending.FirstOrDefault(a => a.IsOpenDuplicateCandidate(type, raised.Severity, raised.CattleId, raised.RaisedAt));
         if (open is not null)
         {
             var joined = open.AddEvidence(entry.AlertId.Value, evidence, command.ReceivedAt);

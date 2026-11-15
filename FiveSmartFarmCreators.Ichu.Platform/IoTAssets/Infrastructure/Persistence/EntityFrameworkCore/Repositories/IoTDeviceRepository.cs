@@ -63,6 +63,13 @@ public class IoTDeviceRepository(AppDbContext context) : IIoTDeviceRepository
         return AssignedToCattle(ranchId, cattleId).AsNoTracking().SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<IoTDevice>> FindAssignedCollarsAsNoTrackingAsync(Guid ranchId, CancellationToken cancellationToken)
+    {
+        return await Devices().AsNoTracking()
+            .Where(d => d.RanchId == ranchId && d.Type == DeviceType.SmartCollar && d.Assignments.Any(a => a.EndedAt == null))
+            .ToListAsync(cancellationToken);
+    }
+
     private IQueryable<IoTDevice> Devices() =>
         context.Set<IoTDevice>().Include(d => d.Assignments).AsSplitQuery();
 

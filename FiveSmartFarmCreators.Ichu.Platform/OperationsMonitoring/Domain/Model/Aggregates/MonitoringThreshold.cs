@@ -6,7 +6,7 @@ using FiveSmartFarmCreators.Ichu.Platform.Shared.Domain.Model.Aggregates.Interna
 namespace FiveSmartFarmCreators.Ichu.Platform.OperationsMonitoring.Domain.Model.Aggregates;
 
 /// <summary>
-///     The normal range that a ranch configures for one metric and production stage. ICHU supplies no default clinical ranges, so an animal whose stage has no configured threshold cannot produce a threshold alert.
+///     The normal range that a ranch configures for one metric, production stage and severity. ICHU supplies no default clinical ranges, so an animal whose stage has no configured threshold cannot produce a threshold alert.
 /// </summary>
 public sealed class MonitoringThreshold : AggregateRoot
 {

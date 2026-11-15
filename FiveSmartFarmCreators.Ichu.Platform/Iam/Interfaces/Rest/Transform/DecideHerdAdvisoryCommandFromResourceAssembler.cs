@@ -6,7 +6,7 @@ namespace FiveSmartFarmCreators.Ichu.Platform.Iam.Interfaces.Rest.Transform;
 
 public static class DecideHerdAdvisoryCommandFromResourceAssembler
 {
-    public static Result<DecideHerdAdvisoryCommand> ToCommandFromResource(Guid ranchId, Guid advisoryId, DecideAdvisoryResource resource)
+    public static Result<DecideHerdAdvisoryCommand> ToCommandFromResource(Guid? ranchId, Guid advisoryId, DecideAdvisoryResource resource)
     {
         var scope = AdvisoryScopeFromResourceAssembler.ToScope(resource.Scope);
         return scope.IsFailure

@@ -17,6 +17,8 @@ public static class TelemetryReadingResourceFromEntityAssembler
             entity.ReceivedAt,
             ToMeasurementResource(entity.BodyTemperature, MonitoringUnits.Celsius),
             ToMeasurementResource(entity.ActivityIndex, MonitoringUnits.Index),
+            ToMeasurementResource(entity.HeartRate, MonitoringUnits.BeatsPerMinute),
+            ToMeasurementResource(entity.MethaneIndex, MonitoringUnits.Index),
             ToMeasurementResource(entity.RuminationMinutes, MonitoringUnits.Minutes),
             ToMeasurementResource(entity.BatteryPercent, MonitoringUnits.Percent),
             new PositionResource(

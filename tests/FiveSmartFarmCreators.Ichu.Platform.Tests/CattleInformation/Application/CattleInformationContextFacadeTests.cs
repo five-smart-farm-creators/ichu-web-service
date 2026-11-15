@@ -7,6 +7,7 @@ using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Errors;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.Queries;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Model.ValueObjects;
 using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Domain.Repositories;
+using FiveSmartFarmCreators.Ichu.Platform.CattleInformation.Interfaces.Acl;
 using FiveSmartFarmCreators.Ichu.Platform.Shared.Application.Model;
 
 namespace FiveSmartFarmCreators.Ichu.Platform.Tests.CattleInformation.Application;
@@ -73,6 +74,26 @@ public class CattleInformationContextFacadeTests
         Assert.Empty(herd);
     }
 
+    [Fact]
+    public async Task FindActivePlacements_ListsOnlyActiveAnimalsWithTheirCurrentLotAndStage()
+    {
+        var cattle = new FakeCattleRepository();
+        var lots = new FakeLotRepository();
+        var inLot = Register(cattle, "A-1");
+        var withoutLot = Register(cattle, "A-2");
+        var exited = Register(cattle, "A-3");
+        Assert.True(exited.Deactivate(new DeactivateCattleCommand(RanchId, exited.Id, ExitReason.Sale, Today, exited.Version), Today, AssignedAt).IsSuccess);
+        var lot = Lot.Create(new CreateLotCommand(RanchId, "Heifers", null)).Value!;
+        Assert.True(lot.AddCattle(inLot, lot.Version, AssignedAt).IsSuccess);
+        lots.Items.Add(lot);
+
+        var placements = await Facade(cattle, lots).FindActivePlacementsAsync(RanchId, CancellationToken.None);
+
+        Assert.Equal(2, placements.Count);
+        Assert.Contains(new CattlePlacementSnapshot(inLot.Id.Value, lot.Id.Value, "Calf"), placements);
+        Assert.Contains(new CattlePlacementSnapshot(withoutLot.Id.Value, null, "Calf"), placements);
+    }
+
     private static CattleInformationContextFacade Facade(FakeCattleRepository cattle, FakeLotRepository lots) =>
         new(cattle, lots, new FakeAccess(granted: true));
 
@@ -127,6 +148,9 @@ public class CattleInformationContextFacadeTests
 
         public Task<Lot?> FindByIdAsync(Guid ranchId, LotId lotId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("The herd read uses memberships only.");
+
+        public Task<Guid?> FindRanchIdByIdAsync(LotId lotId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Items.SingleOrDefault(lot => lot.Id == lotId)?.RanchId);
 
         public Task<IReadOnlyList<Lot>> FindByRanchAsync(Guid ranchId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("The herd read uses memberships only.");

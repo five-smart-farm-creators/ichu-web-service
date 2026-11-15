@@ -25,6 +25,17 @@ public class MonitoringThresholdTests
     }
 
     [Fact]
+    public void CriticalRangeContainsTheWarningRangeOnlyWhenItIsAtLeastAsWide()
+    {
+        var critical = ThresholdRange.Create(40, 90).Value!;
+
+        Assert.True(critical.Contains(ThresholdRange.Create(48, 84).Value!));
+        Assert.True(critical.Contains(ThresholdRange.Create(40, 90).Value!));
+        Assert.False(critical.Contains(ThresholdRange.Create(35, 84).Value!));
+        Assert.False(critical.Contains(ThresholdRange.Create(48, 95).Value!));
+    }
+
+    [Fact]
     public void LifeStageIsTrimmedAndMustFitTheLimit()
     {
         Assert.Equal("Heifer", MonitoringThreshold.NormalizeLifeStage("  Heifer  ").Value);
