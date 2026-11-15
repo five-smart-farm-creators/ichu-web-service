@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-14
+
 ### Added
 
 - API review: recorded the published/local OpenAPI comparison, affected consumers, migration plans and verified or pending flow results in `docs/api-route-review.md`.
